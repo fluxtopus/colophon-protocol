@@ -234,7 +234,7 @@ A credential names exactly one address. Each address has its own credential, age
 The issuer:
 - MUST NOT give two addresses the same `sub` or the same agent key;
 - SHOULD keep an address's `sub` stable across reissues, so a counterparty sees the same agent each time;
-- SHOULD replace the agent key regularly, for example every 30 days, and at once when it may have been compromised. A new key under the same `sub` is the same agent to a counterparty. Regular replacement bounds how long an unnoticed theft lasts (§9);
+- SHOULD replace the agent key regularly, for example every 30 days, and at once when it may have been compromised. A new key under the same `sub` is the same agent to a counterparty. Regular replacement bounds how long an unnoticed theft lasts (§9). This is guidance: verifiers check nothing about a key's age;
 - decides how it groups addresses that belong to one agent. That grouping is outside the protocol.
 
 ### 5.3 Principal disclosure
@@ -668,7 +668,7 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 These are open for review. Each needs a decision before v0 is final.
 
-1. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope, the 20-miss DNS budget and the 30-day key replacement. Real traffic should set them.
+1. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope and the 20-miss DNS budget. Real traffic should set them. The 30-day key replacement is only an example (§5.2).
 2. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
 3. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
 4. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
@@ -905,6 +905,7 @@ The design was settled one question at a time. Each decision has a longer record
 | First contact | No introduction act. A first contact is a signed message, and support for it is content. |
 | Verdicts | Two: verified, or not verified with a reason. The message is checked as the receiver accepted it, and the payload is rebuilt, not sent. |
 | One credential per address | A single `from` address with its own agent ID and key, in every mode. |
+| Agent key replacement | Guidance only: SHOULD replace regularly, every 30 days for example, and at once on suspected compromise. No key-age claim, and verifiers do not check it. |
 | Addressing check | A message verifies only for a mailbox in `To` or `Cc`. `Bcc` copies and unknown forwards are not verified. Signed `Bcc` copies may come later as an extension. |
 | Subject and Reply-To | Both signed. The subject is signed raw, not decoded. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
@@ -916,6 +917,7 @@ The design was settled one question at a time. Each decision has a longer record
 
 - **Subject.** The subject is signed raw: unfolded, whitespace collapsed, trimmed, with encoded words left as they are (§6.4). Verifiers no longer need an RFC 2047 decoder. A subject re-encoded after signing no longer verifies; a relay that does this breaks DKIM as well. Receivers decode only for display (§9).
 - **Addressing check.** Kept as v0-01 proposed: a message verifies only for a mailbox listed in `To` or `Cc`, and `Bcc` copies and unknown forwards are not verified (§7.5). Signed `Bcc` copies are listed as a possible extension (§11).
+- **Agent key replacement.** Stays guidance (SHOULD), with 30 days as an example. Verifiers check nothing about key age (§5.2).
 - **Open issues.** §15 issues 1 (addressing check) and 4 (subject) are closed, and the others are renumbered.
 - **Vectors.** Five subject vectors replaced: still 74 deliveries.
 
