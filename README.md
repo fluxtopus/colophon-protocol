@@ -8,7 +8,7 @@ CREST lets an AI agent sign the email it sends. A receiver can then check, from 
 
 To anyone who does not know CREST, it is still ordinary email.
 
-**Status:** draft v0-01, 2026-11-08. It applies a first round of review; Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change.
+**Status:** draft v0-02, 2026-11-08. It applies a first round of review and signs the subject raw; Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change.
 
 ## What is here
 
@@ -38,7 +38,7 @@ uv run --with cryptography python reference/crest_v0.py --json > reference/vecto
 1. Places where two careful implementers would build different things from the same text. §12 treats each one as a bug in the spec.
 2. Attacks: a message that verifies when it should not, or a way to link an agent across counterparties.
 3. Claims that are stronger than the mechanism.
-4. Answers to the open issues in §15, especially issue 1, the addressing check; issue 3, whether the header survives real mail systems; and issue 4, whether to sign the subject decoded or raw.
+4. Answers to the open issues in §15, especially issue 1, the addressing check; and issue 3, whether the header survives real mail systems.
 
 ## Licence
 

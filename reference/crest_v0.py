@@ -46,7 +46,6 @@ LOCAL_PART = re.compile(rf"(?:{ATEXT}|[^\x00-\x7f])+(?:\.(?:{ATEXT}|[^\x00-\x7f]
 LDH = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
 DOMAIN = re.compile(rf"{LDH}(?:\.{LDH})+")
 PHRASE = re.compile(rf"(?:{ATEXT}|[ \t.]|[^\x00-\x7f]|\"(?:[^\"\\\r\n]|\\.)*\")*")
-ENCODED_WORD = re.compile(r"=\?([^?*\s]+)(\*[^?\s]*)?\?([BbQq])\?([!->@-~]+)\?=")
 TOKEN = r"[A-Za-z0-9!#$%&'*+.^_`{|}~-]+"
 CONTENT_TYPE = re.compile(rf"\s*{TOKEN}/{TOKEN}\s*(?:;.*)?", re.DOTALL)
 TRANSFER_ENCODINGS = {"7bit", "8bit", "binary", "quoted-printable", "base64"}
@@ -243,50 +242,14 @@ def address_list(msg: Message, name: str) -> list[str]:
     return out
 
 
-def decode_word(word: re.Match) -> str:
-    """One RFC 2047 encoded word, decoded on its own under §6.4's rules."""
-    charset, language, encoding, text = word.groups()
-    if language or charset.lower() not in ("utf-8", "us-ascii"):
-        raise Fail("malformed")
-    if encoding in "Bb":
-        if not BASE64.fullmatch(text.encode()):
-            raise Fail("malformed")
-        data = base64.b64decode(text)
-    else:
-        out, i = bytearray(), 0
-        while i < len(text):
-            ch = text[i]
-            if ch == "=":
-                pair = text[i + 1 : i + 3]
-                if not re.fullmatch(r"[0-9A-Fa-f]{2}", pair):
-                    raise Fail("malformed")
-                out.append(int(pair, 16))
-                i += 3
-            else:
-                out.append(0x20 if ch == "_" else ord(ch))
-                i += 1
-        data = bytes(out)
-    try:
-        return data.decode(charset.lower())
-    except UnicodeError:  # includes a character split across two encoded words
-        raise Fail("malformed") from None
-
-
 def canonical_subject(msg: Message) -> str:
+    """The raw value (§6.4): unfolded, whitespace collapsed, trimmed. Encoded words are not decoded."""
     values = raw_values(msg, "Subject")
     if len(values) > 1:
         raise Fail("malformed")
     if not values:
         return ""
-    pieces = re.split(r"([ \t]+)", values[0])  # words at even indexes, whitespace at odd
-    words = [ENCODED_WORD.fullmatch(p) if i % 2 == 0 else None for i, p in enumerate(pieces)]
-    out = []
-    for i, piece in enumerate(pieces):
-        if i % 2 == 0:
-            out.append(decode_word(words[i]) if words[i] else piece)
-        elif not (words[i - 1] and i + 1 < len(pieces) and words[i + 1]):
-            out.append(piece)  # whitespace between two encoded words is dropped
-    return re.sub(r"[ \t]+", " ", "".join(out)).strip(" ")
+    return re.sub(r"[ \t]+", " ", values[0]).strip(" ")
 
 
 def canonical_text(text: str) -> bytes:
@@ -797,6 +760,10 @@ Step = tuple[dict, str]  # arrival changes, expected reason
 Case = tuple[str, bytes, list[Step]]
 
 
+# A split character, a language tag and another charset: a decoder would have to rule on each.
+ODD_SUBJECT = b"=?utf-8?q?caf=C3?= =?utf-8?q?=A9?= =?utf-8*en?q?Table?= =?iso-8859-1?q?caf=E9?="
+
+
 def vectors() -> list[Case]:
     raw = signed()
     crlf = b"\r\n"
@@ -854,8 +821,18 @@ def vectors() -> list[Case]:
         one("charset name in capitals", edit(b'charset="utf-8"', b'charset="UTF-8"'), "verified"),
         one("attachment renamed (names are not signed)", edit(b"booking.csv", b"invoice.csv"), "verified"),
         one(
-            "subject sent as an encoded word",
-            set_header(b"Subject", b"=?UTF-8?Q?Table_for_2=2C_Friday_7_November=2C_19=3A30?="),
+            "subject refolded in transit",
+            edit(b"Subject: Table for 2,", b"Subject: Table for 2,\r\n "),
+            "verified",
+        ),
+        one(
+            "spaces in the subject collapsed",
+            edit(b"Subject: Table for 2,", b"Subject:  Table  for 2,\t"),
+            "verified",
+        ),
+        one(
+            "encoded words that decoders disagree on, signed as sent (never decoded)",
+            signed(unsigned=set_header(b"Subject", ODD_SUBJECT, example_unsigned())),
             "verified",
         ),
         one(
@@ -875,8 +852,8 @@ def vectors() -> list[Case]:
         # covered content changed
         one("subject changed", edit(b"Subject: Table for 2", b"Subject: Table for 4"), "signature_invalid"),
         one(
-            "an encoded word inside a longer word is literal text",
-            set_header(b"Subject", b"Table=?utf-8?q?_for_?=2, Friday 7 November, 19:30"),
+            "subject re-encoded as an encoded word after signing",
+            set_header(b"Subject", b"=?UTF-8?Q?Table_for_2=2C_Friday_7_November=2C_19=3A30?="),
             "signature_invalid",
         ),
         one("text changed", edit(b"for 2 this", b"for 4 this"), "signature_invalid"),
@@ -928,15 +905,7 @@ def vectors() -> list[Case]:
             set_header(b"To", b"reservations@bistro.example, , x@bistro.example"),
             "malformed",
         ),
-        one(
-            "a character split across two encoded words",
-            set_header(b"Subject", b"=?utf-8?q?caf=C3?= =?utf-8?q?=A9?="),
-            "malformed",
-        ),
-        one("encoded word with a language tag", set_header(b"Subject", b"=?utf-8*en?q?Table?="), "malformed"),
-        one(
-            "encoded word in another charset", set_header(b"Subject", b"=?iso-8859-1?q?caf=E9?="), "malformed"
-        ),
+        one("invalid UTF-8 in the subject", set_header(b"Subject", b"Table for 2 \xff"), "malformed"),
         one("bad quoted-printable in the body", edit(b"Hello,", b"Hello=ZZ,"), "malformed"),
         one("bad base64 in the attachment", edit(b"MTk6MzAsMgo=", b"MTk6MzAs*go="), "malformed"),
         one("missing v tag", edit(b"Crest-Signature: v=0;", b"Crest-Signature:"), "malformed"),

@@ -92,14 +92,16 @@ ok    verified             display name changed
 ok    verified             trailing spaces on a body line
 ok    verified             charset name in capitals
 ok    verified             attachment renamed (names are not signed)
-ok    verified             subject sent as an encoded word
+ok    verified             subject refolded in transit
+ok    verified             spaces in the subject collapsed
+ok    verified             encoded words that decoders disagree on, signed as sent (never decoded)
 ok    verified             non-ASCII subject, as the signer encoded it
 ok    verified             unrelated TXT beside the record
 ok    verified             a CREST record with a duplicate tag beside the record
 ok    verified             arrived exactly at exp + grace
 ok    verified             signed 1 hour before the credential's iat
 ok    signature_invalid    subject changed
-ok    signature_invalid    an encoded word inside a longer word is literal text
+ok    signature_invalid    subject re-encoded as an encoded word after signing
 ok    signature_invalid    text changed
 ok    signature_invalid    Reply-To added
 ok    signature_invalid    Cc added
@@ -122,9 +124,7 @@ ok    malformed            non-ASCII domain in Cc
 ok    malformed            comment in To
 ok    malformed            unquoted @ in a display name
 ok    malformed            empty member in To
-ok    malformed            a character split across two encoded words
-ok    malformed            encoded word with a language tag
-ok    malformed            encoded word in another charset
+ok    malformed            invalid UTF-8 in the subject
 ok    malformed            bad quoted-printable in the body
 ok    malformed            bad base64 in the attachment
 ok    malformed            missing v tag

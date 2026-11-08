@@ -1,6 +1,6 @@
 # CREST v0: Agent Signatures for Email
 
-Draft v0-01, 2026-11-08. For review. Not for production use.
+Draft v0-02, 2026-11-08. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -40,7 +40,7 @@ Appendices:
 - B. Test vectors
 - C. Formal model
 - D. Decision log
-- E. Changes from v0-00
+- E. Changes
 
 ## 1. Introduction
 
@@ -363,14 +363,11 @@ DKIM still covers whatever the issuer's DKIM signature lists.
 6. Keep header order. Drop later duplicates.
 7. If the header is absent, the list is `[]`. If it appears more than once, or is empty, the message is malformed.
 
-**Subject.** RFC 2047 encoded words are decoded, under strict rules, so that verifiers agree. Signing the raw value instead is open (§15, issue 4).
+**Subject.** The subject is signed raw, as it appears on the wire, the way DKIM's relaxed header canonicalization treats it (RFC 6376 §3.4.2):
 1. Unfold, as above.
-2. Split the value into words at runs of SP and HTAB.
-3. A word that is, in full, `=?charset?encoding?text?=` is an encoded word (RFC 2047 §2), where `encoding` is `B` or `Q` in either case. Any other word is literal text, even if it contains `=?`.
-4. The charset MUST be `utf-8` or `us-ascii`, compared case-insensitively, with no language tag (`*lang`, RFC 2231 §5). Any other charset is malformed.
-5. Each encoded word is decoded on its own. `B` is strict base64 (RFC 4648 §4, padding required). `Q` follows RFC 2047 §4.2, and `=` MUST be followed by two hex digits. The octets are then decoded in the charset. Invalid octets are malformed, and so is a character split across two encoded words.
-6. Whitespace between two adjacent encoded words is dropped (RFC 2047 §6.2). Other whitespace is kept.
-7. Each run of SP and HTAB becomes one SP, and SP is trimmed at both ends.
+2. Each run of SP and HTAB becomes one SP, and SP is trimmed at both ends.
+
+RFC 2047 encoded words are not decoded: `=?utf-8?q?caf=C3=A9?=` is signed as those 21 characters. The issuer's DKIM signature covers `Subject`, so the verifier sees the octets the signer saw, and no verifier needs a decoder to agree with another. A receiver decodes the subject only to show it (§9).
 
 An absent `Subject` is `""`. More than one `Subject` makes the message malformed.
 
@@ -408,7 +405,7 @@ The signature is computed as in RFC 7515: Ed25519 over `ASCII(BASE64URL(header) 
 ### 6.6 Signing
 
 The signer:
-1. builds the message in its final form, as it will leave the issuer's mail system. Footers, banners and subject tags are added first.
+1. builds the message in its final form, as it will leave the issuer's mail system. Footers, banners and subject tags are added first, and the subject is encoded as it will be sent.
 2. picks the credential for the `From` address. It SHOULD NOT sign with a credential that has less than 6 hours left before `exp`, so the message has time to arrive. Verifiers do not check this.
 3. builds the signing input from those bytes, signs it, and adds `Crest-Signature`.
 4. hands the message to the mail system, which adds DKIM with `d=` equal to the `From` host.
@@ -567,6 +564,8 @@ It does not mean:
 
 **Display names are not signed.** `From: "Your Bank" <maple-tiger-27@acme.example>` verifies. Receivers SHOULD show the address and the issuing domain, not the display name, next to a verified verdict.
 
+**The subject is signed as octets.** A receiver decodes encoded words to show the subject, and mail libraries disagree on unusual input: a character split across two encoded words, an unknown charset, invalid octets. The signature binds the octets, not one reading of them. A receiver SHOULD show a subject it cannot decode cleanly in its raw form, not a repaired one. A signer SHOULD send an ASCII subject as plain text and encode a non-ASCII subject as whole `utf-8` encoded words, or as UTF-8 (RFC 6532).
+
 **Lookalike domains.** CREST proves which domain spoke, not that it is the domain the user expects. A receiver SHOULD make internationalized and lookalike domains visible, for example by showing A-labels or by flagging confusable characters.
 
 **A stolen agent key** can sign only for its one address, and still needs the domain's mail system to pass DKIM. It is not bounded by the credential's 24 hours. Credentials are public: every message the agent sent carries one, so a thief who holds the key can attach any current credential for it. The key stays usable for as long as the issuer certifies it, and for up to 26 hours after the issuer stops. Ending it is the issuer's job: it replaces the agent key (§5.2). Regular replacement bounds how long an unnoticed theft lasts.
@@ -671,26 +670,18 @@ These are open for review. Each needs a decision before v0 is final.
 1. **The addressing check and forwarded mail.** §7.5 lets a message verify only for a mailbox listed in `To` or `Cc`, and §7.6 lets it verify once per mailbox. That stops a captured message from being resent to someone else, verified. But a plain forward, for example from an old address the receiver does not know about, then shows as not verified, although it keeps DKIM. So do `Bcc` recipients. The alternative, no addressing check, lets anyone who receives a signed message resend it, verified, to anyone: a verified request would work like a bearer token. The current proposal keeps the check, leaves `Bcc` not verified, and lets a receiver count forwards it knows about as aliases. Is the trade right?
 2. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope, the 20-miss DNS budget and the 30-day key replacement. Real traffic should set them.
 3. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
-4. **Decoded or raw subject.** v0-01 decodes RFC 2047 encoded words under strict rules (§6.4). The alternative is to sign the raw value: unfold, collapse whitespace, trim, and compare octets, as DKIM's relaxed canonicalization does. The issuer's DKIM signature covers `Subject`, so the raw octets a verifier sees are the octets the signer saw. Signing them raw removes a decoder from every verifier. Common libraries disagree on these subjects:
-   - a character split across two encoded words, as some mail clients write: one library merges the words, others give replacement characters or fail;
-   - an encoded word inside a longer word, such as `foo=?utf-8?q?_bar?=baz`: one library decodes it and adds spaces, a strict decoder leaves it as text;
-   - a language tag, or an unknown charset: one implementation crashed where the draft said malformed;
-   - invalid octets: replaced or rejected;
-   - a byte order mark: kept or stripped.
-
-   §6.4 now settles each case, but every verifier must follow it exactly. Signing raw would give up only one thing: a subject that a relay re-encodes, unchanged in meaning, no longer verifies. Such a relay breaks DKIM as well.
-5. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0-01 compares them octet for octet after lowercasing ASCII.
-6. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
+4. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
+5. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
    - Tag letters `c` and `b`.
    - base64url everywhere, the DNS record included, where DKIM uses base64. It is decoded strictly in every place (§2).
    - A standard detached JWS rather than RFC 7797 unencoded payloads.
    - A message-level `exp` was dropped: the credential's `exp` and arrival time bound a message already.
-7. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
+6. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
    - multiple DKIM signatures on one message;
    - SMTPUTF8 addresses;
    - a corpus of real mail from the systems in issue 3.
-8. **The formal model** (Appendix C) is not built yet.
-9. **Name.** "CREST" and the header name are provisional until a trademark check is done.
+7. **The formal model** (Appendix C) is not built yet.
+8. **Name.** "CREST" and the header name are provisional until a trademark check is done.
 
 ## Appendix A. Worked example
 
@@ -811,14 +802,16 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Trailing spaces on a body line | verified |
 | Charset name in capitals | verified |
 | Attachment renamed (names are not signed) | verified |
-| Subject sent as an encoded word | verified |
+| Subject refolded in transit | verified |
+| Spaces in the subject collapsed | verified |
+| Encoded words that decoders disagree on, signed as sent (never decoded) | verified |
 | Non-ASCII subject, as the signer encoded it | verified |
 | Unrelated TXT beside the record | verified |
 | A CREST record with a duplicate tag beside the record | verified |
 | Arrived exactly at exp + grace | verified |
 | Signed 1 hour before the credential's iat | verified |
 | Subject changed | `signature_invalid` |
-| An encoded word inside a longer word is literal text | `signature_invalid` |
+| Subject re-encoded as an encoded word after signing | `signature_invalid` |
 | Text changed | `signature_invalid` |
 | Reply-To added | `signature_invalid` |
 | Cc added | `signature_invalid` |
@@ -841,9 +834,7 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Comment in To | `malformed` |
 | Unquoted @ in a display name | `malformed` |
 | Empty member in To | `malformed` |
-| A character split across two encoded words | `malformed` |
-| Encoded word with a language tag | `malformed` |
-| Encoded word in another charset | `malformed` |
+| Invalid UTF-8 in the subject | `malformed` |
 | Bad quoted-printable in the body | `malformed` |
 | Bad base64 in the attachment | `malformed` |
 | Missing v tag | `malformed` |
@@ -914,11 +905,18 @@ The design was settled one question at a time. Each decision has a longer record
 | First contact | No introduction act. A first contact is a signed message, and support for it is content. |
 | Verdicts | Two: verified, or not verified with a reason. The message is checked as the receiver accepted it, and the payload is rebuilt, not sent. |
 | One credential per address | A single `from` address with its own agent ID and key, in every mode. |
-| Subject and Reply-To | Both signed. |
+| Subject and Reply-To | Both signed. The subject is signed raw, not decoded. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
 | Relation to A2A | Independent, with a defined bridge. |
 
-## Appendix E. Changes from v0-00
+## Appendix E. Changes
+
+### v0-02
+
+- **Subject.** The subject is signed raw: unfolded, whitespace collapsed, trimmed, with encoded words left as they are (§6.4). Verifiers no longer need an RFC 2047 decoder. A subject re-encoded after signing no longer verifies; a relay that does this breaks DKIM as well. Receivers decode only for display (§9). §15 issue 4 is closed, and the later issues are renumbered.
+- **Vectors.** Five subject vectors replaced: still 74 deliveries.
+
+### v0-01, from v0-00
 
 v0-01 applies the first round of review. The design is unchanged; the changes close places where implementations would disagree, and correct claims the mechanism did not support.
 
