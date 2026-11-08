@@ -507,7 +507,7 @@ A captured message passes DKIM again if it is resent unchanged to someone else. 
 - A receiver MAY also count addresses it knows forward to the mailbox, for example an old address the user set up to forward.
 - A recipient that was only on the envelope, such as a `Bcc` recipient or an unknown forward, gets **not verified** (`not_addressed`). A sender that wants a recipient to verify lists them in `To` or `Cc`.
 
-This rule is open for review (§15, issue 1).
+Signed copies for `Bcc` recipients are a possible extension (§11).
 
 ### 7.6 Replays
 
@@ -626,7 +626,8 @@ It does not mean:
   - DNS records per agent;
   - ARC for trusted forwarders;
   - a structured `note` part for machine-readable data;
-  - timestamps for long-term proof.
+  - timestamps for long-term proof;
+  - signed `Bcc` copies. The issuer would send each `Bcc` recipient a separate copy whose signing input names that one address, which no header shows. The address has to be in the signing input, because a tag is not signed. A v0 verifier ignores the new tag, rebuilds the signing input without the address, and fails the copy at step 19 as `signature_invalid`, before the addressing check at step 20. It never verifies such a copy wrongly. The extension stays safe for v0 verifiers; only the reason code differs from `not_addressed`.
 
 ## 12. Conformance
 
@@ -667,21 +668,20 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 These are open for review. Each needs a decision before v0 is final.
 
-1. **The addressing check and forwarded mail.** §7.5 lets a message verify only for a mailbox listed in `To` or `Cc`, and §7.6 lets it verify once per mailbox. That stops a captured message from being resent to someone else, verified. But a plain forward, for example from an old address the receiver does not know about, then shows as not verified, although it keeps DKIM. So do `Bcc` recipients. The alternative, no addressing check, lets anyone who receives a signed message resend it, verified, to anyone: a verified request would work like a bearer token. The current proposal keeps the check, leaves `Bcc` not verified, and lets a receiver count forwards it knows about as aliases. Is the trade right?
-2. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope, the 20-miss DNS budget and the 30-day key replacement. Real traffic should set them.
-3. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
-4. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
-5. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
+1. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope, the 20-miss DNS budget and the 30-day key replacement. Real traffic should set them.
+2. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
+3. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
+4. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
    - Tag letters `c` and `b`.
    - base64url everywhere, the DNS record included, where DKIM uses base64. It is decoded strictly in every place (§2).
    - A standard detached JWS rather than RFC 7797 unencoded payloads.
    - A message-level `exp` was dropped: the credential's `exp` and arrival time bound a message already.
-6. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
+5. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
    - multiple DKIM signatures on one message;
    - SMTPUTF8 addresses;
-   - a corpus of real mail from the systems in issue 3.
-7. **The formal model** (Appendix C) is not built yet.
-8. **Name.** "CREST" and the header name are provisional until a trademark check is done.
+   - a corpus of real mail from the systems in issue 2.
+6. **The formal model** (Appendix C) is not built yet.
+7. **Name.** "CREST" and the header name are provisional until a trademark check is done.
 
 ## Appendix A. Worked example
 
@@ -905,6 +905,7 @@ The design was settled one question at a time. Each decision has a longer record
 | First contact | No introduction act. A first contact is a signed message, and support for it is content. |
 | Verdicts | Two: verified, or not verified with a reason. The message is checked as the receiver accepted it, and the payload is rebuilt, not sent. |
 | One credential per address | A single `from` address with its own agent ID and key, in every mode. |
+| Addressing check | A message verifies only for a mailbox in `To` or `Cc`. `Bcc` copies and unknown forwards are not verified. Signed `Bcc` copies may come later as an extension. |
 | Subject and Reply-To | Both signed. The subject is signed raw, not decoded. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
 | Relation to A2A | Independent, with a defined bridge. |
@@ -913,7 +914,9 @@ The design was settled one question at a time. Each decision has a longer record
 
 ### v0-02
 
-- **Subject.** The subject is signed raw: unfolded, whitespace collapsed, trimmed, with encoded words left as they are (§6.4). Verifiers no longer need an RFC 2047 decoder. A subject re-encoded after signing no longer verifies; a relay that does this breaks DKIM as well. Receivers decode only for display (§9). §15 issue 4 is closed, and the later issues are renumbered.
+- **Subject.** The subject is signed raw: unfolded, whitespace collapsed, trimmed, with encoded words left as they are (§6.4). Verifiers no longer need an RFC 2047 decoder. A subject re-encoded after signing no longer verifies; a relay that does this breaks DKIM as well. Receivers decode only for display (§9).
+- **Addressing check.** Kept as v0-01 proposed: a message verifies only for a mailbox listed in `To` or `Cc`, and `Bcc` copies and unknown forwards are not verified (§7.5). Signed `Bcc` copies are listed as a possible extension (§11).
+- **Open issues.** §15 issues 1 (addressing check) and 4 (subject) are closed, and the others are renumbered.
 - **Vectors.** Five subject vectors replaced: still 74 deliveries.
 
 ### v0-01, from v0-00

@@ -38,7 +38,7 @@ uv run --with cryptography python reference/crest_v0.py --json > reference/vecto
 1. Places where two careful implementers would build different things from the same text. §12 treats each one as a bug in the spec.
 2. Attacks: a message that verifies when it should not, or a way to link an agent across counterparties.
 3. Claims that are stronger than the mechanism.
-4. Answers to the open issues in §15, especially issue 1, the addressing check; and issue 3, whether the header survives real mail systems.
+4. Answers to the open issues in §15, especially issue 2, whether the header survives real mail systems.
 
 ## Licence
 
