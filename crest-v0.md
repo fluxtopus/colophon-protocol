@@ -1,6 +1,6 @@
 # CREST v0: Agent Signatures for Email
 
-Draft v0-00, 2026-11-08. For review. Not for production use.
+Draft v0-01, 2026-11-08. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -8,7 +8,7 @@ Licence: Apache 2.0.
 
 CREST lets an AI agent sign the email it sends.
 
-A receiver can then check three things from DNS and the message alone:
+A receiver can then check three things, from DNS, the message, and its own delivery facts (when the message arrived, which DKIM signatures passed, and which mailbox it was delivered to):
 - which agent wrote the message;
 - which domain issued that agent and stands behind it;
 - what the domain says the agent acts for: its principal, as far as the principal allows, and a short statement of its authority.
@@ -40,6 +40,7 @@ Appendices:
 - B. Test vectors
 - C. Formal model
 - D. Decision log
+- E. Changes from v0-00
 
 ## 1. Introduction
 
@@ -58,7 +59,7 @@ It needs no central registry, no HTTPS fetch, and no service run by any one comp
 ### 1.1 Principles
 
 1. **Plain email first.** A signed message is a valid, readable email. A receiver that ignores CREST loses nothing.
-2. **Verifiable by anyone.** Any implementation checks a message from DNS and the message itself.
+2. **Verifiable by anyone.** Any implementation checks a message from DNS, the message itself, and the receiver's own delivery facts: arrival time, DKIM result and mailbox.
 3. **Built on what exists.** DKIM, DNS, MIME and JOSE before anything new.
 4. **Receiver in control.** The receiver decides who gets in and what to act on. A sender cannot force its way in.
 5. **Agents act on a person's authority.** A person delegates authority to an agent, and the agent acts on its own within it. Every credential traces to that person.
@@ -98,7 +99,11 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 | Arrival time | The moment the receiver's mail server accepted the message in SMTP (the end of the DATA phase). |
 | Verdict | The verifier's result: **verified**, or **not verified** with a reason. |
 
-Values written in `code` are exact. "base64url" is the URL-safe alphabet without padding (RFC 4648 §5). "JCS" is the JSON Canonicalization Scheme (RFC 8785). Times are integer seconds since the Unix epoch, UTC.
+Values written in `code` are exact. "JCS" is the JSON Canonicalization Scheme (RFC 8785). Times are integer seconds since the Unix epoch, UTC.
+
+"base64url" is the URL-safe alphabet without padding (RFC 4648 §5), decoded strictly. A value with padding, with `+` or `/`, with any other character, or with unused bits that are not zero is invalid. This holds everywhere CREST uses base64url, the DNS record included.
+
+A grammar written as a regular expression must match the whole value. A value with anything before or after the match, a line break included, does not match.
 
 ## 3. Overview
 
@@ -125,7 +130,9 @@ Header:  Crest-Signature: v=0; c=<credential>; b=<agent signature>
 Message: still passes DKIM with d=acme.example
 ```
 
-The issuer reissues each credential automatically, at least once a day. To revoke an agent, the issuer stops reissuing its credential. The credential then lapses within 24 hours.
+The issuer reissues each credential automatically, at least once a day. To revoke an agent, the issuer stops reissuing its credential. The credential then lapses within 26 hours: its 24-hour life plus a 2-hour grace for mail in transit.
+
+Revocation does not end a stolen agent key by itself. Every message carries a credential, so whoever holds the key can reuse one. A stolen key stays usable until the issuer stops certifying it, and for up to 26 hours after (§5.2, §9).
 
 The verifier checks the message as its own mail server accepted it. The result is **verified**, or **not verified** with a reason. A message that is not verified is still delivered as plain email. CREST never blocks delivery.
 
@@ -149,13 +156,13 @@ v=CREST0; k=ed25519; p=<base64url of the 32-byte Ed25519 public key>
 
 - `v` MUST be `CREST0`.
 - `k` MUST be `ed25519`.
-- `p` is the raw public key (RFC 8032), in base64url. An empty `p=` means the key is revoked.
-- Whitespace around tags and values is ignored. Unknown tags are ignored. A record with a duplicate tag is invalid.
+- `p` is the raw 32-octet public key (RFC 8032), in base64url. An empty `p=` means the key is revoked.
+- The record is parsed like the header (§6.2): all whitespace is removed, then it is a list of `name=value` items separated by `;`. Unknown tags are ignored. A record with a duplicate tag is not a CREST record.
 - If a TXT record has several character strings, they are joined with nothing between them before parsing, as in DKIM.
 
-A selector is one DNS label: lowercase letters, digits and hyphens, from 1 to 63 characters, not starting or ending with a hyphen. Its grammar is `^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$`.
+A selector is one DNS label: lowercase letters, digits and hyphens, from 1 to 63 characters, not starting or ending with a hyphen. Its grammar is `[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?`.
 
-A name with no TXT record whose `v` is `CREST0` has no key. A name with more than one such record is treated the same way.
+Other TXT records may share the name. §7.4 says exactly which record a verifier uses, and what it concludes when there is none, or more than one. An issuer MUST publish exactly one CREST record at each selector.
 
 ### 4.2 Rotation and removal
 
@@ -197,20 +204,26 @@ A verifier MUST reject a protected header that contains `crit`. It ignores any o
 
 | Claim | Required | Value |
 | --- | --- | --- |
-| `iss` | yes | The issuer host. It MUST equal the host of `from`, lowercase, as A-labels. |
-| `sub` | yes | The agent ID, unique within the issuer. Grammar: `^[A-Za-z0-9._-]{1,64}$`. |
-| `from` | yes | The one address the agent sends from, in canonical form (§6.4). |
-| `cnf` | yes | `{"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "<base64url public key>"}}`. This is the agent key, as a proof-of-possession key (RFC 7800). |
-| `principal` | yes | The disclosure (§5.3). |
-| `scope` | no | A statement of the agent's authority, in plain words (§5.4). |
-| `iat` | yes | The time the credential was issued. |
-| `exp` | yes | The time it expires. `exp - iat` MUST be more than 0 and at most 86,400 (24 hours). |
+| `iss` | yes | A string: the issuer host. It MUST equal the host of `from`. |
+| `sub` | yes | A string: the agent ID, unique within the issuer. Grammar: `[A-Za-z0-9._-]{1,64}`. |
+| `from` | yes | A string: the one address the agent sends from, already in canonical form (§6.4). |
+| `cnf` | yes | An object: `{"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "<base64url public key>"}}`, where `x` decodes to 32 octets. This is the agent key, as a proof-of-possession key (RFC 7800). |
+| `principal` | yes | An object: the disclosure (§5.3). |
+| `scope` | no | A string: a statement of the agent's authority, in plain words (§5.4). |
+| `iat` | yes | An integer: the time the credential was issued. |
+| `exp` | yes | An integer: the time it expires. `exp - iat` MUST be more than 0 and at most 86,400 (24 hours). |
 
-The payload MUST be I-JSON (RFC 7493). A verifier MUST reject duplicate member names. `iat` and `exp` MUST be integers.
+Each claim MUST have the JSON type its row gives, and match its grammar where one is given. Otherwise the credential is invalid (§7.2 step 13). A string is never read as a number, nor a number as a string.
+
+**JSON rules.** The payload, and the protected headers of both JWS in a message, MUST be I-JSON (RFC 7493), with these rules made exact:
+- member names are unique;
+- every number is an integer between -(2^53 - 1) and 2^53 - 1, written without a fraction or an exponent. `1.0`, `1e3`, `NaN` and `Infinity` are not allowed.
+
+JSON that breaks these rules makes the message malformed (§7.2 step 7).
 
 The payload SHOULD be serialized with JCS. A verifier does not depend on this: it checks the signature over the bytes as sent.
 
-The whole credential in compact form MUST be at most 1,536 octets.
+The whole credential in compact form MUST be at most 2,048 octets, and the whole header value at most 2,560 (§6.2). Each field cap in this section is a maximum on its own. Not every field can be at its cap at once: a credential with every field at its maximum, made of characters that JSON escapes, comes to about 2,600 octets. The total caps bind, and the issuer MUST keep within them. The credential in Appendix A is 590 octets.
 
 A verifier MUST ignore claims it does not know. Claim names without a colon (`:`) are reserved for this specification. An extension claim name MUST contain a colon, for example `example.com:tier` (§11).
 
@@ -220,8 +233,8 @@ A credential names exactly one address. Each address has its own credential, age
 
 The issuer:
 - MUST NOT give two addresses the same `sub` or the same agent key;
-- SHOULD keep an address's `sub` and agent key stable across reissues, so a counterparty sees the same agent each time;
-- MAY change the agent key when it must, for example after a compromise;
+- SHOULD keep an address's `sub` stable across reissues, so a counterparty sees the same agent each time;
+- SHOULD replace the agent key regularly, for example every 30 days, and at once when it may have been compromised. A new key under the same `sub` is the same agent to a counterparty. Regular replacement bounds how long an unnoticed theft lasts (§9);
 - decides how it groups addresses that belong to one agent. That grouping is outside the protocol.
 
 ### 5.3 Principal disclosure
@@ -231,8 +244,8 @@ The issuer:
 | Mode | Object | What the receiver learns |
 | --- | --- | --- |
 | withheld | `{"mode": "withheld"}` | The issuer says it knows the principal. Nothing more. **This is the default.** |
-| pseudonymous | `{"mode": "pseudonymous", "id": "<id>"}` | A pseudonym for the principal that only this counterparty sees. Grammar: `^[A-Za-z0-9._-]{1,64}$`. |
-| named | `{"mode": "named", "name": "<name>"}` | The principal's name or address, as the issuer attests it. At most 128 UTF-8 octets, with no control characters. |
+| pseudonymous | `{"mode": "pseudonymous", "id": "<id>"}` | A pseudonym for the principal that only this counterparty sees. Grammar: `[A-Za-z0-9._-]{1,64}`. |
+| named | `{"mode": "named", "name": "<name>"}` | The principal's name or address, as the issuer attests it. 1 to 128 UTF-8 octets, without the characters §5.4 forbids. |
 
 Rules for issuers:
 - **No credential without a principal.** An issuer MUST NOT issue a credential it cannot trace to the principal whose authority it carries. Withheld mode hides that link from the receiver. The link must still exist.
@@ -248,9 +261,10 @@ A disclosed principal is only as reliable as the issuer that attests it.
 
 `scope` is an optional statement, in plain words, of what the agent may do. For example: "Books restaurant tables for one person, up to $500 per booking."
 
-- At most 280 UTF-8 octets.
-- No control characters: U+0000 to U+001F and U+007F to U+009F.
+- 1 to 280 UTF-8 octets.
+- None of these characters: the controls U+0000 to U+001F and U+007F to U+009F, and the bidirectional controls U+061C, U+200E, U+200F, U+202A to U+202E and U+2066 to U+2069. They can make text display in an order other than the one signed. Other format characters, such as U+200D ZERO WIDTH JOINER, are allowed: emoji need them.
 - It is part of the credential, so the domain signs it and the agent cannot change it per message.
+- A change takes effect only as credentials are replaced. Messages under an earlier credential still verify, with the earlier scope, until that credential lapses: up to 26 hours.
 
 CREST never decides whether a message fits its scope. A receiver shows the scope and applies its own policy.
 
@@ -266,19 +280,24 @@ CREST never decides whether a message fits its scope. A receiver shows the scope
 
 A signed message MUST have one of two layouts.
 
-1. The whole message is one `text/plain` part.
+1. The whole message is one `text/plain` part, not marked `Content-Disposition: attachment`.
 2. The top level is `multipart/mixed`, and:
    - its first child is `text/plain` and is not marked `Content-Disposition: attachment`. This is the body.
-   - every other child is a single part (not `multipart/*`) with `Content-Disposition: attachment`. These are the attachments.
+   - every other child is a single part, neither `multipart/*` nor `message/*`, with `Content-Disposition: attachment`. These are the attachments.
 
 Nothing else is allowed. In particular, a signed message has no `text/html` alternative and no nested multiparts. HTML is what a person would see in place of the signed text, and it is what gateways rewrite most.
 
+Media types, subtypes, parameter names, the `Content-Disposition` value and transfer encodings are compared case-insensitively. So are the `charset` and `format` values. A missing `Content-Type` means `text/plain` (RFC 2045 §5.2).
+
 The body part:
-- MUST use charset `utf-8` or `us-ascii`. A missing charset means `us-ascii`.
-- MAY use any content transfer encoding. `quoted-printable` or `base64` is RECOMMENDED, because they survive relays that rewrap long lines.
+- MUST use charset `utf-8` or `us-ascii`, by exactly those names. A missing charset means `us-ascii`. Aliases such as `utf8` are not accepted.
 - MUST NOT use `format=flowed`. Verifiers do not undo it.
 
-An attachment with a `message/*` type (a forwarded email) is allowed. It is covered by the digest of its body bytes as they appear in the message.
+Every part MUST use one of the transfer encodings `7bit`, `8bit`, `binary`, `quoted-printable` or `base64`. A missing `Content-Transfer-Encoding` means `7bit`. For the body, `quoted-printable` or `base64` is RECOMMENDED, because they survive relays that rewrap long lines.
+
+A forwarded email cannot be a `message/*` attachment: libraries serialize those parts differently. In v0 it is quoted in the text, or attached under another type.
+
+In every part, the top level included, `Content-Type`, `Content-Transfer-Encoding` and `Content-Disposition` each appear at most once, and `Content-Type` starts with `type/subtype`. A part that breaks this makes the message malformed.
 
 ### 6.2 The `Crest-Signature` header
 
@@ -296,9 +315,9 @@ Crest-Signature: v=0; c=<credential>; b=<agent signature>
 
 - The signer MAY fold the header anywhere, including inside values (RFC 5322 §2.2.3).
 - Before parsing, a verifier removes all whitespace: SP, HTAB, CR and LF.
-- Tags are separated by `;` and written `name=value`. A duplicate tag makes the header malformed. Unknown tags are ignored.
-- With whitespace removed, the value MUST be at most 2,048 octets. In practice it is about 800.
-- The issuer's DKIM signature SHOULD cover `Crest-Signature`.
+- The value is then a list of items separated by `;`. Empty items are ignored. Every other item is `name=value`: the name matches `[a-z][a-z0-9_]*`, and the value may be empty. An item without `=`, a name that does not match (`V`, for example), or a duplicate name makes the header malformed. Unknown tags are ignored.
+- With whitespace removed, the value MUST be at most 2,560 octets, and `c` at most 2,048. A larger one is malformed. In practice the value is about 800 octets.
+- The issuer's DKIM signature MUST cover `Crest-Signature`, and SHOULD use relaxed header canonicalization (RFC 6376 §3.4.2) so that refolding in transit does not break DKIM. Verifiers do not check this.
 
 ### 6.3 The signing input
 
@@ -313,17 +332,17 @@ The signing input is this JSON object, serialized with JCS:
 | `reply_to` | the canonical `Reply-To` addresses, an array |
 | `subject` | the canonical subject (§6.4) |
 | `text` | base64url of SHA-256 over the canonical text (§6.4), encoded as UTF-8 |
-| `attachments` | an array with one entry per attachment, in MIME order: `{"type": ..., "name": ..., "sha256": ...}` |
-| `credential` | base64url of SHA-256 over the `c` tag value, the credential in compact form as ASCII |
+| `attachments` | an array with one entry per attachment, in MIME order: `{"type": ..., "sha256": ...}` |
+| `credential` | base64url of SHA-256 over the `c` tag value after whitespace removal (§6.2): the credential in compact form, as ASCII |
 
 An attachment entry is:
 - `type`: the media type and subtype, lowercase, without parameters. A missing `Content-Type` means `text/plain`.
-- `name`: the `filename` parameter of `Content-Disposition`, or failing that the `name` parameter of `Content-Type`, decoded per RFC 2231. If neither is present, `""`.
-- `sha256`: base64url of SHA-256 over the part's body after its transfer encoding is decoded.
+- `sha256`: base64url of SHA-256 over the part's body after its transfer encoding is decoded, as §6.4 says for the text. For `7bit`, `8bit` and `binary` these are the body octets as they appear, line endings included. The line ending just before the next boundary belongs to the boundary (RFC 2046 §5.1.1).
 
 Not covered:
 - `Message-ID` and `Date`, which some providers replace on sending;
 - display names, which servers re-encode;
+- attachment file names, which libraries decode differently. A receiver SHOULD NOT present a file name as part of what the agent signed;
 - `In-Reply-To` and `References`, which servers rewrite, and which nothing in v0 depends on;
 - all other headers.
 
@@ -331,26 +350,36 @@ DKIM still covers whatever the issuer's DKIM signature lists.
 
 ### 6.4 Canonical forms
 
-**Addresses.** For `From`, `To`, `Cc` and `Reply-To`:
-1. Parse the header as an RFC 5322 address list. Take the addr-spec of every mailbox, including the members of groups. Drop display names, comments and routes.
-2. Convert the domain to A-labels (IDNA2008, RFC 5891), then lowercase it, and remove a trailing dot. A domain that cannot be converted makes the message malformed.
-3. Lowercase the ASCII letters A to Z in the local part. Leave all other characters as they are. Apply no Unicode normalization.
-4. Keep header order. Drop later duplicates.
-5. If the header is absent, the list is `[]`. If the header appears more than once, the message is malformed.
+**Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Crest-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every CRLF followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
 
-A signed message MUST NOT use a quoted-string local part (for example `"john doe"@example.com`) in these four headers. A verifier treats one as malformed.
+**Addresses.** `From`, `To`, `Cc` and `Reply-To` use a strict subset of RFC 5322, so that every verifier reads them alike. A value outside the subset makes the message malformed. Verifiers do not repair it.
+1. The value is a list of mailboxes separated by commas. Each mailbox, with SP and HTAB trimmed at both ends, is either an addr-spec alone, or a display name followed by an addr-spec in angle brackets.
+2. A display name is made of atext, `.`, SP, HTAB, non-ASCII characters and quoted strings. Anything else in it, an unquoted `@` for example, is malformed.
+3. An addr-spec is `local@domain`, with no whitespace:
+   - the local part is a dot-atom of atext and non-ASCII characters (RFC 6532). A quoted local part, such as `"john doe"@example.com`, is malformed;
+   - the domain is two or more labels separated by `.`. Each label is 1 to 63 ASCII letters, digits and hyphens, and does not start or end with a hyphen. An internationalized domain MUST be written as A-labels (`xn--...`). Verifiers do not convert or check A-labels. A non-ASCII domain, a domain literal such as `[192.0.2.1]`, and a trailing dot are malformed.
+4. Outside quoted strings, `(`, `)`, `:`, `;`, `[`, `]` and `\` are malformed, and so is any `<` or `>` beyond one pair per mailbox. This rules out comments, groups (`undisclosed-recipients:;` included), domain literals and route syntax. An empty member, as in `a@x.example, , b@x.example`, is malformed too.
+5. Canonical form: lowercase the ASCII letters A to Z in the local part and the domain. Leave all other characters as they are. Apply no Unicode normalization.
+6. Keep header order. Drop later duplicates.
+7. If the header is absent, the list is `[]`. If it appears more than once, or is empty, the message is malformed.
 
-**Subject.**
-1. Unfold: remove each CRLF that is followed by whitespace.
-2. Decode RFC 2047 encoded words. Whitespace between two adjacent encoded words is dropped, as RFC 2047 §6.2 says.
-3. Replace each run of SP and HTAB with one SP.
-4. Trim SP at both ends.
+**Subject.** RFC 2047 encoded words are decoded, under strict rules, so that verifiers agree. Signing the raw value instead is open (§15, issue 4).
+1. Unfold, as above.
+2. Split the value into words at runs of SP and HTAB.
+3. A word that is, in full, `=?charset?encoding?text?=` is an encoded word (RFC 2047 §2), where `encoding` is `B` or `Q` in either case. Any other word is literal text, even if it contains `=?`.
+4. The charset MUST be `utf-8` or `us-ascii`, compared case-insensitively, with no language tag (`*lang`, RFC 2231 §5). Any other charset is malformed.
+5. Each encoded word is decoded on its own. `B` is strict base64 (RFC 4648 §4, padding required). `Q` follows RFC 2047 §4.2, and `=` MUST be followed by two hex digits. The octets are then decoded in the charset. Invalid octets are malformed, and so is a character split across two encoded words.
+6. Whitespace between two adjacent encoded words is dropped (RFC 2047 §6.2). Other whitespace is kept.
+7. Each run of SP and HTAB becomes one SP, and SP is trimmed at both ends.
 
-An absent `Subject` is `""`. More than one `Subject` makes the message malformed. An encoded word in an unknown charset makes the message malformed.
+An absent `Subject` is `""`. More than one `Subject` makes the message malformed.
 
 **Text.**
-1. Decode the body part's transfer encoding.
-2. Decode the charset to Unicode. Bytes that are invalid in the charset make the message malformed.
+1. Decode the body part's transfer encoding, strictly. Attachments are decoded the same way.
+   - `quoted-printable` follows RFC 2045 §6.7. SP and HTAB at the end of a line are removed. A line that then ends in `=` joins the next. Every other line end decodes to CRLF. An `=` that is not followed by two hex digits is malformed.
+   - `base64`: remove SP, HTAB, CR and LF, then decode as RFC 4648 §4, padding required. Any other character, or wrong padding, is malformed. Unused bits are ignored.
+   - `7bit`, `8bit` and `binary` are taken as they are.
+2. Decode the charset to Unicode. Bytes that are invalid in the charset make the message malformed. A byte order mark is text, and is kept.
 3. Split into lines at CRLF, CR or LF.
 4. Remove trailing SP and HTAB from each line.
 5. Remove empty lines at the end.
@@ -370,7 +399,7 @@ It travels as `<protected header>..<signature>`, the compact form with the paylo
 | `alg` | `EdDSA` |
 | `typ` | `crest-sig` |
 | `iat` | when the signer signed, an integer |
-| `nonce` | a random value, at least 96 bits, in base64url. Grammar: `^[A-Za-z0-9_-]{16,64}$`. |
+| `nonce` | a random value, at least 96 bits, in base64url. Grammar: `[A-Za-z0-9_-]{16,64}`. |
 
 A verifier MUST reject `crit`, and ignores other members.
 
@@ -380,7 +409,7 @@ The signature is computed as in RFC 7515: Ed25519 over `ASCII(BASE64URL(header) 
 
 The signer:
 1. builds the message in its final form, as it will leave the issuer's mail system. Footers, banners and subject tags are added first.
-2. picks the credential for the `From` address. It MUST NOT sign with a credential that has less than 6 hours left before `exp`.
+2. picks the credential for the `From` address. It SHOULD NOT sign with a credential that has less than 6 hours left before `exp`, so the message has time to arrive. Verifiers do not check this.
 3. builds the signing input from those bytes, signs it, and adds `Crest-Signature`.
 4. hands the message to the mail system, which adds DKIM with `d=` equal to the `From` host.
 
@@ -397,7 +426,7 @@ A verifier works on four inputs from the receiving system, never from the messag
 3. **The DKIM results.** These come from the receiver's own checks, in one of two ways:
    - the verifier checks the message's DKIM signatures itself (RFC 6376);
    - the verifier reads an `Authentication-Results` field (RFC 8601) added by the receiver's own boundary mail server, identified by its authserv-id. It MUST ignore any such field that came with the message.
-4. **The mailbox.** This is the envelope recipient (RCPT TO) this copy was delivered for, and the addresses that mailbox receives at.
+4. **The mailbox.** This is the mailbox this copy was delivered to: a stable identifier the receiver chooses, and every address the mailbox receives at, its own and its aliases. The receiver maps the envelope recipient (RCPT TO) to the mailbox. Two envelope recipients that reach one mailbox, such as an address and its `+tag` form, are one mailbox.
 
 A verifier SHOULD verify soon after arrival. The domain key in DNS may change later.
 
@@ -411,25 +440,27 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | 2 | It has exactly one. | `multiple_signatures` |
 | 3 | `From` has exactly one address. Let H be its host. | `malformed` |
 | 4 | At least one DKIM signature passed with `d=` equal to H (compared case-insensitively). If none did, stop here, before any DNS lookup. | `dkim_unaligned` |
-| 5 | The header parses (§6.2), and is within its size limit. | `malformed` |
+| 5 | With whitespace removed, the header value is at most 2,560 octets, parses as a tag list (§6.2), and has a `v` tag. | `malformed` |
 | 6 | `v` is `0`. | `unsupported_version` |
-| 7 | `c` and `b` parse as compact JWS, `b` with an empty payload, and their JSON is I-JSON. | `malformed` |
+| 7 | It has `c` and `b`, and `c` is at most 2,048 octets. Both parse as compact JWS in strict base64url, `b` with an empty payload. Their protected headers and the claims are JSON objects that follow the JSON rules of §5.1. | `malformed` |
 | 8 | The credential header has `alg` `EdDSA`, `typ` `crest-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H. | `credential_invalid` |
 | 9 | Look up TXT at `<kid>._crest.H` (§7.4). | `dns_error`, `dns_limited` |
-| 10 | Exactly one record with `v=CREST0` and `k=ed25519` exists. | `key_not_found` |
-| 11 | Its `p` is not empty. | `key_revoked` |
+| 10 | The answer holds exactly one CREST record, and it has `k=ed25519` and a `p` tag (§7.4). | `key_not_found` |
+| 11 | `p` is not empty, and is 32 octets in strict base64url (§7.4). | `key_revoked` if empty, otherwise `key_not_found` |
 | 12 | The credential's signature verifies with that key. | `credential_invalid` |
-| 13 | The claims are well-formed: `sub`, `principal`, `scope`, `cnf` and lifetime, per §5. | `credential_invalid` |
+| 13 | Every claim has its JSON type and grammar (§5.1 to §5.4): `sub`, `from`, `principal`, `scope`, `cnf`, and `0 < exp - iat <= 86400`. | `credential_invalid` |
 | 14 | `iat - 300 <= arrival <= exp + 7200`. | `credential_expired` |
 | 15 | `from` equals the canonical `From` address. | `from_mismatch` |
-| 16 | The layout is valid (§6.1). | `layout` |
+| 16 | The layout is valid (§6.1). Parts are checked from the top. For each part, its `Content-*` fields are checked first: a duplicate field or a `Content-Type` that does not parse is `malformed`. Then its type, charset, `format`, transfer encoding and disposition: a failure there is `layout`. | `layout`, `malformed` |
 | 17 | The signing input can be built (§6.3, §6.4). | `malformed` |
-| 18 | The signature header has `alg` `EdDSA`, `typ` `crest-sig`, a valid `nonce`, and no `crit`. Its `iat` satisfies `credential iat - 300 <= iat <= min(exp, arrival + 300)`. | `signature_invalid` |
+| 18 | The signature header has `alg` `EdDSA`, `typ` `crest-sig`, a `nonce` that matches its grammar, an integer `iat`, and no `crit`. `iat <= min(exp, arrival + 300)`. | `signature_invalid` |
 | 19 | The agent signature verifies with the key in `cnf`, over the rebuilt signing input. | `signature_invalid` |
 | 20 | `To` or `Cc` lists an address of the mailbox (§7.5). | `not_addressed` |
-| 21 | The tuple (envelope recipient, `iss`, `sub`, `nonce`) has not been seen (§7.6). | `replay` |
+| 21 | The tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay` |
 
 If every step passes, the verdict is **verified**.
+
+A verifier does at most one DNS lookup and two Ed25519 verifications per message.
 
 The constants:
 - 300 seconds allows for clocks that run fast.
@@ -455,16 +486,27 @@ A verdict never blocks delivery by itself. Receivers may still apply their own p
 
 - A verifier MUST look up a key only for the domain that passed aligned DKIM (step 4). This keeps unauthenticated mail from making the verifier query any domain it names.
 - A verifier MUST NOT make the lookup while the SMTP session is open.
-- The lookup timeout is 2 seconds. A timeout or a server failure is `dns_error`.
-- Answers are cached for their TTL. A missing record is cached for at least 5 minutes.
-- A verifier MUST limit lookups of distinct uncached selectors per domain. A limit of 4 per domain per hour is RECOMMENDED. A lookup refused by the limit is `dns_limited`.
+- A lookup has 2 seconds, wall clock, retries included. A timeout or a server failure is `dns_error`.
+- Answers are cached for their TTL. A name with no usable record is cached for at least 5 minutes.
+- A verifier MUST limit misses: lookups that find no usable record. After 20 misses for one domain in an hour (RECOMMENDED), it refuses uncached lookups for that domain until the hour is over. A refused lookup is `dns_limited`. Lookups that find a key do not count. Any sender at a shared domain can still spend the budget with made-up selectors, so `dns_limited` is a plain not verified: a receiver MUST NOT treat it as evidence against the sender.
 - Like DKIM, a lookup tells the sender's DNS operator that a message arrived. See §10.
+
+**Which record is the key.** The answer to the lookup is a set of TXT records. The verifier:
+1. joins each record's character strings, with nothing between them;
+2. parses each record as a tag list, as §6.2 does;
+3. discards every record that does not parse, has a duplicate tag, or has no `v=CREST0` tag. These are not CREST records;
+4. if no CREST record remains, or more than one, stops with `key_not_found`. NXDOMAIN and an answer with no TXT records count as none;
+5. if the record has no `k=ed25519` tag, or no `p` tag, stops with `key_not_found`;
+6. if `p` is empty, stops with `key_revoked`;
+7. if `p` is not strict base64url of exactly 32 octets, stops with `key_not_found`.
+
+Otherwise `p` is the domain key.
 
 ### 7.5 Addressed to this mailbox
 
 A captured message passes DKIM again if it is resent unchanged to someone else. Step 20 stops that. A message verifies only for a mailbox it was addressed to in `To` or `Cc`.
 
-- The mailbox's addresses are its own addresses and aliases.
+- The mailbox's addresses are its own addresses and aliases (§7.1).
 - A receiver MAY also count addresses it knows forward to the mailbox, for example an old address the user set up to forward.
 - A recipient that was only on the envelope, such as a `Bcc` recipient or an unknown forward, gets **not verified** (`not_addressed`). A sender that wants a recipient to verify lists them in `To` or `Cc`.
 
@@ -472,9 +514,9 @@ This rule is open for review (§15, issue 1).
 
 ### 7.6 Replays
 
-The verifier remembers each (envelope recipient, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp` plus the 2-hour grace. After that, step 14 rejects the message anyway.
+The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp` plus the 2-hour grace. After that, step 14 rejects the message anyway.
 
-- The tuple includes the envelope recipient, so one message delivered to two mailboxes at the same receiver verifies for each.
+- The tuple names the mailbox, not the envelope recipient. A message verifies at most once per mailbox: a copy sent again to the same mailbox, through an alias or a `+tag` address, is a replay. One message delivered to two mailboxes at the same receiver verifies for each.
 - The check comes after the signatures, so a forged message cannot fill the store.
 - A receiver MAY remove duplicate deliveries, such as SMTP retries, by `Message-ID` before verifying. A second copy that reaches the verifier is not verified (`replay`).
 
@@ -482,19 +524,22 @@ The verifier remembers each (envelope recipient, `iss`, `sub`, `nonce`) of a mes
 
 | Item | Limit |
 | --- | --- |
-| `Crest-Signature` value, whitespace removed | 2,048 octets |
-| Credential, compact | 1,536 octets |
+| `Crest-Signature` value, whitespace removed | 2,560 octets |
+| Credential (`c`), whitespace removed | 2,048 octets |
 | Credential lifetime (`exp - iat`) | at most 24 hours |
-| Credential life left when signing | at least 6 hours |
+| Credential life left when signing | at least 6 hours (SHOULD; not checked) |
 | Arrival grace after `exp` | 2 hours |
 | Clock skew | 5 minutes |
-| `scope` | 280 UTF-8 octets |
-| Named principal | 128 UTF-8 octets |
+| `scope` | 1 to 280 UTF-8 octets |
+| Named principal | 1 to 128 UTF-8 octets |
+| JSON numbers | integers within ±(2^53 - 1) |
 | `sub`, pseudonym `id` | 1 to 64 characters, `[A-Za-z0-9._-]` |
 | `nonce` | 16 to 64 base64url characters, at least 96 random bits |
-| DNS lookup timeout | 2 seconds |
+| DNS lookup budget | 2 seconds, wall clock, retries included |
 | Negative cache | at least 5 minutes |
-| Uncached selectors per domain | 4 per hour (RECOMMENDED) |
+| DNS misses per domain | 20 per hour (RECOMMENDED) |
+| Work per message | at most 1 DNS lookup and 2 Ed25519 verifications |
+| Agent key replaced | every 30 days, for example (SHOULD) |
 | Domain key TTL | at most 1 hour (SHOULD) |
 | Retired selector kept | at least 7 days after last use (SHOULD) |
 
@@ -511,7 +556,7 @@ v0 has no special message for an introduction. A stranger agent's first message 
 
 ## 9. Security considerations
 
-**What "verified" means.** The `From` host's mail system sent the message, and the agent key that domain certified for that address signed its addresses, subject, text and attachments. The credential was valid on arrival, and this mailbox was meant to receive it.
+**What "verified" means.** The `From` host's mail system sent the message, and the agent key that domain certified for that address signed its addresses, subject, text and attachments. The credential was valid on arrival. The message was addressed to this mailbox in `To` or `Cc`, and had not verified for this mailbox before.
 
 It does not mean:
 - that the agent is honest or competent;
@@ -524,7 +569,7 @@ It does not mean:
 
 **Lookalike domains.** CREST proves which domain spoke, not that it is the domain the user expects. A receiver SHOULD make internationalized and lookalike domains visible, for example by showing A-labels or by flagging confusable characters.
 
-**A stolen agent key** can sign only for its one address. It lasts until the credential lapses: at most 24 hours plus the 2-hour grace. It still needs the domain's mail system to pass DKIM. Protecting keys is the issuer's job.
+**A stolen agent key** can sign only for its one address, and still needs the domain's mail system to pass DKIM. It is not bounded by the credential's 24 hours. Credentials are public: every message the agent sent carries one, so a thief who holds the key can attach any current credential for it. The key stays usable for as long as the issuer certifies it, and for up to 26 hours after the issuer stops. Ending it is the issuer's job: it replaces the agent key (§5.2). Regular replacement bounds how long an unnoticed theft lasts.
 
 **A leaked domain key** lets the attacker mint credentials for any address on the host. To pass step 4, the attacker also needs to send through the domain's DKIM-signing mail system. Removing the key reaches verifiers within the record's TTL.
 
@@ -534,16 +579,19 @@ It does not mean:
 
 **Resending a captured message.** DKIM passes again on an unchanged resend. The addressing check (§7.5) and the replay store (§7.6) stop it from verifying anywhere it was not sent.
 
+**Unsigned headers.** `Sender`, `Resent-*` and every other header §6.3 does not list are not signed by the agent. A receiver MUST NOT present them as part of what the agent signed.
+
 **Relays that change messages.** Mailing lists and gateways that change a covered part or break DKIM make a message not verified. This is deliberate: a verdict that could be true for some receivers and false for others would make implementations disagree. ARC (RFC 8617) is not used in v0.
 
 **Strict alignment.** The DKIM domain must equal the `From` host. Relaxed alignment would need the Public Suffix List, and its versions differ between implementations. A provider that signs subdomain mail with the parent domain must sign CREST mail with the exact host.
 
 **Denial of service.**
-- Key lookups happen only after aligned DKIM passes, have timeouts, and are rate-limited.
-- Size limits (§7.7) bound parsing.
+- Key lookups happen only after aligned DKIM passes, have a 2-second budget, and misses are rate-limited.
+- A message costs at most one DNS lookup and two Ed25519 verifications.
+- Size limits (§7.7) bound parsing. Grammars are strict, and verifiers reject what they cannot read rather than repair it.
 - JSON must be I-JSON, which rejects duplicate keys, a common source of parser disagreement.
 
-**Time.** Verification uses arrival time, so a signer cannot backdate. The signature's `iat` is checked only for sanity.
+**Time.** Verification uses arrival time, so a signer cannot backdate. The signature's `iat` is only checked not to be later than the credential's `exp`, or than arrival plus 5 minutes.
 
 **Long-term proof is out of scope.** CREST verifies a message when it arrives. Proving years later what was said is a records question between one party, its archive, and perhaps a court. An extension may add timestamps or key transparency. A receiver that needs proof later SHOULD keep the DNS record it verified against, next to the message.
 
@@ -551,7 +599,9 @@ It does not mean:
 
 **Being an agent is always disclosed.** A signed message says an agent wrote it. Who it acts for is disclosed only as far as the principal chooses (§5.3).
 
-**Unlinkability depends on addresses.** A credential names one address, its own agent ID and its own key (§5.2), so nothing in it links two of an agent's addresses. Whether counterparties can link an agent depends on whether its issuer gives each counterparty its own address.
+**Unlinkability depends on addresses.** A credential names one address, its own agent ID and its own key (§5.2), so its identifiers do not link two of an agent's addresses. Whether counterparties can link an agent depends on whether its issuer gives each counterparty its own address.
+
+**Credentials can still link.** Credentials minted in one batch carry the same `iat` and `exp`, and the same scope wording can repeat across addresses. Two counterparties who compare notes can link them. An issuer SHOULD spread reissue times across an agent's addresses, and SHOULD keep scope wording generic.
 
 **The domain links.** Every message shows its domain, as DKIM already does. Unlinkability across counterparties holds only when many principals share the domain. On a domain with one owner, the domain names the owner.
 
@@ -586,10 +636,10 @@ There are three roles.
 | Role | Must |
 | --- | --- |
 | Issuer | Publish domain keys (§4), and issue credentials that follow §5, including the issuer rules in §5.2, §5.3 and §5.5. |
-| Signer | Sign messages that follow §6, with the 6-hour rule (§6.6). |
+| Signer | Sign messages that follow §6. |
 | Verifier | Follow §7 exactly, and reach the expected verdict on every published test vector. |
 
-Two verifiers given the same four inputs (§7.1) MUST reach the same verdict and the same reason. That is the test of this specification. Where it fails, the specification is wrong and should be fixed.
+Two verifiers given the same four inputs (§7.1) and the same DNS answers MUST reach the same verdict and the same reason. That is the test of this specification. Where it fails, the specification is wrong and should be fixed.
 
 ## 13. Registrations
 
@@ -618,22 +668,27 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 These are open for review. Each needs a decision before v0 is final.
 
-1. **The addressing check and forwarded mail.** §7.5 lets a message verify only for a mailbox listed in `To` or `Cc`. That stops a captured message from being resent to someone else. But a plain forward, for example from an old address the receiver does not know about, then shows as not verified, although it keeps DKIM. So do `Bcc` recipients. The alternative, no addressing check, lets anyone who receives a signed message resend it, verified, to anyone. Is the trade right?
-2. **The numbers.** The values in §7.7 are first proposals: in particular the 2-hour grace, the 6-hour minimum, the 280-octet scope, the 2,048-octet header and the selector rate limit. Real traffic should set them.
-3. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Microsoft 365, Gmail, Amazon SES and common gateways unchanged, or within what limits. If it does not, the fallback is to carry the credential and signature in a MIME part.
-4. **Attachment names.** Libraries differ in how they decode filenames, for example RFC 2047 encoded words where RFC 2231 is expected. Should `name` stay in the signing input, with exact rules, or be dropped?
-5. **Local parts.** Lowercasing ASCII in local parts matches how almost all mail systems behave, but RFC 5321 says local parts are case-sensitive. Is lowercasing right, and how should non-ASCII local parts (SMTPUTF8) be compared?
+1. **The addressing check and forwarded mail.** §7.5 lets a message verify only for a mailbox listed in `To` or `Cc`, and §7.6 lets it verify once per mailbox. That stops a captured message from being resent to someone else, verified. But a plain forward, for example from an old address the receiver does not know about, then shows as not verified, although it keeps DKIM. So do `Bcc` recipients. The alternative, no addressing check, lets anyone who receives a signed message resend it, verified, to anyone: a verified request would work like a bearer token. The current proposal keeps the check, leaves `Bcc` not verified, and lets a receiver count forwards it knows about as aliases. Is the trade right?
+2. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope, the 20-miss DNS budget and the 30-day key replacement. Real traffic should set them.
+3. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
+4. **Decoded or raw subject.** v0-01 decodes RFC 2047 encoded words under strict rules (§6.4). The alternative is to sign the raw value: unfold, collapse whitespace, trim, and compare octets, as DKIM's relaxed canonicalization does. The issuer's DKIM signature covers `Subject`, so the raw octets a verifier sees are the octets the signer saw. Signing them raw removes a decoder from every verifier. Common libraries disagree on these subjects:
+   - a character split across two encoded words, as some mail clients write: one library merges the words, others give replacement characters or fail;
+   - an encoded word inside a longer word, such as `foo=?utf-8?q?_bar?=baz`: one library decodes it and adds spaces, a strict decoder leaves it as text;
+   - a language tag, or an unknown charset: one implementation crashed where the draft said malformed;
+   - invalid octets: replaced or rejected;
+   - a byte order mark: kept or stripped.
+
+   §6.4 now settles each case, but every verifier must follow it exactly. Signing raw would give up only one thing: a subject that a relay re-encodes, unchanged in meaning, no longer verifies. Such a relay breaks DKIM as well.
+5. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0-01 compares them octet for octet after lowercasing ASCII.
 6. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
    - Tag letters `c` and `b`.
-   - base64url in DNS, where DKIM uses base64.
+   - base64url everywhere, the DNS record included, where DKIM uses base64. It is decoded strictly in every place (§2).
    - A standard detached JWS rather than RFC 7797 unencoded payloads.
    - A message-level `exp` was dropped: the credential's `exp` and arrival time bound a message already.
-7. **Test vectors.** Appendix B lists the first set. Still missing:
-   - non-ASCII subjects in several encodings;
-   - internationalized domains and SMTPUTF8 addresses;
-   - multiple DKIM signatures;
-   - `message/rfc822` attachments;
-   - published machine-readable files.
+7. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
+   - multiple DKIM signatures on one message;
+   - SMTPUTF8 addresses;
+   - a corpus of real mail from the systems in issue 3.
 8. **The formal model** (Appendix C) is not built yet.
 9. **Name.** "CREST" and the header name are provisional until a trademark check is done.
 
@@ -669,8 +724,8 @@ s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ
 **Signing input, JCS.** Shown here on several lines. It is one line when signed.
 
 ```
-{"attachments":[{"name":"booking.csv","sha256":"toHbGVby3dGckYAJkxBXPj9DGUnSCDiuIVwGV4oFR7w",
-"type":"text/csv"}],"cc":[],"credential":"VJTvpJO2BHDbAMRd9wVXolaQc60ix5iczhAaXo_YB48",
+{"attachments":[{"sha256":"toHbGVby3dGckYAJkxBXPj9DGUnSCDiuIVwGV4oFR7w","type":"text/csv"}],
+"cc":[],"credential":"VJTvpJO2BHDbAMRd9wVXolaQc60ix5iczhAaXo_YB48",
 "from":"maple-tiger-27@acme.example","reply_to":[],"subject":"Table for 2, Friday 7 November, 19:30",
 "text":"JO-XRoNsBAPLwS_XAckdl7Jmo2DmjMagPnYpKzTgLkA","to":["reservations@bistro.example"],"v":0}
 ```
@@ -690,8 +745,8 @@ Crest-Signature: v=0;
  DAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.47Kwts6Ukd235LbLIfYTwTC0fAEILEXmM
  APaAEiUBc-8Sm0jAdNQgNNnY7FwbZKBG6Ga8uphSPZ10_Y9mcKLCQ;
  b=eyJhbGciOiJFZERTQSIsImlhdCI6MTc5Mzg3MDEwMCwibm9uY2UiOiJabTl5TFdWNFlXMXdiR1V
- 0YjI1c2VRIiwidHlwIjoiY3Jlc3Qtc2lnIn0..J76daT-bD8KuBLZgWPBWssuqkKubtkrR559rTX9
- mTyUj6M1MiRbNUimv0vzWBrIRfpk6eK_rz-YROYXCAgvJBA
+ 0YjI1c2VRIiwidHlwIjoiY3Jlc3Qtc2lnIn0..qzQMJWT89VqQAD836qQJGYCWqkuuyiqLcJkDYkw
+ 3B1q_KLSESBJwoYkwKNRkwiPfDzUuiMlsyBRpryy2-5mkAQ
 From: Booking agent <Maple-Tiger-27@acme.example>
 To: Reservations <reservations@bistro.example>
 Subject: Table for 2, Friday 7 November, 19:30
@@ -729,6 +784,8 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 | Arrival time | 1793870110 (2026-11-05T09:15:10Z) |
 | DKIM | pass, `d=acme.example` |
 | Envelope recipient | `reservations@bistro.example` |
+| Mailbox | `mbx-reservations`, which receives at `reservations@bistro.example` and `reservations+web@bistro.example` |
+| DNS | the record above, at `s1._crest.acme.example` |
 
 **Verdict:** verified. The agent:
 - `iss`: `acme.example`
@@ -739,40 +796,90 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
 ## Appendix B. Test vectors
 
-`reference/crest_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per vector and exits non-zero if any fails.
+`reference/crest_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per delivery and exits non-zero if any fails. Run it with `--json` to write the vectors as `reference/vectors.json`: each message as base64 of its octets, then one or more deliveries, each with the receiver's inputs and the expected result.
+
+A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
 | Change to the message or inputs | Expected |
 | --- | --- |
 | None | verified |
-| The same message again, same mailbox | `replay` |
-| The same message, a second mailbox at the same receiver | verified |
-| `Crest-Signature` folded differently | verified |
-| Display name changed | verified (CREST does not cover it; DKIM may) |
-| Trailing spaces added to a body line | verified |
+| ... delivered again to the same mailbox | `replay` |
+| ... delivered again, to the alias `reservations+web@bistro.example` | `replay` |
+| ... delivered to a second mailbox, `mbx-tables`, which also receives at `reservations@bistro.example` | verified |
+| Crest-Signature refolded in transit | verified |
+| Display name changed | verified |
+| Trailing spaces on a body line | verified |
+| Charset name in capitals | verified |
+| Attachment renamed (names are not signed) | verified |
+| Subject sent as an encoded word | verified |
+| Non-ASCII subject, as the signer encoded it | verified |
+| Unrelated TXT beside the record | verified |
+| A CREST record with a duplicate tag beside the record | verified |
+| Arrived exactly at exp + grace | verified |
+| Signed 1 hour before the credential's iat | verified |
 | Subject changed | `signature_invalid` |
+| An encoded word inside a longer word is literal text | `signature_invalid` |
 | Text changed | `signature_invalid` |
-| `Reply-To` added | `signature_invalid` |
-| `Cc` added | `signature_invalid` |
+| Reply-To added | `signature_invalid` |
+| Cc added | `signature_invalid` |
 | Attachment changed | `signature_invalid` |
-| An HTML part added | `layout` |
-| Body charset ISO-8859-1 | `layout` |
-| A second `To` header | `malformed` |
-| A second `Crest-Signature` | `multiple_signatures` |
-| No `Crest-Signature` | `no_signature` |
-| DKIM passes only for `mail.acme.example` | `dkim_unaligned` |
-| `v=1` | `unsupported_version` |
-| DNS lookup fails | `dns_error` |
+| Body starts with a BOM (a BOM is content) | `signature_invalid` |
+| HTML part added | `layout` |
+| Body in ISO-8859-1 | `layout` |
+| Charset alias utf8 | `layout` |
+| Body marked format=flowed | `layout` |
+| Unknown transfer encoding | `layout` |
+| Message/rfc822 attachment | `layout` |
+| Second To field | `malformed` |
+| Second Subject field | `malformed` |
+| Second Content-Type in the body part | `malformed` |
+| Quoted local part in Cc | `malformed` |
+| Quoted local part in From | `malformed` |
+| Group in To | `malformed` |
+| Domain literal in Cc | `malformed` |
+| Non-ASCII domain in Cc | `malformed` |
+| Comment in To | `malformed` |
+| Unquoted @ in a display name | `malformed` |
+| Empty member in To | `malformed` |
+| A character split across two encoded words | `malformed` |
+| Encoded word with a language tag | `malformed` |
+| Encoded word in another charset | `malformed` |
+| Bad quoted-printable in the body | `malformed` |
+| Bad base64 in the attachment | `malformed` |
+| Missing v tag | `malformed` |
+| Tag name in capitals | `malformed` |
+| Padded base64url in c | `malformed` |
+| A fraction in exp | `malformed` |
+| A duplicate claim | `malformed` |
+| Credential over 2,048 octets | `malformed` |
+| Second Crest-Signature | `multiple_signatures` |
+| No Crest-Signature | `no_signature` |
+| DKIM passes only for mail.acme.example | `dkim_unaligned` |
+| V=1 | `unsupported_version` |
+| DNS lookup failed | `dns_error` |
 | No record at the selector | `key_not_found` |
-| Record with empty `p=` | `key_revoked` |
+| Two CREST records | `key_not_found` |
+| A k=rsa CREST record beside the record | `key_not_found` |
+| Record without p | `key_not_found` |
+| Key of the wrong length | `key_not_found` |
+| Key in padded base64 | `key_not_found` |
+| Record with empty p= | `key_revoked` |
 | Record holds a different key | `credential_invalid` |
-| Arrival 1 second after `exp` plus grace | `credential_expired` |
-| Arrival exactly at `exp` plus grace | verified |
-| `From` changed to another address on the same host | `from_mismatch` |
-| Delivered to a mailbox not in `To` or `Cc` | `not_addressed` |
+| Sub with a trailing newline | `credential_invalid` |
+| Sub as a number | `credential_invalid` |
+| No from claim | `credential_invalid` |
+| From claim not in canonical form | `credential_invalid` |
+| Lifetime of 25 hours | `credential_invalid` |
+| Bidi control in scope | `credential_invalid` |
+| Agent key of 31 octets | `credential_invalid` |
+| Arrived 1 second after exp + grace | `credential_expired` |
+| From is another address on the same host | `from_mismatch` |
+| Signature iat 10 minutes after arrival | `signature_invalid` |
+| Delivered to a mailbox not in To or Cc (Bcc) | `not_addressed` |
 
 Some of these changes would also break DKIM in real mail. The vectors test the CREST checks alone, with the DKIM result given as an input.
 
-The sketch handles ASCII domains and dot-atom local parts only, and does not handle `message/*` attachments. Machine-readable vectors, and vectors for what the sketch does not handle, are open (§15, issue 7).
+The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts and ASCII domains.
 
 ## Appendix C. Formal model
 
@@ -780,7 +887,8 @@ A formal model of v0 (Tamarin or ProVerif) is planned, to be built alongside thi
 
 It is to prove:
 1. a verified message traces to a credential the domain issued for a delegating principal;
-2. a captured message cannot verify for a mailbox it was not addressed to, or verify twice for the same one.
+2. a captured message cannot verify for a mailbox it was not addressed to, and verifies at most once per mailbox;
+3. a verifier's work per message is bounded: at most one DNS lookup and two signature verifications.
 
 It does not exist yet.
 
@@ -809,3 +917,22 @@ The design was settled one question at a time. Each decision has a longer record
 | Subject and Reply-To | Both signed. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
 | Relation to A2A | Independent, with a defined bridge. |
+
+## Appendix E. Changes from v0-00
+
+v0-01 applies the first round of review. The design is unchanged; the changes close places where implementations would disagree, and correct claims the mechanism did not support.
+
+- **Mailbox, not envelope recipient.** The verifier's fourth input is the mailbox. The replay tuple uses it, so a copy resent through an alias is a replay (§7.1, §7.6).
+- **Stolen agent keys.** A stolen key is usable while the issuer certifies it, not for at most 24 hours. Issuers SHOULD replace agent keys regularly (§3, §5.2, §9).
+- **DNS.** One algorithm picks the key record (§7.4). The rate limit counts misses only, at 20 per domain per hour, and `dns_limited` is never a signal against the sender.
+- **Strict parsing.** Grammars match whole values (§2). Claims have exact JSON types, and JSON numbers are integers (§5.1). base64url is strict everywhere. Tag names are lowercase. A missing `v` is malformed (§6.2, §7.2).
+- **Addresses.** A strict subset of RFC 5322: no groups, comments, domain literals or quoted local parts. Domains are ASCII, with A-labels for IDNs (§6.4).
+- **Subject.** Strict RFC 2047 decoding, word by word, `utf-8` and `us-ascii` only. Signing the raw subject instead is open (§15, issue 4).
+- **MIME.** Tokens compare case-insensitively. Fixed charset names, five transfer encodings, no `format=flowed`, no `message/*` attachments, and no duplicate `Content-*` fields (§6.1). Strict quoted-printable and base64 (§6.4).
+- **Signing input.** Attachment file names are no longer signed (§6.3).
+- **Sizes.** Credential 2,048 octets and header 2,560, with the total caps binding (§5.1, §6.2).
+- **Text in claims.** Scope and named principals also forbid bidirectional controls (§5.4).
+- **Time.** The lower bound on the signature `iat` is gone, and the 6-hour rule is a SHOULD (§6.6, §7.2).
+- **DKIM.** The issuer's DKIM signature MUST cover `Crest-Signature`, with relaxed header canonicalization RECOMMENDED (§6.2).
+- **Privacy.** Batch reissue times and repeated scope wording can link addresses (§10).
+- **Vectors.** 74 deliveries in Appendix B, and a machine-readable `reference/vectors.json`.
