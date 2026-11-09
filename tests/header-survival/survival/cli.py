@@ -265,6 +265,7 @@ def cmd_report(args) -> int:
     rd = run_dir(args.run_id)
     info = json.loads((rd / "run.json").read_text(encoding="utf-8"))
     rows: list[report.Row] = []
+    copies: list[tuple[str, str, bytes, bytes | None]] = []
     for receiver in plan.receivers:
         for label in messages.LABELS:
             sp, cp = sent_path(rd, receiver.name, label), captured_path(rd, receiver.name, label)
@@ -289,6 +290,9 @@ def cmd_report(args) -> int:
                     )
                 )
                 continue
+            copies.append(
+                (receiver.name, label, sp.read_bytes(), cp.read_bytes() if cp.exists() else None)
+            )
             if not cp.exists():
                 rows.append(
                     report.Row(
@@ -322,9 +326,12 @@ def cmd_report(args) -> int:
     sent_at = dt.datetime.fromtimestamp(
         info.get("sent_at", info["built_at"]), dt.timezone.utc
     ).strftime("%Y-%m-%d %H:%M UTC")
-    md, js = report.write(rd, rows, args.run_id, sent_at, info["sender"])
+    out_dir = Path(args.out) if args.out else rd
+    md, js = report.write(out_dir, rows, args.run_id, sent_at, info["sender"])
+    hd = out_dir / "headers.md"
+    hd.write_text(report.headers_markdown(copies, args.run_id), encoding="utf-8")
     print(md.read_text(encoding="utf-8"))
-    print(f"wrote {md} and {js}", file=sys.stderr)
+    print(f"wrote {md}, {js} and {hd}", file=sys.stderr)
     return 0
 
 
@@ -402,6 +409,11 @@ def parser() -> argparse.ArgumentParser:
         "--unsent",
         action="store_true",
         help="report captures of messages this tool did not send (dry runs, hand delivery)",
+    )
+    r.add_argument(
+        "--out",
+        help="directory for results.md, results.json and headers.md (default: the run directory;"
+        " results/<run-id> is what a run publishes)",
     )
     r.set_defaults(func=cmd_report)
     return p

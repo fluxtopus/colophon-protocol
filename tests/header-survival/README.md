@@ -122,5 +122,9 @@ The private keys never enter the repository. The deterministic keys the tests us
   `.mime`), found by the run token. Each provider's export is its own serialisation of the
   stored message, so a `refolded` result here, like one from Graph, says the value survived.
 
-Runs live under `runs/` (ignored by git). A run worth keeping is copied to `results/` with its
-captures, so the table can be checked against the stored messages.
+Runs live under `runs/` (ignored by git). The stored messages are personal data: they name
+real mailboxes and carry `Received` chains, provider headers and storage keys. They stay
+private. What a run publishes is `report --out results/<run-id>`: `results.md`, `results.json`
+and `headers.md`, the last holding each copy's `Colophon-Signature` field as sent and as
+stored, which names no mailbox, host or storage key. `.gitignore` keeps captures, sent copies
+and run metadata out of `results/`.

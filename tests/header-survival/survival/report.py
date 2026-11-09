@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -142,13 +143,46 @@ def markdown(rows: list[Row], run_id: str, sent_at: str, sender: str) -> str:
 
 
 def write(
-    run_dir: Path, rows: list[Row], run_id: str, sent_at: str, sender: str
+    out_dir: Path, rows: list[Row], run_id: str, sent_at: str, sender: str
 ) -> tuple[Path, Path]:
-    md = run_dir / "results.md"
-    js = run_dir / "results.json"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    md = out_dir / "results.md"
+    js = out_dir / "results.json"
     md.write_text(markdown(rows, run_id, sent_at, sender), encoding="utf-8")
     js.write_text(
         json.dumps([r.__dict__ for r in rows], indent=1, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     return md, js
+
+
+HEADER_FIELD = re.compile(rb"(?im)^Colophon-Signature:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*")
+
+
+def header_fields(raw: bytes) -> list[str]:
+    """Every `Colophon-Signature` field in a message's header block, folded as stored."""
+    head = raw.split(b"\r\n\r\n", 1)[0]
+    return [m.group(0).decode("utf-8", "replace") for m in HEADER_FIELD.finditer(head)]
+
+
+def headers_markdown(copies: list[tuple[str, str, bytes, bytes | None]], run_id: str) -> str:
+    """The header as sent and as stored for each captured copy: the one piece of a stored
+    message that is publishable, since it holds no address, host or storage key. `copies` is
+    (receiver, label, sent raw, captured raw or None)."""
+    out = [
+        f"# Colophon-Signature as sent and as stored: run {run_id}",
+        "",
+        "Each block is the exact field from the message's header block, with its line breaks.",
+        "Only this header is reproduced; the rest of each stored message stays private.",
+        "",
+    ]
+    for receiver, label, sent, captured in copies:
+        out += [f"## {receiver} / {label}", "", "As sent:", "", "```"]
+        out += header_fields(sent) or ["(none)"]
+        out += ["```", "", "As stored:", "", "```"]
+        if captured is None:
+            out.append("(not captured)")
+        else:
+            out += header_fields(captured) or ["(none)"]
+        out += ["```", ""]
+    return "\n".join(out)

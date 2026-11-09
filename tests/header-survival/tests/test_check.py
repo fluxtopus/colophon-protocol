@@ -229,3 +229,17 @@ def test_shared_mailbox_exports_are_told_apart_by_recipient(tmp_path, keys, now)
     assert not capture.addressed_to(
         b"Delivered-To: me@example.com\r\nTo: x@y\r\n\r\n", "me@example.com"
     )
+
+
+def test_headers_markdown_reproduces_only_the_colophon_field(built):
+    from survival import report
+
+    sent = built["minimal"].raw
+    stored = b"Received: from a by b; Mon, 9 Nov 2026 15:49:41 +0000\r\n" + sent
+    copies = [("box", "minimal", sent, stored), ("box", "cap", built["cap"].raw, None)]
+    text = report.headers_markdown(copies, "run-1")
+    fields = report.header_fields(sent)
+    assert len(fields) == 1 and fields[0].startswith("Colophon-Signature: v=0;")
+    assert fields[0] in text
+    assert "(not captured)" in text
+    assert "To:" not in text and "Subject:" not in text and "Received" not in text
