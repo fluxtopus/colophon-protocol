@@ -18,7 +18,7 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
   S < L, R not of small order, and the equation without the cofactor.
 - One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses
   [`dnspython`](https://www.dnspython.org) through the optional `dns` extra.
-- It scores 118/118 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
+- It scores 123/123 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
   the §7.8 `Authentication-Results` report, and reproduces the spec's worked example (Appendix A)
   byte for byte.
 
@@ -80,7 +80,7 @@ domains = dkim_pass_domains(value, authserv_id="mx.bistro.example", message=raw_
 A passing signature counts for its `d=` (`header.d`), never for the domain of its `i=` alone,
 which may be a subdomain (§7.1). Some servers report only `header.i`. With `message`, such a
 result counts for the `d=` of the one `DKIM-Signature` field in the message whose identity (its
-`i=`, or `@` and its `d=`) equals `header.i`: local parts equal octet for octet, domains equal
+`i=`, decoded from DKIM quoted-printable, or `@` and its `d=`) equals `header.i`: local parts equal octet for octet, domains equal
 ignoring case. With no such field, or more than one, it does not count.
 `dkim_identity_domain(message, header_i)` is that lookup on its own.
 
@@ -101,7 +101,11 @@ verdict = verify(
 )
 ```
 
-`max_delay` is off by default, for callers that verify at arrival or bound the delay themselves.
+`max_delay` is off by default. A receiver whose replay store removes entries D after they
+expire, as the stores in `colophon_protocol.replay` do with their `retention`, must set it to that
+D or less: §7.6 requires the check. Only a receiver that keeps every entry until it no longer
+verifies any message that could carry it may leave it off. The check comes before the replay
+store, so a late message costs no store call.
 
 ### Report the verdict in `Authentication-Results`
 

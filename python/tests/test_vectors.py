@@ -17,7 +17,7 @@ from colophon_protocol import (
     sansio,
     verify,
 )
-from colophon_protocol.authres import colophon_resinfo
+from colophon_protocol.authres import colophon_resinfo, dkim_identity_domain
 from colophon_protocol.dns import (
     MISS_LIMIT,
     AsyncGuardedResolver,
@@ -33,10 +33,11 @@ from conftest import Case, Delivery, load_cases
 CASES = load_cases()
 
 
-def _receipt(d: Delivery) -> Receipt:
+def _receipt(d: Delivery, message: bytes) -> Receipt:
+    recovered = (dkim_identity_domain(message, i) for i in d.dkim_pass_identities)
     return Receipt(
         arrival=d.accepted_at,
-        dkim_pass_domains=d.dkim_pass_domains,
+        dkim_pass_domains=[*d.dkim_pass_domains, *filter(None, recovered)],
         mailbox=d.mailbox,
         mailbox_addresses=d.mailbox_addresses,
     )
@@ -92,12 +93,12 @@ def _expected(case: Case) -> list[tuple[str, str]]:
 
 
 def test_vector_count() -> None:
-    assert len(CASES) == 115
+    assert len(CASES) == 120
     deliveries = [d for c in CASES for d in c.deliveries]
-    assert len(deliveries) == 118
+    assert len(deliveries) == 123
     results = [d.expected_authentication_results.split()[0] for d in deliveries]
-    assert results.count("colophon=pass") == 32
-    assert results.count("colophon=fail") == 82
+    assert results.count("colophon=pass") == 35
+    assert results.count("colophon=fail") == 84
     assert results.count("colophon=none") == 1
     assert results.count("colophon=temperror") == 3
 
@@ -109,7 +110,7 @@ def test_blocking(case: Case) -> None:
         _outcome(
             verify(
                 case.message,
-                _receipt(d),
+                _receipt(d, case.message),
                 resolver=_Guarded(d),
                 replay_store=store if d.replay_store_available else _Down(),
             )
@@ -126,7 +127,7 @@ async def test_asyncio(case: Case) -> None:
     for d in case.deliveries:
         verdict = await aio.verify(
             case.message,
-            _receipt(d),
+            _receipt(d, case.message),
             resolver=_AsyncGuarded(d),
             replay_store=store if d.replay_store_available else _AsyncDown(),
         )
@@ -139,7 +140,7 @@ def test_sansio(case: Case) -> None:
     seen: set[str] = set()
     got = []
     for d in case.deliveries:
-        step: sansio.Step = sansio.start(case.message, _receipt(d))
+        step: sansio.Step = sansio.start(case.message, _receipt(d, case.message))
         if isinstance(step, sansio.NeedKey):
             records = d.dns_txt.get(step.query.name, [])
             if d.dns_misses >= MISS_LIMIT:

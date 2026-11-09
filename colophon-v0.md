@@ -301,7 +301,7 @@ In every part, the top level included, `Content-Type`, `Content-Transfer-Encodin
 - each parameter is `;`, a token, `=`, then a token or a quoted string. SP and HTAB are allowed around each of these. Comments are not.
 - empty items, such as a trailing `;`, are ignored. In a quoted string, a backslash and the character after it stand for that character.
 - a parameter without `=`, a value that is neither a token nor a quoted string, and a parameter name that appears twice make the message malformed. Parameter names compare case-insensitively.
-- the RFC 2231 forms of `boundary`, `charset` and `format`, such as `charset*=utf-8''utf-8` or `boundary*0`, are not used in v0. A message with one breaks the layout. Other RFC 2231 parameters are ignored.
+- the RFC 2231 forms of `boundary`, `charset` and `format`, such as `charset*=utf-8''utf-8` or `boundary*0`, are not used in v0. Where the verifier reads that parameter, a message with one breaks the layout: `boundary` in a `multipart/mixed` top level, and `charset` and `format` in the body part. Elsewhere they are ignored like other RFC 2231 parameters, for example `charset*` in a `multipart/mixed` top level.
 
 Of an attachment's `Content-Type`, only `type/subtype` is read, so its parameters, a file name in any form included, never change the verdict.
 
@@ -451,7 +451,7 @@ A verifier works on four inputs from the receiving system, never from the messag
 
    A passing signature counts for its `d=` domain, reported as `header.d`. The `i=` identity, reported as `header.i`, does not count on its own: it may name a subdomain of `d=`.
 
-   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, or `@` and its `d=` when it has no `i=`. If exactly one `DKIM-Signature` field in the message has an identity equal to `header.i`, the signature counts for that field's `d=`. Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case. Otherwise, with no such field or more than one, the signature does not count.
+   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, decoded from DKIM quoted-printable (RFC 6376 §2.11), or `@` and its `d=` when it has no `i=`. A field has no identity if its tag list does not parse (RFC 6376 §3.2), a tag appears twice, it has no `d=`, or its `i=` has an `=` that is not followed by two hexadecimal digits. If exactly one `DKIM-Signature` field in the message has an identity equal to `header.i`, the signature counts for that field's `d=`. Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case. Otherwise, with no such field or more than one, the signature does not count.
 4. **The mailbox.** This is the mailbox this copy was delivered to: a stable identifier the receiver chooses, and every address the mailbox receives at, its own and its aliases. The receiver maps the envelope recipient (RCPT TO) to the mailbox. Two envelope recipients that reach one mailbox, such as an address and its `+tag` form, are one mailbox.
 
 A verifier SHOULD verify soon after arrival. The domain key in DNS may change later.
@@ -486,7 +486,7 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | 18 | The signature header has `alg` `EdDSA`, `typ` `colophon-sig`, a `nonce` that matches its grammar, an integer `iat`, and no `crit`. `iat <= min(exp, arrival + 300)`. | `signature_invalid` |
 | 19 | The agent signature verifies with the key in `cnf`, over the rebuilt signing input (§6.5). | `signature_invalid` |
 | 20 | `To` or `Cc` lists an address of the mailbox (§7.5). | `not_addressed` |
-| 21 | The replay store can be read and written, the message is verified within the verifier's delay D after arrival, and the tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay_unchecked`, `replay` |
+| 21 | The message is verified within the verifier's delay D after arrival, the replay store can be read and written, and the tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay_unchecked`, `replay` |
 
 If every step passes, the verdict is **verified**.
 
@@ -522,7 +522,7 @@ A verdict never blocks delivery by itself. Receivers may still apply their own p
 - A verifier MUST NOT make the lookup while the SMTP session is open.
 - A lookup has 2 seconds, wall clock, retries included. A timeout or a server failure is `dns_error`.
 - Answers are cached for their TTL. A name with no usable record is cached for at least 5 minutes.
-- A verifier MUST limit misses. A miss is a lookup that does not give a key: one that ends in `dns_error`, `key_not_found` or `key_revoked` (§7.2 steps 9 to 11). An answer from the cache is not a lookup, and a refused lookup is not a miss. After 20 misses for one domain in an hour (RECOMMENDED), it refuses uncached lookups for that domain until the hour is over. A refused lookup is `dns_limited`. Lookups that give a key do not count, even when the credential's signature then fails. Any sender at a shared domain can still spend the budget with made-up selectors, so `dns_limited` is a plain not verified: a receiver MUST NOT treat it as evidence against the sender.
+- A verifier MUST limit misses. A miss is a lookup that does not give a key: one that ends in `dns_error`, `key_not_found` or `key_revoked` (§7.2 steps 9 to 11). An answer whose one Colophon record has a key that is not valid ends in `key_not_found`, so it is a miss. An answer from the cache is not a lookup, and a refused lookup is not a miss. After 20 misses for one domain in an hour (RECOMMENDED), it refuses uncached lookups for that domain until the hour is over. A refused lookup is `dns_limited`. Lookups that give a key do not count, even when the credential's signature then fails. Any sender at a shared domain can still spend the budget with made-up selectors, so `dns_limited` is a plain not verified: a receiver MUST NOT treat it as evidence against the sender.
 - Like DKIM, a lookup tells the sender's DNS operator that a message arrived. See §10.
 
 **Which record is the key.** The answer to the lookup is a set of TXT records. The verifier:
@@ -550,7 +550,8 @@ Signed copies for `Bcc` recipients are a possible extension (§11).
 
 The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp`, plus the 2-hour grace, plus D. D is the longest time the verifier allows between a message's arrival and its verification: 24 hours, for example. After that, a copy that arrives fails step 14, and a copy that arrived in time is past D. A receiver that verifies messages again after a failure or an outage chooses a D that covers its retry window.
 
-- A message verified more than D after its arrival is not verified (`replay_unchecked`): its tuple may already be gone from the store.
+- A verifier that keeps each tuple only until `exp` + 2 hours + D MUST return `replay_unchecked` for a message verified more than D after its arrival: its tuple may already be gone from the store. A verifier that keeps every tuple until it no longer verifies any message that could carry it need not check D.
+- The verifier checks D before it reads the store. A late message costs no read, and claims no tuple.
 - If the store cannot be read or written, the verifier MUST NOT return verified. The verdict is `replay_unchecked`, which §7.8 reports as `temperror`: verifying again once the store is back may pass.
 
 - The tuple names the mailbox, not the envelope recipient. A message verifies at most once per mailbox: a copy sent again to the same mailbox, through an alias or a `+tag` address, is a replay. One message delivered to two mailboxes at the same receiver verifies for each.
@@ -793,6 +794,12 @@ No open issue blocks v0 final. Issues 1, 2 and 5 are resolved, and stay here for
    - **Late verification (§7.6).** Decided: tuples are kept until `exp` + 2 hours + D, where D is the verifier's longest delay from arrival to verification, chosen to cover its retry window, and a message verified later than D is `replay_unchecked`. Not chosen: fix D in the spec, 24 hours for example, which covers retry windows of minutes to hours; or extend retention only, with no rule for messages verified later than D.
    - **Message size (§7.7).** Decided: no limit of Colophon's own; the receiver's SMTP size limit applies. Not chosen: a RECOMMENDED maximum size for signed messages.
 
+   Also on 2026-11-09, building the library raised six questions that the rules above left open. The text now answers each.
+   - **DKIM identity (§7.1).** `i=` is compared after decoding DKIM quoted-printable, because the identity is the decoded value (RFC 6376 §3.5). A field whose tags do not parse, or whose `i=` is not valid quoted-printable, has no identity. Not chosen: compare `i=` as written, which is not the identity RFC 6376 defines.
+   - **Late verification (§7.6).** The check of D is required of a verifier that removes tuples at `exp` + 2 hours + D, and only of it. The verifier checks D before the store, so a late message costs no read and claims no tuple. Not chosen: require the check of every verifier, including one that keeps tuples longer.
+   - **DNS misses (§7.4).** An answer whose only Colophon record has a key that is not valid is a miss, as every lookup that ends in `key_not_found` is.
+   - **Parameters (§6.1).** The RFC 2231 form of `boundary`, `charset` or `format` breaks the layout only where the verifier reads that parameter. Elsewhere it is ignored.
+
 ## Appendix A. Worked example
 
 The reference sketch in `reference/colophon_v0.py` produces this example. Run `uv run --with cryptography python reference/colophon_v0.py --example` to reproduce it byte for byte. The keys are test keys derived from fixed strings. Never use them for anything else.
@@ -903,6 +910,8 @@ Each delivery also gives `expected_authentication_results`: the `colophon` resul
 
 A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
+`dkim_pass_identities` holds the `header.i` of each passing DKIM signature that the boundary server reported without `header.d`. The verifier recovers its `d=` from the message (§7.1). Unless a row says otherwise, it is empty.
+
 Two inputs stand for the receiver's state. `dns_misses` is the number of misses (§7.4) for the `From` host in the hour before the delivery, with no key cached; 20 or more means the lookup is refused. `replay_store_available` is false when the replay store cannot be read or written (§7.6). Unless a row says otherwise, they are 0 and true. A string in `dns_txt` stands for its UTF-8 octets. The vectors do not cover the delay D of §7.6.
 
 | Change to the message or inputs | Expected |
@@ -991,6 +1000,11 @@ Two inputs stand for the receiver's state. `dns_misses` is the number of misses 
 | DKIM passes for mail.acme.example and acme.example | verified |
 | DKIM passes for two unaligned domains | `dkim_unaligned` |
 | DKIM passes for ACME.EXAMPLE | verified |
+| DKIM reported by `header.i` only, `bookings+agent@acme.example`, for a field with `i=bookings=2Bagent@acme.example` | verified |
+| DKIM reported by `header.i` only, `bookings=2Gagent@acme.example`, for a field with that `i=`, which is not valid quoted-printable | `dkim_unaligned` |
+| DKIM reported by `header.i` only, `@Acme.Example`, for a field with `d=acme.example` and no `i=` | verified |
+| DKIM reported by `header.i` only, `@acme.example`, for two fields with that identity | `dkim_unaligned` |
+| DKIM reported by `header.i` only, `@acme.example`, for a field with that `i=`, beside one with that `i=` whose tags do not parse | verified |
 | V=1 | `unsupported_version` |
 | DNS lookup failed | `dns_error` |
 | No record at the selector | `key_not_found` |
@@ -1099,7 +1113,8 @@ v0-06 answers the review of the reference sketch made while building the Python 
 - **DKIM results.** A signature counts for its `d=`, not its `i=`. A verifier whose boundary server reports only `header.i` recovers `d=` from the message (§7.1).
 - **Replay store.** A new reason, `replay_unchecked`, reported as `temperror`, when the store cannot be checked or a message is verified too late. Tuples are kept for the verifier's delay D as well, which covers its retry window. A receiver may hold a `temperror` message and verify it again (§7.6, §7.8).
 - **Limits.** The message size, the boundary length and D are in §7.7.
-- **Vectors.** Two new delivery inputs, `dns_misses` and `replay_store_available`, and 38 new deliveries: 118 in all (Appendix B). The sketch now reads MIME with its own parser.
+- **Vectors.** Three new delivery inputs, `dkim_pass_identities`, `dns_misses` and `replay_store_available`, and 43 new deliveries: 123 in all (Appendix B). The sketch now reads MIME with its own parser.
+- **Clarifications.** Six questions from building the library are answered in the text (§15, issue 5): how `i=` is decoded and when a `DKIM-Signature` field has no identity (§7.1), when a verifier must check D and in what order (§7.2 step 21, §7.6), that an invalid key is a miss (§7.4), and where the RFC 2231 rule applies (§6.1).
 
 ### v0-05
 

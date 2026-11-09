@@ -1,5 +1,5 @@
 {
- "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. Deliveries run in order and share one replay store; a missing DNS name is NXDOMAIN, null is a failed lookup, and a TXT string stands for its UTF-8 octets. dns_misses counts the From host's misses this hour before the delivery, with no key cached (section 7.4); replay_store_available false means the replay store cannot be read or written (section 7.6). expected_authentication_results is the colophon resinfo of section 7.8, unfolded.",
+ "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. Deliveries run in order and share one replay store; a missing DNS name is NXDOMAIN, null is a failed lookup, and a TXT string stands for its UTF-8 octets. dkim_pass_identities holds the header.i of each passing DKIM signature reported without header.d, whose d= the verifier recovers from the message (section 7.1). dns_misses counts the From host's misses this hour before the delivery, with no key cached (section 7.4); replay_store_available false means the replay store cannot be read or written (section 7.6). expected_authentication_results is the colophon resinfo of section 7.8, unfolded.",
  "cases": [
   {
    "name": "replay: one mailbox, its alias, and a second mailbox",
@@ -10,6 +10,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -31,6 +32,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -52,6 +54,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations+web@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -73,6 +76,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "tables@bistro.example",
      "mailbox": "mbx-tables",
      "mailbox_addresses": [
@@ -100,6 +104,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -127,6 +132,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -154,6 +160,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -181,6 +188,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -208,6 +216,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -235,6 +244,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -262,6 +272,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -289,6 +300,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -316,6 +328,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -343,6 +356,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -371,6 +385,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -399,6 +414,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -426,6 +442,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -453,6 +470,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -480,6 +498,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -507,6 +526,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -534,6 +554,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -561,6 +582,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -588,6 +610,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -615,6 +638,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -642,6 +666,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -669,6 +694,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -696,6 +722,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -723,6 +750,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -750,6 +778,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -777,6 +806,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -805,6 +835,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -832,6 +863,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -859,6 +891,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -886,6 +919,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -913,6 +947,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -940,6 +975,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -967,6 +1003,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -994,6 +1031,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1021,6 +1059,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1048,6 +1087,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1075,6 +1115,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1102,6 +1143,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1129,6 +1171,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1156,6 +1199,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1183,6 +1227,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1210,6 +1255,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1237,6 +1283,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1264,6 +1311,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1291,6 +1339,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1318,6 +1367,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1345,6 +1395,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1372,6 +1423,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1399,6 +1451,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1426,6 +1479,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1453,6 +1507,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1480,6 +1535,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1507,6 +1563,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1534,6 +1591,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1561,6 +1619,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1588,6 +1647,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1615,6 +1675,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1642,6 +1703,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1669,6 +1731,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1696,6 +1759,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1723,6 +1787,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1750,6 +1815,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1777,6 +1843,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1804,6 +1871,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1831,6 +1899,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1858,6 +1927,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1885,6 +1955,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1912,6 +1983,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1939,6 +2011,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1966,6 +2039,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -1993,6 +2067,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2020,6 +2095,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2047,6 +2123,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2074,6 +2151,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2101,6 +2179,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2128,6 +2207,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2155,6 +2235,7 @@
      "dkim_pass_domains": [
       "mail.acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2183,6 +2264,7 @@
       "acme.example",
       "mail.acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2211,6 +2293,7 @@
       "esp.example",
       "mail.acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2237,6 +2320,147 @@
      "accepted_at": 1793870110,
      "dkim_pass_domains": [
       "ACME.EXAMPLE"
+     ],
+     "dkim_pass_identities": [],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "DKIM reported by header.i only, i= with an encoded octet",
+   "message": "REtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaT1ib29raW5ncz0yQmFnZW50QGFjbWUuZXhhbXBsZTsgaD1mcm9tOnRvOyBiaD1BQUFBOyBiPUFBQUENCkNvbG9waG9uLVNpZ25hdHVyZTogdj0wOw0KIGM9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbXRwWkNJNkluTXhJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRZM0psWkN0cWQzUWlmUS5leUpqDQogYm1ZaU9uc2lhbmRySWpwN0ltTnlkaUk2SWtWa01qVTFNVGtpTENKcmRIa2lPaUpQUzFBaUxDSjRJam9pYkVNNVVISnJURmN5VVcxUVkNCiBVdHhRV1ZsUTFrNU5FOU5NMDAzTlUxbFJEbFZlV2MyYjFSb1owOU1SU0o5ZlN3aVpYaHdJam94Tnprek9UVXlNREF3TENKbWNtOXRJag0KIG9pYldGd2JHVXRkR2xuWlhJdE1qZEFZV050WlM1bGVHRnRjR3hsSWl3aWFXRjBJam94Tnprek9EWTFOakF3TENKcGMzTWlPaUpoWTIxDQogbExtVjRZVzF3YkdVaUxDSndjbWx1WTJsd1lXd2lPbnNpYVdRaU9pSndYMWhyTWpraUxDSnRiMlJsSWpvaWNITmxkV1J2Ym5sdGIzVnoNCiBJbjBzSW5OamIzQmxJam9pUW05dmEzTWdjbVZ6ZEdGMWNtRnVkQ0IwWVdKc1pYTWdabTl5SUc5dVpTQndaWEp6YjI0c0lIVndJSFJ2SQ0KIENRMU1EQWdjR1Z5SUdKdmIydHBibWN1SWl3aWMzVmlJam9pWVdkZk4waHhNaUo5LlJYWk1MQ0dHU2YxaDJIMnZtNlI2MkZVZUh3RXBCDQogbHRsNHZxb3VBNDNnTDI0bzVjQ3pVTXg4dHNrVkVnRFdFT0tjQlJZSHc4cTRQdXhOZnFtR0ROTkF3Ow0KIGI9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbWxoZENJNk1UYzVNemczTURFd01Dd2libTl1WTJVaU9pSmFiVGw1VEZkV05GbFhNWGRpUjFWDQogMFlqSTFjMlZSSWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0YzJsbkluMC4ubG1JdlJvdjJ2NlUzLWRSVS1uMDhtQy1SaDRzNmxZUDM2WFYNCiAzdmUtT3JzRWt5WG1IQ2pFSWMyakxJZ216bmNqcUw5S0JXaUYwUXFrczRzY2c5WlM4QXcNCkZyb206IEJvb2tpbmcgYWdlbnQgPE1hcGxlLVRpZ2VyLTI3QGFjbWUuZXhhbXBsZT4NClRvOiBSZXNlcnZhdGlvbnMgPHJlc2VydmF0aW9uc0BiaXN0cm8uZXhhbXBsZT4NClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzANCk1lc3NhZ2UtSUQ6IDxleGFtcGxlLTFAYWNtZS5leGFtcGxlPg0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAwOToxNTowMCArMDAwMA0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iPV9jb2xvcGhvbl9leGFtcGxlXzEiDQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [],
+     "dkim_pass_identities": [
+      "bookings+agent@acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "DKIM reported by header.i only, i= with malformed quoted-printable",
+   "message": "REtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaT1ib29raW5ncz0yR2FnZW50QGFjbWUuZXhhbXBsZTsgaD1mcm9tOnRvOyBiaD1BQUFBOyBiPUFBQUENCkNvbG9waG9uLVNpZ25hdHVyZTogdj0wOw0KIGM9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbXRwWkNJNkluTXhJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRZM0psWkN0cWQzUWlmUS5leUpqDQogYm1ZaU9uc2lhbmRySWpwN0ltTnlkaUk2SWtWa01qVTFNVGtpTENKcmRIa2lPaUpQUzFBaUxDSjRJam9pYkVNNVVISnJURmN5VVcxUVkNCiBVdHhRV1ZsUTFrNU5FOU5NMDAzTlUxbFJEbFZlV2MyYjFSb1owOU1SU0o5ZlN3aVpYaHdJam94Tnprek9UVXlNREF3TENKbWNtOXRJag0KIG9pYldGd2JHVXRkR2xuWlhJdE1qZEFZV050WlM1bGVHRnRjR3hsSWl3aWFXRjBJam94Tnprek9EWTFOakF3TENKcGMzTWlPaUpoWTIxDQogbExtVjRZVzF3YkdVaUxDSndjbWx1WTJsd1lXd2lPbnNpYVdRaU9pSndYMWhyTWpraUxDSnRiMlJsSWpvaWNITmxkV1J2Ym5sdGIzVnoNCiBJbjBzSW5OamIzQmxJam9pUW05dmEzTWdjbVZ6ZEdGMWNtRnVkQ0IwWVdKc1pYTWdabTl5SUc5dVpTQndaWEp6YjI0c0lIVndJSFJ2SQ0KIENRMU1EQWdjR1Z5SUdKdmIydHBibWN1SWl3aWMzVmlJam9pWVdkZk4waHhNaUo5LlJYWk1MQ0dHU2YxaDJIMnZtNlI2MkZVZUh3RXBCDQogbHRsNHZxb3VBNDNnTDI0bzVjQ3pVTXg4dHNrVkVnRFdFT0tjQlJZSHc4cTRQdXhOZnFtR0ROTkF3Ow0KIGI9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbWxoZENJNk1UYzVNemczTURFd01Dd2libTl1WTJVaU9pSmFiVGw1VEZkV05GbFhNWGRpUjFWDQogMFlqSTFjMlZSSWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0YzJsbkluMC4ubG1JdlJvdjJ2NlUzLWRSVS1uMDhtQy1SaDRzNmxZUDM2WFYNCiAzdmUtT3JzRWt5WG1IQ2pFSWMyakxJZ216bmNqcUw5S0JXaUYwUXFrczRzY2c5WlM4QXcNCkZyb206IEJvb2tpbmcgYWdlbnQgPE1hcGxlLVRpZ2VyLTI3QGFjbWUuZXhhbXBsZT4NClRvOiBSZXNlcnZhdGlvbnMgPHJlc2VydmF0aW9uc0BiaXN0cm8uZXhhbXBsZT4NClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzANCk1lc3NhZ2UtSUQ6IDxleGFtcGxlLTFAYWNtZS5leGFtcGxlPg0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAwOToxNTowMCArMDAwMA0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iPV9jb2xvcGhvbl9leGFtcGxlXzEiDQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [],
+     "dkim_pass_identities": [
+      "bookings=2Gagent@acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "dkim_unaligned",
+     "expected_authentication_results": "colophon=fail reason=\"dkim_unaligned\""
+    }
+   ]
+  },
+  {
+   "name": "DKIM reported by header.i only, no i=, domain in another case",
+   "message": "REtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaD1mcm9tOnRvOyBiaD1BQUFBOyBiPUFBQUENCkNvbG9waG9uLVNpZ25hdHVyZTogdj0wOw0KIGM9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbXRwWkNJNkluTXhJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRZM0psWkN0cWQzUWlmUS5leUpqDQogYm1ZaU9uc2lhbmRySWpwN0ltTnlkaUk2SWtWa01qVTFNVGtpTENKcmRIa2lPaUpQUzFBaUxDSjRJam9pYkVNNVVISnJURmN5VVcxUVkNCiBVdHhRV1ZsUTFrNU5FOU5NMDAzTlUxbFJEbFZlV2MyYjFSb1owOU1SU0o5ZlN3aVpYaHdJam94Tnprek9UVXlNREF3TENKbWNtOXRJag0KIG9pYldGd2JHVXRkR2xuWlhJdE1qZEFZV050WlM1bGVHRnRjR3hsSWl3aWFXRjBJam94Tnprek9EWTFOakF3TENKcGMzTWlPaUpoWTIxDQogbExtVjRZVzF3YkdVaUxDSndjbWx1WTJsd1lXd2lPbnNpYVdRaU9pSndYMWhyTWpraUxDSnRiMlJsSWpvaWNITmxkV1J2Ym5sdGIzVnoNCiBJbjBzSW5OamIzQmxJam9pUW05dmEzTWdjbVZ6ZEdGMWNtRnVkQ0IwWVdKc1pYTWdabTl5SUc5dVpTQndaWEp6YjI0c0lIVndJSFJ2SQ0KIENRMU1EQWdjR1Z5SUdKdmIydHBibWN1SWl3aWMzVmlJam9pWVdkZk4waHhNaUo5LlJYWk1MQ0dHU2YxaDJIMnZtNlI2MkZVZUh3RXBCDQogbHRsNHZxb3VBNDNnTDI0bzVjQ3pVTXg4dHNrVkVnRFdFT0tjQlJZSHc4cTRQdXhOZnFtR0ROTkF3Ow0KIGI9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbWxoZENJNk1UYzVNemczTURFd01Dd2libTl1WTJVaU9pSmFiVGw1VEZkV05GbFhNWGRpUjFWDQogMFlqSTFjMlZSSWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0YzJsbkluMC4ubG1JdlJvdjJ2NlUzLWRSVS1uMDhtQy1SaDRzNmxZUDM2WFYNCiAzdmUtT3JzRWt5WG1IQ2pFSWMyakxJZ216bmNqcUw5S0JXaUYwUXFrczRzY2c5WlM4QXcNCkZyb206IEJvb2tpbmcgYWdlbnQgPE1hcGxlLVRpZ2VyLTI3QGFjbWUuZXhhbXBsZT4NClRvOiBSZXNlcnZhdGlvbnMgPHJlc2VydmF0aW9uc0BiaXN0cm8uZXhhbXBsZT4NClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzANCk1lc3NhZ2UtSUQ6IDxleGFtcGxlLTFAYWNtZS5leGFtcGxlPg0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAwOToxNTowMCArMDAwMA0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iPV9jb2xvcGhvbl9leGFtcGxlXzEiDQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [],
+     "dkim_pass_identities": [
+      "@Acme.Example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "DKIM reported by header.i only, two fields with that identity",
+   "message": "REtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaD1mcm9tOnRvOyBiaD1BQUFBOyBiPUFBQUENCkRLSU0tU2lnbmF0dXJlOiB2PTE7IGE9ZWQyNTUxOS1zaGEyNTY7IGQ9YWNtZS5leGFtcGxlOyBzPW1haWw7IGg9ZnJvbTp0bzsgYmg9QUFBQTsgYj1BQUFBDQpDb2xvcGhvbi1TaWduYXR1cmU6IHY9MDsNCiBjPWV5SmhiR2NpT2lKRlpFUlRRU0lzSW10cFpDSTZJbk14SWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0WTNKbFpDdHFkM1FpZlEuZXlKag0KIGJtWWlPbnNpYW5kcklqcDdJbU55ZGlJNklrVmtNalUxTVRraUxDSnJkSGtpT2lKUFMxQWlMQ0o0SWpvaWJFTTVVSEpyVEZjeVVXMVFZDQogVXR4UVdWbFExazVORTlOTTAwM05VMWxSRGxWZVdjMmIxUm9aMDlNUlNKOWZTd2laWGh3SWpveE56a3pPVFV5TURBd0xDSm1jbTl0SWoNCiBvaWJXRndiR1V0ZEdsblpYSXRNamRBWVdOdFpTNWxlR0Z0Y0d4bElpd2lhV0YwSWpveE56a3pPRFkxTmpBd0xDSnBjM01pT2lKaFkyMQ0KIGxMbVY0WVcxd2JHVWlMQ0p3Y21sdVkybHdZV3dpT25zaWFXUWlPaUp3WDFock1qa2lMQ0p0YjJSbElqb2ljSE5sZFdSdmJubHRiM1Z6DQogSW4wc0luTmpiM0JsSWpvaVFtOXZhM01nY21WemRHRjFjbUZ1ZENCMFlXSnNaWE1nWm05eUlHOXVaU0J3WlhKemIyNHNJSFZ3SUhSdkkNCiBDUTFNREFnY0dWeUlHSnZiMnRwYm1jdUlpd2ljM1ZpSWpvaVlXZGZOMGh4TWlKOS5SWFpNTENHR1NmMWgySDJ2bTZSNjJGVWVId0VwQg0KIGx0bDR2cW91QTQzZ0wyNG81Y0N6VU14OHRza1ZFZ0RXRU9LY0JSWUh3OHE0UHV4TmZxbUdETk5BdzsNCiBiPWV5SmhiR2NpT2lKRlpFUlRRU0lzSW1saGRDSTZNVGM1TXpnM01ERXdNQ3dpYm05dVkyVWlPaUphYlRsNVRGZFdORmxYTVhkaVIxVg0KIDBZakkxYzJWUklpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dGMybG5JbjAuLmxtSXZSb3YydjZVMy1kUlUtbjA4bUMtUmg0czZsWVAzNlhWDQogM3ZlLU9yc0VreVhtSENqRUljMmpMSWdtem5janFMOUtCV2lGMFFxa3M0c2NnOVpTOEF3DQpGcm9tOiBCb29raW5nIGFnZW50IDxNYXBsZS1UaWdlci0yN0BhY21lLmV4YW1wbGU+DQpUbzogUmVzZXJ2YXRpb25zIDxyZXNlcnZhdGlvbnNAYmlzdHJvLmV4YW1wbGU+DQpTdWJqZWN0OiBUYWJsZSBmb3IgMiwgRnJpZGF5IDcgTm92ZW1iZXIsIDE5OjMwDQpNZXNzYWdlLUlEOiA8ZXhhbXBsZS0xQGFjbWUuZXhhbXBsZT4NCkRhdGU6IFRodSwgMDUgTm92IDIwMjYgMDk6MTU6MDAgKzAwMDANCk1JTUUtVmVyc2lvbjogMS4wDQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9taXhlZDsgYm91bmRhcnk9Ij1fY29sb3Bob25fZXhhbXBsZV8xIg0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9InV0Zi04Ig0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpIZWxsbywNCg0KQ291bGQgeW91IGhvbGQgYSB0YWJsZSBmb3IgMiB0aGlzIEZyaWRheSwgNyBOb3ZlbWJlciwgYXQgMTk6MzA/DQpPbmUgZ3Vlc3QgaXMgdmVnZXRhcmlhbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [],
+     "dkim_pass_identities": [
+      "@acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "dkim_unaligned",
+     "expected_authentication_results": "colophon=fail reason=\"dkim_unaligned\""
+    }
+   ]
+  },
+  {
+   "name": "DKIM reported by header.i only, beside a field whose tags do not parse",
+   "message": "REtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaT1AYWNtZS5leGFtcGxlOyBoPWZyb206dG87IGJoPUFBQUE7IGI9QUFBQTsgeA0KREtJTS1TaWduYXR1cmU6IHY9MTsgYT1lZDI1NTE5LXNoYTI1NjsgZD1hY21lLmV4YW1wbGU7IHM9bWFpbDsgaT1AYWNtZS5leGFtcGxlOyBoPWZyb206dG87IGJoPUFBQUE7IGI9QUFBQQ0KQ29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [],
+     "dkim_pass_identities": [
+      "@acme.example"
      ],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
@@ -2265,6 +2489,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2292,6 +2517,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2317,6 +2543,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2340,6 +2567,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2368,6 +2596,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2396,6 +2625,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2423,6 +2653,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2450,6 +2681,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2477,6 +2709,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2504,6 +2737,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2531,6 +2765,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2558,6 +2793,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2585,6 +2821,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2612,6 +2849,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2639,6 +2877,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2666,6 +2905,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2693,6 +2933,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2720,6 +2961,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2747,6 +2989,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2774,6 +3017,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2801,6 +3045,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2828,6 +3073,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2855,6 +3101,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2882,6 +3129,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2909,6 +3157,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2936,6 +3185,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2963,6 +3213,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -2990,6 +3241,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -3017,6 +3269,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -3044,6 +3297,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -3071,6 +3325,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -3098,6 +3353,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [
@@ -3125,6 +3381,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "x@bistro.example",
      "mailbox": "mbx-x",
      "mailbox_addresses": [
@@ -3151,6 +3408,7 @@
      "dkim_pass_domains": [
       "acme.example"
      ],
+     "dkim_pass_identities": [],
      "envelope_recipient": "reservations@bistro.example",
      "mailbox": "mbx-reservations",
      "mailbox_addresses": [

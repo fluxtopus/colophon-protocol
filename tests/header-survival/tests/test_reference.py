@@ -8,7 +8,7 @@ from survival.reference import ROOT, SKETCH, ref
 
 def test_every_delivery_passes():
     results = ref.run(ref.vectors())
-    assert len(results) == 118
+    assert len(results) == 123
     assert [(n, i, w, g) for n, i, w, g in results if w != g] == []
 
 
