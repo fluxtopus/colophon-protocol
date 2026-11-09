@@ -30,6 +30,8 @@ jobs:
         run: uv run --with cryptography python reference/colophon_v0.py
       - name: Check vectors.json reproduces
         run: uv run --with cryptography python reference/colophon_v0.py --json | cmp - reference/vectors.json
+      - name: Test the header-survival harness
+        run: uv run --directory tests/header-survival pytest -q
       - name: Build the site
         run: uv run site/build.py
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
