@@ -148,7 +148,7 @@ def _signed(
     raw: bytes, credential: str, keys: Keys, iat: int, used_nonce: str
 ) -> tuple[bytes, str]:
     signed = ref.sign(raw, credential, keys.agent, iat=iat, nonce=used_nonce, strict=True)
-    parsed = ref.BytesParser(policy=ref.policy.compat32).parsebytes(signed)
+    parsed = ref.parse_part(signed)
     value = ref.re.sub(r"[ \t\r\n]+", "", ref.raw_values(parsed, ref.HEADER)[0])
     return signed, value
 
@@ -242,7 +242,7 @@ def _signed_with_header(
     raw: bytes, credential: str, keys: Keys, header: dict, recipient: str
 ) -> Built:
     """ref.sign with a caller-supplied protected header. The steps are the sketch's own."""
-    parsed = ref.BytesParser(policy=ref.policy.compat32).parsebytes(raw)
+    parsed = ref.parse_part(raw)
     payload = ref.jcs(ref.signing_input(parsed, credential))
     h, _, s = ref.jws_sign(header, payload, keys.agent)
     value = f"v={ref.VERSION}; c={credential}; b={h}..{s}"

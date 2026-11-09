@@ -104,6 +104,20 @@ ok    verified             unrelated TXT beside the record
 ok    verified             a Colophon record with a duplicate tag beside the record
 ok    verified             arrived exactly at exp + grace
 ok    verified             signed 1 hour before the credential's iat
+ok    verified             body in 8bit with non-ASCII text
+ok    verified             8-bit octets inside a quoted-printable body
+ok    verified             lines end in LF alone
+ok    verified             a CR alone ends a body line
+ok    verified             empty display name in To
+ok    verified             quoted-pair in the charset
+ok    verified             empty parameter items
+ok    verified             attachment name in RFC 2231 form
+ok    verified             attachment parameter that does not parse (not read)
+ok    verified             boundary of 70 characters
+ok    verified             preamble and epilogue
+ok    verified             agent signature with another valid R (R need not be the RFC 8032 one)
+ok    verified             a non-ASCII Colophon record beside the record (not a Colophon record)
+ok    verified             19 DNS misses for the host this hour
 ok    signature_invalid    subject changed
 ok    signature_invalid    subject re-encoded as an encoded word after signing
 ok    signature_invalid    text changed
@@ -117,6 +131,8 @@ ok    layout               charset alias utf8
 ok    layout               body marked format=flowed
 ok    layout               unknown transfer encoding
 ok    layout               message/rfc822 attachment
+ok    layout               charset in RFC 2231 form
+ok    layout               transfer encoding on the multipart
 ok    malformed            second To field
 ok    malformed            second Subject field
 ok    malformed            second Content-Type in the body part
@@ -137,6 +153,18 @@ ok    malformed            padded base64url in c
 ok    malformed            a fraction in exp
 ok    malformed            a duplicate claim
 ok    malformed            credential over 2,048 octets
+ok    malformed            escaped surrogate in sub
+ok    malformed            noncharacter U+FFFF in scope
+ok    malformed            a CR alone in To
+ok    malformed            a header line that is not a field
+ok    malformed            charset given twice
+ok    malformed            a parameter without a value
+ok    malformed            boundary given twice
+ok    malformed            boundary of 71 characters
+ok    malformed            no close delimiter
+ok    malformed            two delimiter lines in a row
+ok    malformed            a line that starts with the delimiter
+ok    malformed            a delimiter in the epilogue
 ok    multiple_signatures  second Colophon-Signature
 ok    no_signature         no Colophon-Signature
 ok    dkim_unaligned       DKIM passes only for mail.acme.example
@@ -152,6 +180,11 @@ ok    key_not_found        record without p
 ok    key_not_found        key of the wrong length
 ok    key_not_found        key in padded base64
 ok    key_revoked          record with empty p=
+ok    key_not_found        the record with a non-ASCII tag added
+ok    key_not_found        domain key is the identity point (every credential verifies under it)
+ok    key_not_found        domain key of 32 zero octets (small order)
+ok    key_not_found        domain key not in canonical encoding
+ok    dns_limited          20 DNS misses for the host this hour
 ok    credential_invalid   record holds a different key
 ok    credential_invalid   iss in capitals
 ok    credential_invalid   sub with a trailing newline
@@ -161,9 +194,14 @@ ok    credential_invalid   from claim not in canonical form
 ok    credential_invalid   lifetime of 25 hours
 ok    credential_invalid   bidi control in scope
 ok    credential_invalid   agent key of 31 octets
+ok    credential_invalid   agent key is the identity point (every signature verifies under it)
+ok    signature_invalid    agent signature with S + L in place of S
+ok    signature_invalid    agent signature with R the identity point
+ok    signature_invalid    agent signature that only a cofactored check accepts
 ok    credential_expired   arrived 1 second after exp + grace
 ok    from_mismatch        From is another address on the same host
 ok    verified             SMTPUTF8 local part, ASCII letters lowercased
 ok    from_mismatch        SMTPUTF8 local part with non-ASCII in another case
 ok    signature_invalid    signature iat 10 minutes after arrival
 ok    not_addressed        delivered to a mailbox not in To or Cc (Bcc)
+ok    replay_unchecked     replay store unavailable

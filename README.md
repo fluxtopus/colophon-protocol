@@ -8,7 +8,7 @@ Colophon lets an AI agent sign the email it sends. A receiver can then check, fr
 
 To anyone who does not know Colophon, it is still ordinary email.
 
-**Status:** draft v0-05, 2026-11-09. No open issue blocks v0 final. The header survived real mail: in the header-survival test, 12 of 12 copies arrived intact and verified (§15, issue 1). Verifiers can now report their verdict in `Authentication-Results` (§7.8). Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change before v0 final.
+**Status:** draft v0-06, 2026-11-09. v0-06 makes the message syntax, Ed25519 checks and replay store exact; these wire rules were decided on 2026-11-09 (§15, issue 5). The header survived real mail: in the header-survival test, 12 of 12 copies arrived intact and verified (§15, issue 1). Verifiers can now report their verdict in `Authentication-Results` (§7.8). Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change before v0 final.
 
 ## What is here
 
