@@ -17,7 +17,8 @@ receiver or sender can switch languages without relearning the API.
 
 ```ts
 type Verdict =
-  | { readonly verified: true; readonly agent: Agent; readonly selector: string; ... }
+  | { readonly verified: true; readonly agent: Agent; readonly selector: string;
+      readonly credentialHash: string; ... }
   | { readonly verified: false; readonly reason: Reason; readonly detail: string };
 type Reason = "no_signature" | "multiple_signatures" | "malformed" | ... | "replay";
 ```
@@ -49,6 +50,13 @@ if (step.kind === "need_key") step = step.resume(answerOrFailure);  // TxtAnswer
 if (step.kind === "need_replay_check") step = step.resume(firstTime);
 ```
 
+```ts
+import { colophonResinfo, authenticationResults } from "colophon-protocol";  // §7.8, pure
+colophonResinfo(verdict);  // 'colophon=pass header.from=... header.cred=...'
+authenticationResults(verdict, { authservId: "mx.bistro.example",
+                                 otherResinfo: ["dkim=pass header.d=acme.example"] });
+```
+
 `verify()` never rejects for anything in the message or the DNS answer, as in Python. It rejects
 only when the replay store does. `sign()` and `issue()` throw `SigningError` and `IssueError`
 with the reason a verifier would give.
@@ -75,7 +83,8 @@ with the reason a verifier would give.
 ## Testing and CI
 
 - The shared vectors through the conformance runner, using a `conformance/adapters/typescript.mjs`
-  adapter: 80/80 is the bar, in the same workflow as the sketch and the Python library.
+  adapter: 80/80 on verdicts and on the §7.8 resinfo is the bar, in the same workflow as the
+  sketch and the Python library.
 - The worked example reproduced byte for byte, with the test seeds the sketch uses.
 - Cross-implementation differential tests: the Python mutation generator writes mutated messages,
   and both libraries must give the same verdict through the conformance contract.
