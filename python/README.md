@@ -2,7 +2,7 @@
 
 Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md) agent signatures on email.
 
-> **Draft, not for production.** This package implements draft v0-05 of a specification that
+> **Draft, not for production.** This package implements draft v0-06 of a specification that
 > is still changing. Its API, its verdicts and the wire format may all change before v0 final.
 > Use it to try Colophon out, to test interoperability and to report problems.
 
@@ -12,10 +12,13 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
   drivers run it; you can drive it from any other I/O model.
 - Results are frozen dataclasses with full type hints. The package passes `mypy --strict`.
 - Parsing is strict and does bounded work: hand-written linear scanners, no regular expressions
-  on message input, and the §7.7 length limits checked before anything is decoded.
+  on message input beyond the fixed-length boundary check, and the §7.7 length limits checked
+  before anything is decoded.
+- Ed25519 is checked as §6.5 makes it exact: keys in canonical form and not of small order,
+  S < L, R not of small order, and the equation without the cofactor.
 - One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses
   [`dnspython`](https://www.dnspython.org) through the optional `dns` extra.
-- It scores 80/80 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
+- It scores 118/118 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
   the §7.8 `Authentication-Results` report, and reproduces the spec's worked example (Appendix A)
   byte for byte.
 
@@ -71,8 +74,34 @@ only the field your own server added:
 ```python
 from colophon_protocol.authres import dkim_pass_domains
 
-domains = dkim_pass_domains(value, authserv_id="mx.bistro.example")
+domains = dkim_pass_domains(value, authserv_id="mx.bistro.example", message=raw_message)
 ```
+
+A passing signature counts for its `d=` (`header.d`), never for the domain of its `i=` alone,
+which may be a subdomain (§7.1). Some servers report only `header.i`. With `message`, such a
+result counts for the `d=` of the one `DKIM-Signature` field in the message whose identity (its
+`i=`, or `@` and its `d=`) equals `header.i`: local parts equal octet for octet, domains equal
+ignoring case. With no such field, or more than one, it does not count.
+`dkim_identity_domain(message, header_i)` is that lookup on its own.
+
+### Temporary errors: hold and verify again
+
+`dns_error`, `dns_limited` and `replay_unchecked` are temporary (§7.4, §7.6, §7.8): a later
+attempt may pass, and they are never evidence against the sender. A receiver may hold such a
+message and verify it again with the same `Receipt`, within its delay D: the longest it allows
+between arrival and verification. The replay store keeps each entry for D past the credential's
+expiry (`replay.RETENTION`, 24 hours). Pass the same D to `verify` and a message verified later
+than that is `replay_unchecked`, because its replay entry may already be gone:
+
+```python
+from colophon_protocol.replay import RETENTION
+
+verdict = verify(
+    raw_message, receipt, resolver=resolver, replay_store=replay_store, max_delay=RETENTION
+)
+```
+
+`max_delay` is off by default, for callers that verify at arrival or bound the delay themselves.
 
 ### Report the verdict in `Authentication-Results`
 
@@ -104,9 +133,9 @@ Authentication-Results: mx.bistro.example;
     header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo
 ```
 
-- **Results.** `pass` when verified; `none` for `no_signature`; `temperror` for `dns_error` and
-  `dns_limited`, which may pass later and are never evidence against the sender; `fail` for
-  every other reason. `fail` is not evidence of forgery: treat it as mail with no signature.
+- **Results.** `pass` when verified; `none` for `no_signature`; `temperror` for `dns_error`,
+  `dns_limited` and `replay_unchecked`, which may pass later and are never evidence against the
+  sender; `fail` for every other reason. `fail` is not evidence of forgery: treat it as mail with no signature.
   `colophon_result(verdict)` returns the result alone.
 - **What is reported.** With `pass` only: the verified address, the agent ID, the selector
   (`Verified.selector`), the principal's mode, and the SHA-256 of the credential
@@ -170,7 +199,7 @@ class RedisReplayStore:
         self._redis = redis
 
     async def claim(self, key: ReplayKey, expires_at: int) -> bool:
-        # True only for the first claim. The entry outlives the credential by RETENTION,
+        # True only for the first claim. The entry outlives the credential by RETENTION (D),
         # so a message verified late, from a queue, cannot replay.
         return bool(
             await self._redis.set(
@@ -180,8 +209,9 @@ class RedisReplayStore:
 ```
 
 `claim()` is asked only after both signatures verify, so the store holds verified traffic only.
-If it raises, `verify()` raises too: a store that is down is not a verdict about the message,
-and the caller decides whether to retry or to deliver the message as plain email.
+If it raises, the verdict is `replay_unchecked` (§7.6), reported as `temperror`: the message is
+not verified, and verifying it again once the store is back, within D, may pass. Cancellation
+still propagates from the asyncio driver.
 
 ### Without the drivers: the sans-IO core
 
@@ -200,6 +230,8 @@ if isinstance(step, NeedKey):
 if isinstance(step, NeedReplayCheck):
     # step.key, step.expires_at: claim the key atomically in your store
     step = step.resume(first_time=True)
+    # or step.unchecked() when the store cannot be read or written, or when
+    # step.late(now, max_delay) says this is more than D after step.arrival
 verdict = step  # Verified | NotVerified
 ```
 
@@ -288,7 +320,8 @@ colophon-protocol verify received.eml --arrival 2026-11-08T21:15:10Z \
 
 `verify` reads live DNS unless `--dns-file` gives the answers as JSON. It takes the DKIM result
 either as `--dkim-pass` domains or as your server's `--authentication-results` value with its
-`--authserv-id`.
+`--authserv-id`; a result with only `header.i` counts as §7.1 says, from the message's
+`DKIM-Signature` fields.
 
 ## Development
 
@@ -302,5 +335,6 @@ uv run pytest -m network    # also the live-DNS test
 
 The tests read the vectors and the reference sketch from the repository root, or from
 `COLOPHON_SPEC_DIR` when set. The differential test mutates the worked example thousands of
-ways and checks that this package and the sketch agree, or that each disagreement falls in a
-known, documented category.
+ways and checks that this package and the sketch give the same verdict and reason on each.
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed between drafts.

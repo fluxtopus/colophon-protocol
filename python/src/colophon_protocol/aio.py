@@ -8,6 +8,8 @@ runs inline on the event loop. For very large messages a caller may prefer
 from __future__ import annotations
 
 import asyncio
+import time
+from collections.abc import Callable
 from typing import Protocol
 
 from colophon_protocol.errors import DnsLimited
@@ -40,11 +42,13 @@ async def verify(
     resolver: AsyncTxtResolver,
     replay_store: AsyncReplayStore,
     dns_budget: float = DNS_BUDGET,
+    max_delay: int | None = None,
+    clock: Callable[[], float] = time.time,
 ) -> Verdict:
     """Verify one delivery (§7.2). Never raises for anything in the message or the DNS answer.
 
-    Cancellation propagates. So does an exception from ``replay_store``; see
-    ``colophon_protocol.verify``.
+    Cancellation propagates. An exception from ``replay_store`` gives ``replay_unchecked``;
+    ``max_delay`` and ``clock`` are as in ``colophon_protocol.verify``.
     """
     step = start(message, receipt)
     if not isinstance(step, NeedKey):
@@ -60,4 +64,10 @@ async def verify(
     after = step.resume(answer)
     if not isinstance(after, NeedReplayCheck):
         return after
-    return after.resume(await replay_store.claim(after.key, after.expires_at))
+    if after.late(clock(), max_delay):
+        return after.unchecked("verified more than D after arrival")
+    try:
+        first_time = await replay_store.claim(after.key, after.expires_at)
+    except Exception:  # noqa: BLE001 - a store that cannot be read or written; not cancellation
+        return after.unchecked()
+    return after.resume(first_time)

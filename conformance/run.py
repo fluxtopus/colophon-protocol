@@ -28,7 +28,7 @@ REASONS = frozenset(
         "no_signature", "multiple_signatures", "malformed", "dkim_unaligned",
         "unsupported_version", "credential_invalid", "dns_error", "dns_limited", "key_not_found",
         "key_revoked", "credential_expired", "from_mismatch", "layout", "signature_invalid",
-        "not_addressed", "replay",
+        "not_addressed", "replay", "replay_unchecked",
     }
 )  # fmt: skip
 INPUT_FIELDS = (
@@ -38,6 +38,8 @@ INPUT_FIELDS = (
     "mailbox",
     "mailbox_addresses",
     "dns_txt",
+    "dns_misses",
+    "replay_store_available",
 )
 DEFAULT_VECTORS = Path(__file__).resolve().parent.parent / "reference" / "vectors.json"
 

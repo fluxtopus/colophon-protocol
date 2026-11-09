@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from colophon_protocol._codec import b64url_decode, b64url_encode
+from colophon_protocol._ed25519 import valid_public_key
 from colophon_protocol._grammar import parse_tags, remove_whitespace
 from colophon_protocol.model import Reason, TxtAnswer
 
@@ -22,13 +23,15 @@ def format_revoked_record() -> str:
 def select_domain_key(answer: TxtAnswer) -> bytes | Reason:
     """§7.4 "Which record is the key": the 32-octet domain key, or the step 10/11 reason.
 
-    Records are octets. Each is read as Latin-1, which maps every octet to one character, so an
-    octet outside ASCII can only appear in a tag value and never changes how the list splits.
+    Records are octets, never decoded as text. A record with an octet above 0x7F is not a
+    Colophon record (§4.1, §7.4 step 3). The key must be valid (§6.5, §7.4 step 7).
     """
     found: list[dict[str, str]] = []
     for record in answer.records:
+        if not record.isascii():
+            continue
         try:
-            tags = parse_tags(remove_whitespace(record.decode("latin-1")))
+            tags = parse_tags(remove_whitespace(record.decode("ascii")))
         except ValueError:
             continue
         if tags.get("v") == RECORD_VERSION:
@@ -44,6 +47,6 @@ def select_domain_key(answer: TxtAnswer) -> bytes | Reason:
         key = b64url_decode(tags["p"])
     except ValueError:
         return Reason.KEY_NOT_FOUND
-    if len(key) != 32:
+    if len(key) != 32 or not valid_public_key(key):
         return Reason.KEY_NOT_FOUND
     return key

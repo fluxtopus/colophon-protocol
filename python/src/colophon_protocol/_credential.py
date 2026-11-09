@@ -7,6 +7,7 @@ from typing import Any
 
 from colophon_protocol._addresses import valid_canonical_address
 from colophon_protocol._codec import b64url_decode, b64url_encode, b64url_sha256, jcs
+from colophon_protocol._ed25519 import valid_public_key
 from colophon_protocol._fail import Fail
 from colophon_protocol._grammar import (
     MAX_NAME_BYTES,
@@ -106,6 +107,8 @@ def check_claims(claims: dict[str, Any]) -> Claims:
         key = b""
     if len(key) != 32:
         raise invalid("cnf.jwk.x is not 32 octets of base64url")
+    if not valid_public_key(key):
+        raise invalid("cnf.jwk.x is not a valid Ed25519 public key (§6.5)")
     return Claims(
         iss=str(claims["iss"]),
         sub=sub,

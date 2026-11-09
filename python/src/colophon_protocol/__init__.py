@@ -38,7 +38,7 @@ from colophon_protocol.model import (
 from colophon_protocol.signer import sign
 
 __version__ = "0.0.1.dev0"
-SPEC_VERSION = "v0-05"
+SPEC_VERSION = "v0-06"
 """The draft of the specification this release implements."""
 
 __all__ = [

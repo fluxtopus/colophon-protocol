@@ -45,6 +45,8 @@ def main() -> int:
             mailbox_addresses=set(d["mailbox_addresses"]),
             dns=d["dns_txt"],
             envelope_recipient=d["envelope_recipient"],
+            dns_misses=d.get("dns_misses", 0),
+            replay_store_available=d.get("replay_store_available", True),
             seen=seen,
         )
         verdict = sketch.verify(message, arrival)

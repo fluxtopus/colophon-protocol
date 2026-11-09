@@ -20,7 +20,7 @@ type Verdict =
   | { readonly verified: true; readonly agent: Agent; readonly selector: string;
       readonly credentialHash: string; ... }
   | { readonly verified: false; readonly reason: Reason; readonly detail: string };
-type Reason = "no_signature" | "multiple_signatures" | "malformed" | ... | "replay";
+type Reason = "no_signature" | "multiple_signatures" | "malformed" | ... | "replay" | "replay_unchecked";
 ```
 
 ## API
@@ -57,8 +57,8 @@ authenticationResults(verdict, { authservId: "mx.bistro.example",
                                  otherResinfo: ["dkim=pass header.d=acme.example"] });
 ```
 
-`verify()` never rejects for anything in the message or the DNS answer, as in Python. It rejects
-only when the replay store does. `sign()` and `issue()` throw `SigningError` and `IssueError`
+`verify()` never rejects for anything in the message, the DNS answer or the replay store, as in
+Python: a store that fails gives `replay_unchecked` (§7.6). `sign()` and `issue()` throw `SigningError` and `IssueError`
 with the reason a verifier would give.
 
 ## Rules that differ from writing Python
@@ -83,7 +83,7 @@ with the reason a verifier would give.
 ## Testing and CI
 
 - The shared vectors through the conformance runner, using a `conformance/adapters/typescript.mjs`
-  adapter: 80/80 on verdicts and on the §7.8 resinfo is the bar, in the same workflow as the
+  adapter: every delivery, on verdicts and on the §7.8 resinfo, is the bar, in the same workflow as the
   sketch and the Python library.
 - The worked example reproduced byte for byte, with the test seeds the sketch uses.
 - Cross-implementation differential tests: the Python mutation generator writes mutated messages,

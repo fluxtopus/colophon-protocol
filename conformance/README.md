@@ -15,7 +15,7 @@ and every resinfo it checked matches. Options: `--vectors <path>` (default
 `reference/vectors.json`), `--timeout <seconds>` per vector (default 20), `--only <text>` to run
 the vectors whose name contains the text, and `--quiet` to print failures and the score only.
 
-The two adapters in this directory score 80/80 on both:
+The two adapters in this directory score 118/118 on both:
 
 ```
 # The reference sketch, from the repository root
@@ -47,7 +47,9 @@ that its last line is shown when the command fails.
       "mailbox_addresses": ["reservations+web@bistro.example", "reservations@bistro.example"],
       "dns_txt": {
         "s1._colophon.acme.example": ["v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"]
-      }
+      },
+      "dns_misses": 0,
+      "replay_store_available": true
     }
   ]
 }
@@ -71,9 +73,16 @@ that its last line is shown when the command fails.
 - `dns_txt`: the DNS as the verifier sees it, by query name. A name that is present maps to its
   TXT records, each with its character strings already joined (§4.1); an empty list is a name with
   no TXT records. A name that is **absent** is NXDOMAIN. A name that maps to **`null`** is a lookup
-  that failed (a timeout or SERVFAIL), which is `dns_error`. Answer from this map only: no real
-  DNS, no cache shared between vectors, and no §7.4 miss limit (no vector expects
-  `dns_limited`).
+  that failed (a timeout or SERVFAIL), which is `dns_error`. A record is a JSON string that
+  stands for its UTF-8 octets; a record with an octet above 0x7F is not a Colophon record (§4.1).
+  Answer from this map only: no real DNS and no cache shared between vectors.
+- `dns_misses`: the §7.4 misses for the `From` host in the hour before this delivery, with no key
+  cached. At 20 or more the verifier refuses the lookup, which is `dns_limited`. Start the
+  delivery's miss count here.
+- `replay_store_available`: false when the replay store cannot be read or written (§7.6), which
+  is `replay_unchecked`. When it is true, use the vector's one store.
+
+The vectors do not cover the delay D of §7.6: verify as if each delivery came within D.
 
 Ignore members you do not know; later versions of the contract may add some. A different
 `contract` value is a different contract: fail.
@@ -91,7 +100,8 @@ One entry per input delivery, in the same order. `verdict` is `"verified"` or
 `"not_verified"`; a `not_verified` entry has `reason`, one of the §7.2 codes: `no_signature`,
 `multiple_signatures`, `malformed`, `dkim_unaligned`, `unsupported_version`,
 `credential_invalid`, `dns_error`, `dns_limited`, `key_not_found`, `key_revoked`,
-`credential_expired`, `from_mismatch`, `layout`, `signature_invalid`, `not_addressed`, `replay`.
+`credential_expired`, `from_mismatch`, `layout`, `signature_invalid`, `not_addressed`, `replay`,
+`replay_unchecked`.
 Other members, such as `agent` or a `detail` string, are allowed and ignored.
 
 #### `authentication_results` (optional)
@@ -101,7 +111,7 @@ this delivery (§7.8): the method, result and properties, without the authserv-i
 `;`. Reporting is not required for conformance (§12), so the member is optional:
 
 - **Present:** the runner compares it with the vector's `expected_authentication_results`, as
-  strings, exactly, and scores it beside the verdicts: `80/80 Authentication-Results resinfo
+  strings, exactly, and scores it beside the verdicts: `118/118 Authentication-Results resinfo
   match`. A value that is not a string fails.
 - **Absent:** the delivery is *not checked* for this score. It is never counted as failed, and
   it does not change the exit status.
@@ -113,7 +123,8 @@ octet for octet:
 - with `pass`, the five properties in the order of §7.8's table: `header.from`, `header.sub`,
   `header.s`, `header.principal`, `header.cred`;
 - with any other result, only the reason, as a quoted string: `colophon=temperror
-  reason="dns_error"`.
+  reason="dns_error"`. `dns_error`, `dns_limited` and `replay_unchecked` are `temperror`; every
+  other reason is `fail`.
 
 RFC 8601 allows other spellings of the same result, such as folding, comments or a reason
 written as a token; a consumer has to accept them, but this score does not.

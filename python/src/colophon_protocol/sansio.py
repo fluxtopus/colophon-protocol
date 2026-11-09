@@ -76,18 +76,34 @@ class NeedKey:
 
 @dataclass(frozen=True, slots=True)
 class NeedReplayCheck:
-    """Steps 1 to 20 passed. Atomically record ``key`` if it is not already recorded, and resume
-    with True if this call recorded it (§7.6). Keep it until ``expires_at`` (Unix seconds, the
-    credential's ``exp`` plus the grace) plus however long verification may lag arrival."""
+    """Steps 1 to 20 passed; step 21 is the caller's (§7.6).
+
+    Atomically record ``key`` if it is not already recorded, and resume with True if this call
+    recorded it. Keep it until ``expires_at`` (Unix seconds, the credential's ``exp`` plus the
+    grace) plus D, the longest delay the verifier allows between ``arrival`` and verification
+    (``replay.RETENTION`` by default). If the store cannot be read or written, or this is more
+    than D after ``arrival``, call :meth:`unchecked` instead: the message is not verified.
+    """
 
     key: ReplayKey
     expires_at: int
+    arrival: int
     _verified: Verified = field(repr=False)
 
     def resume(self, first_time: bool) -> Verdict:
         if first_time is True:
             return self._verified
         return NotVerified(Reason.REPLAY, "this mailbox verified the tuple before")
+
+    def late(self, now: float, max_delay: int | None) -> bool:
+        """True if verifying at ``now`` is more than ``max_delay`` (D) after arrival. None: no
+        limit."""
+        return max_delay is not None and now - self.arrival > max_delay
+
+    def unchecked(self, detail: str = "the replay store cannot be read or written") -> NotVerified:
+        """``replay_unchecked``, reported as ``temperror``: verifying again within D, once the
+        store is back, may pass (§7.6, §7.8)."""
+        return NotVerified(Reason.REPLAY_UNCHECKED, detail)
 
 
 Step = NeedKey | NeedReplayCheck | Verified | NotVerified
@@ -212,7 +228,7 @@ def _steps_9_to_20(s: _AfterStep8, answer: TxtAnswer | DnsFailure) -> NeedReplay
         nonce=nonce,
     )
     key = ReplayKey(s.receipt.mailbox, s.host, claims.sub, nonce)
-    return NeedReplayCheck(key, claims.expires_at + GRACE, verified)
+    return NeedReplayCheck(key, claims.expires_at + GRACE, s.receipt.arrival, verified)
 
 
 def _check_signature_header(

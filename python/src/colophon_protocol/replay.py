@@ -16,11 +16,13 @@ __all__ = ["AsyncMemoryReplayStore", "MemoryReplayStore"]
 
 
 RETENTION = 24 * 3600
-"""Seconds an entry outlives ``expires_at``: the longest a verifier may lag behind arrival.
+"""Seconds an entry outlives ``expires_at``: D of §7.6, the longest a verifier may lag behind
+arrival. Pass the same value as ``verify(max_delay=...)``.
 
 Step 14 compares the credential with the arrival time, not the time of verifying. A message
 verified late, from a queue, can still pass step 14 after ``expires_at`` has gone by on the
-clock, so an entry dropped exactly at ``expires_at`` would let its replay through.
+clock, so an entry dropped exactly at ``expires_at`` would let its replay through; a message
+verified more than D after arrival is ``replay_unchecked``.
 """
 
 

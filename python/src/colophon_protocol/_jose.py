@@ -9,6 +9,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 from colophon_protocol._codec import b64url_decode, b64url_encode, jcs, parse_ijson
+from colophon_protocol._ed25519 import small_order
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +53,11 @@ def parse_compact(token: str, *, detached: bool) -> CompactJws:
 
 
 def verify_ed25519(public_key: bytes, signature: bytes, header_b64: str, payload_b64: str) -> bool:
-    """Ed25519 over ``ASCII(header_b64 || "." || payload_b64)``. False on any failure."""
+    """Ed25519 over ``ASCII(header_b64 || "." || payload_b64)``, as §6.5 makes it exact.
+    False on any failure. OpenSSL checks S < L and the equation without the cofactor; an R of
+    small order is rejected here. Keys are checked where they are read."""
+    if len(signature) == 64 and small_order(signature[:32]):
+        return False
     try:
         key = Ed25519PublicKey.from_public_bytes(public_key)
         key.verify(signature, f"{header_b64}.{payload_b64}".encode("ascii"))

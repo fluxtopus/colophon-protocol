@@ -283,11 +283,14 @@ def _human(verdict: Verdict) -> str:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
+    message = _read_message(args.message)
     if args.authentication_results is not None:
         if not args.authserv_id:
             _fail("--authentication-results needs --authserv-id: only trust your own server's")
         domains = set(args.dkim_pass) | dkim_pass_domains(
-            args.authentication_results, authserv_id=args.authserv_id, use_header_i=args.header_i
+            args.authentication_results,
+            authserv_id=args.authserv_id,
+            message=message,
         )
     else:
         domains = set(args.dkim_pass)
@@ -307,9 +310,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
         from colophon_protocol.dns import GuardedResolver  # noqa: PLC0415
 
         resolver = GuardedResolver(resolver)
-    verdict = verify(
-        _read_message(args.message), receipt, resolver=resolver, replay_store=MemoryReplayStore()
-    )
+    verdict = verify(message, receipt, resolver=resolver, replay_store=MemoryReplayStore())
     _emit(args, verdict.to_json(), _human(verdict))
     return EXIT_OK if verdict.verified else EXIT_NO
 
@@ -393,11 +394,6 @@ def parser() -> argparse.ArgumentParser:
         help="your server's Authentication-Results value, to read dkim=pass from",
     )
     p.add_argument("--authserv-id", help="your server's authserv-id in that field")
-    p.add_argument(
-        "--header-i",
-        action="store_true",
-        help="also read the domain of header.i (for servers that omit header.d)",
-    )
     p.add_argument("--mailbox", help="the mailbox's stable ID; the first --address by default")
     p.add_argument(
         "--address",

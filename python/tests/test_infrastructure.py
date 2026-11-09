@@ -8,9 +8,16 @@ from types import ModuleType
 import pytest
 
 from colophon_protocol import DnsError, DnsLimited, KeyQuery, Reason, TxtAnswer, aio, verify
-from colophon_protocol.dns import AsyncGuardedResolver, GuardedResolver, StaticResolver
+from colophon_protocol.authres import colophon_result
+from colophon_protocol.dns import (
+    MISS_LIMIT,
+    AsyncGuardedResolver,
+    AsyncStaticResolver,
+    GuardedResolver,
+    StaticResolver,
+)
 from colophon_protocol.model import ReplayKey
-from colophon_protocol.replay import AsyncMemoryReplayStore, MemoryReplayStore
+from colophon_protocol.replay import RETENTION, AsyncMemoryReplayStore, MemoryReplayStore
 
 from helpers import ISSUER, receipt
 
@@ -115,14 +122,83 @@ def test_resolver_bugs_are_dns_errors(sketch: ModuleType) -> None:
     assert verdict.reason is Reason.DNS_ERROR
 
 
-def test_replay_store_failure_propagates(sketch: ModuleType) -> None:
-    class Down:
-        def claim(self, key: ReplayKey, expires_at: int) -> bool:
-            raise ConnectionError("store down")
+class _Down:
+    def claim(self, key: ReplayKey, expires_at: int) -> bool:
+        raise ConnectionError("store down")
 
-    resolver = StaticResolver({ISSUER.dns_name: [ISSUER.dns_record]})
-    with pytest.raises(ConnectionError):
-        verify(sketch.signed(), receipt(), resolver=resolver, replay_store=Down())
+
+class _AsyncDown:
+    async def claim(self, key: ReplayKey, expires_at: int) -> bool:
+        raise ConnectionError("store down")
+
+
+def _resolver() -> StaticResolver:
+    return StaticResolver({ISSUER.dns_name: [ISSUER.dns_record]})
+
+
+def test_replay_store_failure_is_replay_unchecked(sketch: ModuleType) -> None:
+    verdict = verify(sketch.signed(), receipt(), resolver=_resolver(), replay_store=_Down())
+    assert verdict.reason is Reason.REPLAY_UNCHECKED
+    assert colophon_result(verdict) == "temperror"
+
+
+async def test_async_replay_store_failure_is_replay_unchecked(sketch: ModuleType) -> None:
+    verdict = await aio.verify(
+        sketch.signed(),
+        receipt(),
+        resolver=AsyncStaticResolver({ISSUER.dns_name: [ISSUER.dns_record]}),
+        replay_store=_AsyncDown(),
+    )
+    assert verdict.reason is Reason.REPLAY_UNCHECKED
+
+
+@pytest.mark.parametrize(
+    ("delay", "verified"), [(0, True), (RETENTION, True), (RETENTION + 1, False)]
+)
+def test_verified_later_than_d_is_replay_unchecked(
+    sketch: ModuleType, delay: int, verified: bool
+) -> None:
+    r = receipt()
+    store = MemoryReplayStore()
+    verdict = verify(
+        sketch.signed(),
+        r,
+        resolver=_resolver(),
+        replay_store=store,
+        max_delay=RETENTION,
+        clock=lambda: float(r.arrival + delay),
+    )
+    assert verdict.verified is verified
+    if not verified:
+        assert verdict.reason is Reason.REPLAY_UNCHECKED
+        assert len(store) == 0  # the store is not touched
+
+
+async def test_async_verified_later_than_d(sketch: ModuleType) -> None:
+    r = receipt()
+    verdict = await aio.verify(
+        sketch.signed(),
+        r,
+        resolver=AsyncStaticResolver({ISSUER.dns_name: [ISSUER.dns_record]}),
+        replay_store=AsyncMemoryReplayStore(),
+        max_delay=60,
+        clock=lambda: float(r.arrival + 61),
+    )
+    assert verdict.reason is Reason.REPLAY_UNCHECKED
+
+
+def test_twenty_misses_refuse_the_lookup(sketch: ModuleType) -> None:
+    clock = _Clock()
+    guard = GuardedResolver(_resolver(), clock=clock)
+    for i in range(MISS_LIMIT - 1):
+        guard.resolve_txt(KeyQuery(f"m{i}", "acme.example"))
+    verdict = verify(sketch.signed(), receipt(), resolver=guard, replay_store=MemoryReplayStore())
+    assert verdict.verified  # 19 misses: the lookup goes ahead
+    guard = GuardedResolver(_resolver(), clock=clock)
+    for i in range(MISS_LIMIT):
+        guard.resolve_txt(KeyQuery(f"m{i}", "acme.example"))
+    verdict = verify(sketch.signed(), receipt(), resolver=guard, replay_store=MemoryReplayStore())
+    assert verdict.reason is Reason.DNS_LIMITED
 
 
 async def test_async_dns_budget(sketch: ModuleType) -> None:

@@ -2,7 +2,9 @@
 
 Reading: :func:`dkim_pass_domains` takes the DKIM results your own server reported. Only trust a
 field your own border added: match ``authserv_id`` to it, and make sure the border removes fields
-with that ID from incoming mail (RFC 8601 §5). Anything else is the sender's text.
+with that ID from incoming mail (RFC 8601 §5). Anything else is the sender's text. A passing
+signature counts for its ``d=`` (§7.1); :func:`dkim_identity_domain` recovers that ``d=`` from
+the message when the server reports only ``header.i``.
 
 Reporting (§7.8): :func:`colophon_resinfo` writes a verdict as the ``colophon`` method's result,
 and :func:`authentication_results` writes the whole field value under your authserv-id. Both are
@@ -24,6 +26,7 @@ __all__ = [
     "authentication_results",
     "colophon_resinfo",
     "colophon_result",
+    "dkim_identity_domain",
     "dkim_pass_domains",
 ]
 
@@ -122,13 +125,16 @@ def _unquote(value: str) -> str:
 
 
 def dkim_pass_domains(
-    value: str, *, authserv_id: str, use_header_i: bool = False
+    value: str, *, authserv_id: str, message: bytes | None = None
 ) -> frozenset[str]:
-    """The ``header.d`` of every ``dkim=pass`` result, lowercased, from one field's value.
+    """The ``d=`` of every ``dkim=pass`` result, lowercased, from one field's value (§7.1).
+
+    A result counts for its ``header.d``. A result with ``header.i`` and no ``header.d`` counts
+    only when ``message`` is given and :func:`dkim_identity_domain` finds its ``d=`` there:
+    ``header.i`` alone may name a subdomain of ``d=``, so its domain never counts on its own.
 
     Returns an empty set when the field's authserv-id is not ``authserv_id``, or the value does
-    not parse. ``use_header_i`` also reads the domain of ``header.i``, for servers (Gmail among
-    them) that report only that; the i= domain may be a subdomain of d=, so prefer ``header.d``.
+    not parse.
     """
     if len(value) > _MAX_VALUE:
         return frozenset()
@@ -150,11 +156,92 @@ def dkim_pass_domains(
             if eq:
                 props.setdefault(ascii_lower(name), _unquote(prop))
         domain = props.get("header.d")
-        if domain is None and use_header_i and "header.i" in props:
-            domain = props["header.i"].rpartition("@")[2]
+        if domain is None and message is not None and "header.i" in props:
+            domain = dkim_identity_domain(message, props["header.i"])
         if domain:
             found.add(ascii_lower(domain))
     return frozenset(found)
+
+
+_TAG_NAME = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_")
+_HEX = frozenset(b"0123456789ABCDEFabcdef")
+_FWS = b" \t\r\n"
+
+
+def _dkim_tags(value: bytes) -> dict[str, bytes] | None:
+    """A DKIM-Signature tag list (RFC 6376 §3.2), with all whitespace removed from each value.
+    None when it does not parse or a tag repeats: such a field has no identity."""
+    tags: dict[str, bytes] = {}
+    for spec in value.split(b";"):
+        name, eq, tag_value = spec.partition(b"=")
+        name = name.strip(_FWS)
+        if not eq:
+            if name:
+                return None
+            continue  # an empty item, such as after the last ';'
+        text = name.decode("latin-1")
+        if not text or not text[0].isascii() or not text[0].isalpha():
+            return None
+        if any(ch not in _TAG_NAME for ch in text) or text in tags:
+            return None
+        tags[text] = bytes(b for b in tag_value if b not in _FWS)
+    return tags
+
+
+def _dkim_qp_decode(value: bytes) -> bytes | None:
+    """RFC 6376 §2.11 dkim-quoted-printable, whitespace already removed. None if invalid."""
+    out = bytearray()
+    i = 0
+    while i < len(value):
+        if value[i] == 0x3D:
+            pair = value[i + 1 : i + 3]
+            if len(pair) != 2 or pair[0] not in _HEX or pair[1] not in _HEX:
+                return None
+            out.append(int(pair, 16))
+            i += 3
+        else:
+            out.append(value[i])
+            i += 1
+    return bytes(out)
+
+
+def _same_identity(a: bytes, b: bytes) -> bool:
+    """Local parts equal octet for octet, domains equal ignoring ASCII case (§7.1)."""
+    local_a, at_a, domain_a = a.rpartition(b"@")
+    local_b, at_b, domain_b = b.rpartition(b"@")
+    return bool(at_a and at_b) and local_a == local_b and domain_a.lower() == domain_b.lower()
+
+
+def dkim_identity_domain(message: bytes, header_i: str) -> str | None:
+    """The ``d=``, lowercased, of the one ``DKIM-Signature`` field in ``message`` whose identity
+    equals ``header_i`` (§7.1). None when no field or more than one has that identity.
+
+    For a server that reports a passing signature with ``header.i`` and no ``header.d``. A
+    field's identity is its ``i=`` (dkim-quoted-printable, decoded), or ``@`` and its ``d=`` when
+    it has no ``i=``. Identities are equal when their local parts are equal octet for octet and
+    their domains are equal ignoring case. A field whose tag list does not parse, or that has no
+    ``d=``, has no identity. ``message`` is the octets as accepted, as for ``verify``.
+    """
+    # Imported here: model imports this module for reporting, and the parser imports model.
+    from colophon_protocol import _mime  # noqa: PLC0415
+    from colophon_protocol._fail import Fail  # noqa: PLC0415
+
+    try:
+        entity = _mime.parse_entity(bytes(message))
+    except Fail:
+        return None
+    wanted = header_i.encode("utf-8", "surrogateescape")
+    found: list[bytes] = []
+    for field in entity.all("dkim-signature"):
+        tags = _dkim_tags(field.unfolded())
+        if tags is None or not tags.get("d"):
+            continue
+        identity = _dkim_qp_decode(tags["i"]) if "i" in tags else b"@" + tags["d"]
+        if identity is not None and _same_identity(identity, wanted):
+            found.append(tags["d"])
+    if len(found) != 1 or not found[0].isascii():
+        return None
+    return ascii_lower(found[0].decode("ascii"))
 
 
 # ---------------------------------------------------------------- reporting the verdict (§7.8)
@@ -162,7 +249,7 @@ def dkim_pass_domains(
 ColophonResult = Literal["pass", "none", "temperror", "fail"]
 """The results of the ``colophon`` method (§7.8)."""
 
-_TEMPERROR = frozenset({"dns_error", "dns_limited"})
+_TEMPERROR = frozenset({"dns_error", "dns_limited", "replay_unchecked"})
 _TSPECIALS = frozenset('()<>@,;:\\"/[]?=')
 
 
@@ -170,8 +257,9 @@ def colophon_result(verdict: Verdict) -> ColophonResult:
     """The §7.8 result for a verdict.
 
     ``pass`` for a verified message. Otherwise by the §7.2 reason: ``none`` for
-    ``no_signature``, ``temperror`` for ``dns_error`` and ``dns_limited``, which may pass on a
-    later attempt and are never evidence against the sender (§7.4), and ``fail`` for every other
+    ``no_signature``, ``temperror`` for ``dns_error``, ``dns_limited`` and ``replay_unchecked``,
+    which may pass on a later attempt and are never evidence against the sender (§7.4, §7.6): a
+    receiver may hold the message and verify it again within its delay D. ``fail`` for every other
     reason. ``fail`` is not evidence of forgery: a ``Bcc`` copy, or a text a mail system
     rewrote, fails as a forgery does. Handle it as mail with no Colophon signature.
     """

@@ -11,10 +11,37 @@ import base64
 import json
 import sys
 
-from colophon_protocol import NotVerified, Receipt, verify
+from colophon_protocol import KeyQuery, NotVerified, Receipt, ReplayKey, TxtAnswer, verify
 from colophon_protocol.authres import colophon_resinfo
-from colophon_protocol.dns import StaticResolver
+from colophon_protocol.dns import GuardedResolver, StaticResolver
+from colophon_protocol.errors import DnsLimited
 from colophon_protocol.replay import MemoryReplayStore
+
+
+class AfterMisses:
+    """The library's §7.4 guard, with ``misses`` NXDOMAIN lookups for the queried host already
+    counted this hour. The host is known only once the verifier asks, so the misses are made
+    then, at names that are not in ``dns_txt``."""
+
+    def __init__(self, dns_txt: dict[str, list[str] | None], misses: int) -> None:
+        self._guard = GuardedResolver(StaticResolver(dns_txt), clock=lambda: 0.0)
+        self._misses = misses
+
+    def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+        for i in range(self._misses):
+            try:
+                self._guard.resolve_txt(KeyQuery(f"-miss-{i}", query.host))
+            except DnsLimited:
+                break
+        self._misses = 0
+        return self._guard.resolve_txt(query)
+
+
+class Unavailable:
+    """A replay store that cannot be read or written."""
+
+    def claim(self, key: ReplayKey, expires_at: int) -> bool:
+        raise ConnectionError("replay store unavailable")
 
 
 def main() -> int:
@@ -32,8 +59,12 @@ def main() -> int:
             mailbox=d["mailbox"],
             mailbox_addresses=d["mailbox_addresses"],
         )
+        available = d.get("replay_store_available", True)
         verdict = verify(
-            message, receipt, resolver=StaticResolver(d["dns_txt"]), replay_store=store
+            message,
+            receipt,
+            resolver=AfterMisses(d["dns_txt"], d.get("dns_misses", 0)),
+            replay_store=store if available else Unavailable(),
         )
         result: dict[str, object]
         if isinstance(verdict, NotVerified):

@@ -1,11 +1,10 @@
 """Differential tests: the library against the reference sketch on mutated messages.
 
 Each mutation edits the draft's example; the sketch signs the result over its own reading of it.
-Both then verify. They must agree, or disagree for a reason listed in ``KNOWN``: each entry is a
-place where the draft does not say which reading is right (reported as a spec issue), or a known
-sketch defect. The safety property holds without exception: the library never verifies a message
-the sketch rejects, unless the sketch rejected it for one of its defects, and when both verify
-they report the same agent.
+Both then verify, and must give the same verdict and reason: since v0-06 the draft fixes every
+reading the two used to differ on (line ends, header syntax, Content-Type, multipart, 8-bit
+bodies). The one allowance is a sketch crash, which is a sketch defect, never a library verdict.
+When both verify they report the same agent.
 """
 
 from __future__ import annotations
@@ -24,17 +23,6 @@ from helpers import receipt, resolver
 
 SEEDS = range(3000)
 
-# Library detail prefix -> the issue it belongs to. The library is stricter in each.
-KNOWN = {
-    "a bare CR in the header section": "line ends: bare CR (spec issue)",
-    "a header line is not a field": "header syntax (spec issue)",
-    "Content-Type does not parse": "Content-Type grammar (spec issue)",
-    "Content-Type has an RFC 2231 parameter": "Content-Type grammar (spec issue)",
-    "multipart has no close delimiter": "multipart structure (spec issue)",
-    "a part after the body is not marked": "multipart structure (spec issue)",
-    "charset ": "charset octets (sketch accepts a non-ASCII charset name)",
-}
-
 
 def _sketch_verdict(sketch: ModuleType, message: bytes) -> str:
     try:
@@ -43,21 +31,8 @@ def _sketch_verdict(sketch: ModuleType, message: bytes) -> str:
         return f"raised {type(exc).__name__}"
 
 
-def _classify(message: bytes, theirs: str, ours: Verified | NotVerified) -> str | None:
-    body = message.partition(b"\r\n\r\n")[2] or message.partition(b"\n\n")[2]
-    if theirs.startswith("raised"):
-        return "sketch raises (sketch defect)"
-    if theirs in ("malformed", "no_signature") and not body.isascii():
-        return "sketch rejects 8-bit body octets (sketch defect)"
-    if b"\r" in message.replace(b"\r\n", b""):
-        return "line ends: bare CR (spec issue)"
-    if isinstance(ours, NotVerified):
-        for prefix, category in KNOWN.items():
-            if ours.detail.startswith(prefix):
-                return category
-        if ours.reason.value == "signature_invalid":
-            return "the sketch could not sign; the library reads further (ordering)"
-    return None
+def _classify(theirs: str) -> str | None:
+    return "sketch raises (sketch defect)" if theirs.startswith("raised") else None
 
 
 def _case(sketch: ModuleType, seed: int) -> tuple[bytes, str, Verified | NotVerified]:
@@ -86,7 +61,7 @@ def test_differential(sketch: ModuleType) -> None:
                 assert agent["sub"] == ours.agent.sub
                 assert agent["iss"] == ours.agent.iss
             continue
-        category = _classify(message, theirs, ours)
+        category = _classify(theirs)
         if isinstance(ours, Verified):
             # The library must not accept what the sketch refuses, bar the sketch's own defects.
             assert category is not None, f"seed {seed}: library verified, sketch said {theirs}"
@@ -102,10 +77,9 @@ def test_differential(sketch: ModuleType) -> None:
 
 
 @pytest.mark.parametrize("body", [b"Caf\xc3\xa9 for 2\r\n"])
-def test_eight_bit_body_is_a_sketch_defect(sketch: ModuleType, body: bytes) -> None:
-    """The sketch reads a part's payload through compat32's get_payload(decode=False), which
-    decodes non-ASCII octets with the part's charset; encoding that back as ASCII then fails, so
-    the sketch calls every UTF-8 body sent as 8bit malformed. The library verifies it."""
+def test_eight_bit_body_octets_as_they_are(sketch: ModuleType, body: bytes) -> None:
+    """§6.4: body octets are taken as they are. v0-05's sketch called a UTF-8 body sent as 8bit
+    malformed; v0-06's agrees with the library."""
     from colophon_protocol import sign
 
     from helpers import AGENT_KEY, SIGNED, credential
@@ -117,5 +91,5 @@ def test_eight_bit_body_is_a_sketch_defect(sketch: ModuleType, body: bytes) -> N
     )
     signed = sign(unsigned, credential=credential(), agent_key=AGENT_KEY, signed_at=SIGNED)
     ours = verify(signed, receipt(), resolver=resolver(), replay_store=MemoryReplayStore())
-    assert isinstance(ours, Verified)
-    assert _sketch_verdict(sketch, signed) == "malformed"
+    theirs = _sketch_verdict(sketch, signed)
+    assert theirs == ("verified" if isinstance(ours, Verified) else ours.reason.value)

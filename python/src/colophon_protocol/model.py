@@ -49,6 +49,7 @@ class Reason(str, enum.Enum):
     SIGNATURE_INVALID = "signature_invalid"
     NOT_ADDRESSED = "not_addressed"
     REPLAY = "replay"
+    REPLAY_UNCHECKED = "replay_unchecked"
 
     def __str__(self) -> str:
         return self.value

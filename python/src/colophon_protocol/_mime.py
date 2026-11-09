@@ -7,6 +7,7 @@ in files. A bare CR is malformed in a header section and an ordinary octet in a 
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from colophon_protocol._codec import mime_base64_decode
@@ -192,13 +193,15 @@ class _Scanner:
         return self.i >= len(self.data)
 
 
-def parse_content_type(value: bytes) -> ContentType:
+def parse_content_type(value: bytes, *, read_params: bool) -> ContentType:
     """``type/subtype *(; name=value)``: tokens, quoted strings, SP and HTAB between them.
 
-    No comments. A repeated parameter name does not parse (RFC 2045 §5.1). Empty items
-    (``text/plain;``) are allowed. An RFC 2231 parameter (a name with ``*``, such as
-    ``charset*=utf-8''x``) parses but is ``layout``: a mail client may read it as the parameter
-    it extends, so ignoring it would let the sender show one charset and sign another.
+    No comments. Parameters are read only where Colophon uses them, in the top level and the
+    body part (``read_params``); elsewhere only ``type/subtype`` must parse, followed by ``;`` or
+    the end. Where they are read, they follow RFC 2045 §5.1 strictly: a parameter without ``=``,
+    a value that is neither a token nor a quoted string, or a repeated name does not parse.
+    Empty items (``text/plain;``) are allowed. An RFC 2231 name (``charset*``) is kept as written;
+    the layout decides what it means (:func:`extended`).
     """
     s = _Scanner(value)
     s.skip_wsp()
@@ -209,7 +212,9 @@ def parse_content_type(value: bytes) -> ContentType:
     subtype = s.token().lower()
     params: dict[str, str] = {}
     s.skip_wsp()
-    while not s.done():
+    if not s.done() and not s.at(b";"):
+        raise _malformed("Content-Type does not parse: ';' expected")
+    while read_params and not s.done():
         if not s.at(b";"):
             raise _malformed("Content-Type does not parse: ';' expected")
         s.i += 1
@@ -227,54 +232,63 @@ def parse_content_type(value: bytes) -> ContentType:
             raise _malformed(f"Content-Type does not parse: parameter {name} repeated")
         params[name] = val
         s.skip_wsp()
-    if any("*" in name for name in params):
-        raise _layout("Content-Type has an RFC 2231 parameter, outside the v0 layout")
     return ContentType(f"{maintype}/{subtype}", params)
+
+
+def extended(params: dict[str, str], *names: str) -> bool:
+    """True if a parameter Colophon reads has an RFC 2231 form (``name*``, ``name*0``,
+    ``name*0*``). That is ``layout``: a mail client may read it as the parameter it extends,
+    so ignoring it would let the sender show one value and sign another (§6.1)."""
+    return any("*" in key and key.split("*", 1)[0] in names for key in params)
 
 
 # ---------------------------------------------------------------- multipart (RFC 2046 §5.1)
 
+# RFC 2046 §5.1.1: 1 to 70 characters, the last not a space.
+_BOUNDARY = re.compile(r"[0-9A-Za-z'()+_,./:=? -]{0,69}[0-9A-Za-z'()+_,./:=?-]")
 
-def split_multipart(body: bytes, boundary: str) -> list[bytes]:
-    """The body parts between the delimiters. The preamble and the epilogue are dropped.
 
-    A delimiter line is ``--boundary``, then optional SP and HTAB, then the line end; the close
-    delimiter has ``--`` after the boundary. The line end just before a delimiter belongs to it.
-    A body that does not split this way is not the layout of §6.1: no boundary parameter, no
-    delimiter, or no close delimiter is ``layout``. Step 16 names only two malformed cases, a
-    repeated field and a Content-Type that does not parse, and a missing parameter is neither.
+def split_multipart(body: bytes, boundary: str | None) -> list[bytes]:
+    """The body parts between the delimiters, RFC 2046 §5.1.1 strictly (§6.1). The preamble and
+    the epilogue are dropped.
+
+    A line ends at LF, with an optional CR before it. A line that starts with ``--boundary`` is a
+    delimiter: after the boundary it has optional SP and HTAB, or ``--`` and then optional SP and
+    HTAB for the close delimiter. The line end just before a delimiter belongs to it. All of these
+    are malformed: a missing or invalid boundary, a line that starts with ``--boundary`` but is
+    not a delimiter, a delimiter after the close one, two delimiter lines with no line end between
+    them, no close delimiter, and no parts.
     """
-    if not boundary:
-        raise _layout("multipart/mixed without a boundary")
-    dash = b"--" + boundary.encode("latin-1")
+    if boundary is None or not _BOUNDARY.fullmatch(boundary):
+        raise _malformed("multipart/mixed has no valid boundary parameter")
+    dash = b"--" + boundary.encode("ascii")
     parts: list[bytes] = []
-    part_start: int | None = None
+    start: int | None = None  # where the current part begins; None in the preamble
+    closed = False
     pos, n = 0, len(body)
     while pos < n:
-        line_start = pos
-        end, nxt = _line_end(body, pos)
-        if body.startswith(dash, line_start, end):
-            rest = body[line_start + len(dash) : end]
+        end = body.find(b"\n", pos)
+        nxt = n if end == -1 else end + 1
+        line = body[pos:] if end == -1 else body[pos:end].removesuffix(b"\r")
+        if line.startswith(dash):
+            rest = line[len(dash) :]
             close = rest.startswith(b"--")
-            padding = rest[2:] if close else rest
-            if not padding.strip(_WSP):
-                if part_start is not None:
-                    # The line end before the delimiter belongs to the delimiter.
-                    part_end = line_start
-                    if part_end > part_start and body[part_end - 1] == 0x0A:
-                        part_end -= 1
-                        if part_end > part_start and body[part_end - 1] == 0x0D:
-                            part_end -= 1
-                    parts.append(body[part_start:part_end])
-                if close:
-                    if part_start is None:
-                        return []
-                    return parts
-                part_start = nxt
+            if closed:
+                raise _malformed("a delimiter line after the close delimiter")
+            if (rest[2:] if close else rest).strip(_WSP):
+                raise _malformed("a line starts with the delimiter but is not one")
+            if start is not None:
+                if pos == start:
+                    raise _malformed("two delimiter lines with no line end between them")
+                cut = pos - 2 if body[pos - 2 : pos] == b"\r\n" else pos - 1
+                parts.append(body[start:cut])
+            start, closed = nxt, close
         pos = nxt
-    if part_start is None:
-        raise _layout("multipart has no delimiter")
-    raise _layout("multipart has no close delimiter")
+    if not closed:
+        raise _malformed("multipart has no close delimiter")
+    if not parts:
+        raise _malformed("multipart has no parts")
+    return parts
 
 
 # ---------------------------------------------------------------- layout (§6.1, §7.2 step 16)
@@ -302,7 +316,7 @@ def _single(entity: Entity, name: str) -> Field | None:
     return found[0] if found else None
 
 
-def _part(entity: Entity) -> tuple[Part, str | None]:
+def _part(entity: Entity, *, read_params: bool = False) -> tuple[Part, str | None]:
     """Check a part's Content-* fields (malformed), then its transfer encoding (layout).
     Returns the part and its disposition type, lowercase, or None."""
     ctype_field = _single(entity, "content-type")
@@ -310,7 +324,7 @@ def _part(entity: Entity) -> tuple[Part, str | None]:
     disposition_field = _single(entity, "content-disposition")
     ctype = DEFAULT_CONTENT_TYPE
     if ctype_field is not None:
-        ctype = parse_content_type(ctype_field.unfolded())
+        ctype = parse_content_type(ctype_field.unfolded(), read_params=read_params)
     cte = "7bit"
     if cte_field is not None:
         cte = cte_field.unfolded().strip(_WSP).decode("latin-1").lower()
@@ -324,29 +338,35 @@ def _part(entity: Entity) -> tuple[Part, str | None]:
 
 
 def _body_part(entity: Entity) -> Part:
-    part, disposition = _part(entity)
+    part, disposition = _part(entity, read_params=True)
+    params = part.content_type.params
     if part.content_type.type != "text/plain":
         raise _layout(f"the body is {part.content_type.type}, not text/plain")
     if disposition == "attachment":
         raise _layout("the body is marked as an attachment")
-    charset = part.content_type.params.get("charset", "us-ascii").lower()
+    if extended(params, "charset", "format"):
+        raise _layout("the body part has charset or format in RFC 2231 form")
+    charset = params.get("charset", "us-ascii").lower()
     if charset not in ("utf-8", "us-ascii"):
         raise _layout(f"charset {charset!r} is not utf-8 or us-ascii")
-    if part.content_type.params.get("format", "").lower() == "flowed":
+    if params.get("format", "fixed").lower() == "flowed":
         raise _layout("format=flowed is not allowed")
     return part
 
 
 def layout(message: Entity) -> Layout:
-    """§6.1, checked from the top as §7.2 step 16 says."""
-    top, _ = _part(message)
+    """§6.1, checked from the top as §7.2 step 16 says; the first failure gives the reason.
+    Parameters are read at the top level and in the body part, never in an attachment."""
+    top, _ = _part(message, read_params=True)
     if top.content_type.type == "text/plain":
         return Layout(_body_part(message), ())
     if top.content_type.type != "multipart/mixed":
         raise _layout(f"top-level type {top.content_type.type} is not allowed")
-    children = split_multipart(message.body, top.content_type.params.get("boundary", ""))
-    if not children:
-        raise _layout("multipart/mixed has no parts")
+    if top.transfer_encoding not in ("7bit", "8bit", "binary"):
+        raise _layout(f"multipart/mixed with transfer encoding {top.transfer_encoding!r}")
+    if extended(top.content_type.params, "boundary"):
+        raise _layout("boundary in RFC 2231 form")
+    children = split_multipart(message.body, top.content_type.params.get("boundary"))
     body = _body_part(parse_entity(children[0]))
     attachments: list[Part] = []
     for raw in children[1:]:

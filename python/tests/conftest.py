@@ -38,6 +38,8 @@ class Delivery:
     mailbox: str
     mailbox_addresses: list[str]
     dns_txt: dict[str, list[str] | None]
+    dns_misses: int
+    replay_store_available: bool
     expected: str
     expected_authentication_results: str
 
@@ -60,6 +62,8 @@ def load_cases() -> list[Case]:
                 mailbox=d["mailbox"],
                 mailbox_addresses=d["mailbox_addresses"],
                 dns_txt=d["dns_txt"],
+                dns_misses=d["dns_misses"],
+                replay_store_available=d["replay_store_available"],
                 expected=d["expected"],
                 expected_authentication_results=d["expected_authentication_results"],
             )

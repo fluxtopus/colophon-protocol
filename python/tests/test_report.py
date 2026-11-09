@@ -46,15 +46,14 @@ def _signed(cred: str) -> bytes:
     return sign(message, credential=cred, agent_key=AGENT_KEY, signed_at=SIGNED)
 
 
+TEMPERROR = (Reason.DNS_ERROR, Reason.DNS_LIMITED, Reason.REPLAY_UNCHECKED)
+
+
 @pytest.mark.parametrize(
     ("reason", "result"),
     [(r, "none") for r in [Reason.NO_SIGNATURE]]
-    + [(r, "temperror") for r in [Reason.DNS_ERROR, Reason.DNS_LIMITED]]
-    + [
-        (r, "fail")
-        for r in Reason
-        if r not in {Reason.NO_SIGNATURE, Reason.DNS_ERROR, Reason.DNS_LIMITED}
-    ],
+    + [(r, "temperror") for r in TEMPERROR]
+    + [(r, "fail") for r in Reason if r is not Reason.NO_SIGNATURE and r not in TEMPERROR],
 )
 def test_not_verified_reports_the_reason_only(reason: Reason, result: str) -> None:
     verdict = NotVerified(reason, "a detail that must not be reported")
@@ -64,7 +63,7 @@ def test_not_verified_reports_the_reason_only(reason: Reason, result: str) -> No
 
 
 def test_every_reason_has_a_result() -> None:
-    assert len(Reason) == 16
+    assert len(Reason) == 17
 
 
 def test_example_matches_the_draft(sketch: ModuleType) -> None:
