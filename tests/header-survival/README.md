@@ -81,8 +81,9 @@ Where to find the raw source:
 Line endings are normalised to CRLF on read, so an export saved with LF is fine. An export
 dropped into a receiver's directory is used even when that receiver is set up for IMAP or
 Graph. Receivers that share a mailbox (a direct address and a forwarding hop) may be exported
-into one directory; the harness tells the copies apart by the `To` header. Only Gmail is collected over IMAP with an app password; the password file lives in the
-operator's private storage, never in the repository or the shell history.
+into one directory; the harness tells the copies apart by the `To` header. Only Gmail is
+collected over IMAP with an app password; the password file lives in the operator's private
+storage, never in the repository or the shell history.
 
 `send` refuses to run while the SES account is in the sandbox unless `--allow-sandbox` is given,
 because sandboxed accounts deliver only to verified addresses.
