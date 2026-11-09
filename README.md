@@ -18,6 +18,7 @@ To anyone who does not know Colophon, it is still ordinary email.
 | [`reference/colophon_v0.py`](reference/colophon_v0.py) | A reference sketch that signs and verifies exactly as the draft says, and runs the test vectors. It is not a library. |
 | [`reference/example.txt`](reference/example.txt) | The sketch's output: the worked example of Appendix A and the vector results. |
 | [`reference/vectors.json`](reference/vectors.json) | The test vectors of Appendix B, machine-readable: each message as base64 of its octets, the receiver's inputs, and the expected verdict and reason. |
+| [`figures/`](figures/) | The specification's figures, as SVG. They are informative: the text is normative. |
 
 Run the sketch (Python 3.10 or later):
 

@@ -105,6 +105,8 @@ Values written in `code` are exact. "JCS" is the JSON Canonicalization Scheme (R
 
 A grammar written as a regular expression must match the whole value. A value with anything before or after the match, a line break included, does not match.
 
+The figures are informative. Where a figure and the text differ, the text is right.
+
 ## 3. Overview
 
 A Colophon message carries two proofs. A receiver believes "agent X of acme.example" only when both hold.
@@ -114,23 +116,15 @@ A Colophon message carries two proofs. A receiver believes "agent X of acme.exam
    - the credential is signed by a domain key that the `From` host publishes in DNS;
    - the agent signature, made with the key the credential names, covers the message's addresses, subject, text and attachments.
 
-```
-DNS:   s1._colophon.acme.example  TXT  "v=COLOPHON0; k=ed25519; p=<domain public key>"
-                                               |
-                                               | signs (at most 24 h)
-                                               v
-Credential:  iss=acme.example, from=maple-tiger-27@acme.example,
-             agent key, principal, scope, iat, exp
-                                               |
-                                               | names the key that signs
-                                               v
-Agent signature:  over From, To, Cc, Reply-To, Subject, text, attachments
-                                               |
-Header:  Colophon-Signature: v=0; c=<credential>; b=<agent signature>
-Message: still passes DKIM with d=acme.example
-```
+![Two boxes, side by side, lead to one verdict. Proof 1, the domain's mail system sent it: a DKIM signature passes, its d= is exactly the From host, and it covers the Colophon-Signature header. It is checked at step 4, before any DNS lookup. Proof 2, this agent wrote it, is a chain of three: the domain key published in DNS at s1._colophon.acme.example signs the credential c, which lasts at most 24 hours and binds an agent key to one address; that agent key makes the agent signature b, over From, To, Cc, Reply-To, Subject, the text and the attachments. Both proofs lead to: verified, both proofs hold. A note says c and b travel together in one header: Colophon-Signature: v=0; c=…; b=….](figures/figure-1-two-proofs.svg)
+
+*Figure 1. The two proofs. The credential is in §5, the agent signature in §6.5, and the order of the checks in §7.2.*
 
 The issuer reissues each credential automatically, at least once a day. To revoke an agent, the issuer stops reissuing its credential. The credential then lapses within 26 hours: its 24-hour life plus a 2-hour grace for mail in transit.
+
+![A timeline of one credential, from iat to exp, which is at most 24 hours later, and on to exp plus 2 hours. Four bars. The credential is valid from iat to exp. The signer uses it from iat until 6 hours are left; it should not sign in the last 6 hours. A message may arrive from iat minus 5 minutes to exp plus 2 hours. The replay record for a verified message is kept from the moment it verifies to exp plus 2 hours. A bracket under the whole span says: revoke by not reissuing; the last credential's mail stops verifying within 26 hours.](figures/figure-2-credential-times.svg)
+
+*Figure 2. One credential's times. The limits are in §7.7; the arrival check is step 14 of §7.2, and the replay record is in §7.6.*
 
 Revocation does not end a stolen agent key by itself. Every message carries a credential, so whoever holds the key can reuse one. A stolen key stays usable until the issuer stops certifying it, and for up to 26 hours after (§5.2, §9).
 
@@ -348,6 +342,10 @@ Not covered:
 
 DKIM still covers whatever the issuer's DKIM signature lists.
 
+![Two columns. On the left, the lines of the worked example message; on the right, what each line becomes in the signing input. From, with display name Booking agent, becomes from: the address only, lowercased. To becomes to: addresses only. Cc and Reply-To, absent here, become cc and reply_to, empty arrays when absent. Subject becomes subject: raw, as on the wire. Message-ID, Date, In-Reply-To and References are not signed. Colophon-Signature gives v and credential, the SHA-256 of c. DKIM-Signature is not in the input: it is proof 1, and it covers Colophon-Signature. In the body, multipart/mixed is one of the two allowed layouts; the text/plain part becomes text, the SHA-256 of the canonical text; the text/csv attachment becomes an attachments entry with its type and SHA-256, and its file name is not signed. Notes: grey text is not signed; a signed message has no text/html part, no nested multipart and no message part; Bcc is not signed either, and a recipient only on the envelope gets not verified, not_addressed.](figures/figure-3-signed-parts.svg)
+
+*Figure 3. What the agent signature covers, shown on the message of Appendix A.*
+
 ### 6.4 Canonical forms
 
 **Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Colophon-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every CRLF followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
@@ -430,6 +428,10 @@ A verifier SHOULD verify soon after arrival. The domain key in DNS may change la
 ### 7.2 Steps
 
 A verifier runs these steps in order. The first step that fails gives the verdict **not verified**, with the reason shown.
+
+![A column of seven stages between the message, as this receiver's server accepted it, and the verdict verified. Steps 1 to 3, structure: one Colophon-Signature header, one From address. Step 4, aligned DKIM: a DKIM pass for the From host, before any DNS lookup. Steps 5 to 8, parse: the header and the credential; iss is the From host. Steps 9 to 11, the one DNS lookup: the domain key at kid._colophon.From host. Steps 12 to 15, credential: its signature, claims and time window; from is From. Steps 16 to 19, message: layout, signing input, agent signature. Steps 20 and 21, this mailbox: listed in To or Cc; not verified here before. Every stage has a dashed line marked fails to one verdict: not verified, with the reason of the first failing step.](figures/figure-4-verifier-stages.svg)
+
+*Figure 4. The steps below, in stages.*
 
 | # | Check | Reason if it fails |
 | --- | --- | --- |
@@ -945,6 +947,7 @@ The design was settled one question at a time. Each decision has a longer record
 - **A2A.** The hook is an extension claim such as `a2a:card` (§14).
 - **Formal model.** Planned in Tamarin, with two lemmas and two mutants (Appendix C).
 - **Vectors.** Three for multiple DKIM signatures, two for SMTPUTF8 local parts, and one for `iss` in capitals: 80 deliveries.
+- **Figures.** Four informative figures: the two proofs and a credential's times (§3), what the signature covers (§6.3), and the verifier's stages (§7.2). Figure 1 replaces the text diagram in §3. No rule changed.
 
 ### v0-03
 

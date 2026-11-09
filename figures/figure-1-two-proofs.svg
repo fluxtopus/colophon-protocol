@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" role="img" aria-labelledby="t1">
+<title id="t1">Figure 1. The two proofs</title>
+<style>
+text{font:14px system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1d1d1f}
+.b{font-weight:600}.m{fill:#5f6368}.s{font-size:12.5px}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.box{fill:#f3f1ec;stroke:#cfc9bd}.grp{fill:none;stroke:#cfc9bd;stroke-dasharray:5 4}
+.ln{fill:none;stroke:#6b6f75;stroke-width:1.4}.dash{stroke-dasharray:4 3}.ah{fill:#6b6f75}
+.ok{fill:#e4efe0;stroke:#7fa676}.no{fill:#f6e6e1;stroke:#c48b7b}.acc{fill:#8a4b08}.rule{stroke:#e4e1da}
+@media (prefers-color-scheme:dark){
+text{fill:#e8e6e3}.m{fill:#a3a3a8}.box{fill:#1f1f23;stroke:#3d3d44}.grp{stroke:#4a4a52}
+.ln{stroke:#9a9aa0}.ah{fill:#9a9aa0}.ok{fill:#1d2a1c;stroke:#4f7a48}.no{fill:#2e1f1c;stroke:#8a5a4e}
+.acc{fill:#f0b878}.rule{stroke:#2f2f33}}
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<rect class="grp" x="20" y="20" width="280" height="300" rx="8"/>
+<text class="b" x="36" y="46">Proof 1</text>
+<text class="m s" x="36" y="66">The domain's mail system sent it</text>
+<rect class="box" x="40" y="96" width="240" height="86" rx="6"/>
+<text class="b" x="56" y="122">DKIM signature passes</text>
+<text class="s" x="56" y="144">d= is exactly the From host,</text>
+<text class="s" x="56" y="164">and it covers Colophon-Signature</text>
+<text class="m s" x="40" y="214">Checked at step 4,</text>
+<text class="m s" x="40" y="232">before any DNS lookup.</text>
+
+<rect class="grp" x="320" y="20" width="380" height="300" rx="8"/>
+<text class="b" x="336" y="46">Proof 2</text>
+<text class="m s" x="336" y="66">This agent wrote it</text>
+<rect class="box" x="340" y="84" width="340" height="50" rx="6"/>
+<text class="b" x="356" y="105">Domain key, published in DNS</text>
+<text class="mono" x="356" y="124">s1._colophon.acme.example</text>
+<path class="ln" marker-end="url(#a)" d="M510 134V160"/>
+<text class="m s" x="520" y="152">signs</text>
+<rect class="box" x="340" y="162" width="340" height="50" rx="6"/>
+<text class="b" x="356" y="183">Credential <tspan class="mono">c</tspan></text>
+<text class="s" x="356" y="202">At most 24 h. Binds an agent key to one address.</text>
+<path class="ln" marker-end="url(#a)" d="M510 212V238"/>
+<text class="m s" x="520" y="230">that agent key signs</text>
+<rect class="box" x="340" y="240" width="340" height="64" rx="6"/>
+<text class="b" x="356" y="261">Agent signature <tspan class="mono">b</tspan></text>
+<text class="s" x="356" y="280">Over From, To, Cc, Reply-To, Subject,</text>
+<text class="s" x="356" y="297">the text and the attachments.</text>
+
+<path class="ln" marker-end="url(#a)" d="M160 320V376H246"/>
+<path class="ln" marker-end="url(#a)" d="M510 320V376H474"/>
+<rect class="ok" x="250" y="356" width="220" height="40" rx="20"/>
+<text class="b" x="360" y="381" text-anchor="middle">verified: both proofs hold</text>
+<text class="m s" x="360" y="430" text-anchor="middle">c and b travel together in one header:</text>
+<text class="mono" x="360" y="452" text-anchor="middle">Colophon-Signature: v=0; c=…; b=…</text>
+</svg>

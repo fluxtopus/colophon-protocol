@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 556" role="img" aria-labelledby="t4">
+<title id="t4">Figure 4. The verifier's steps, in stages</title>
+<style>
+text{font:14px system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1d1d1f}
+.b{font-weight:600}.m{fill:#5f6368}.s{font-size:12.5px}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.box{fill:#f3f1ec;stroke:#cfc9bd}.grp{fill:none;stroke:#cfc9bd;stroke-dasharray:5 4}
+.ln{fill:none;stroke:#6b6f75;stroke-width:1.4}.dash{stroke-dasharray:4 3}.ah{fill:#6b6f75}
+.ok{fill:#e4efe0;stroke:#7fa676}.no{fill:#f6e6e1;stroke:#c48b7b}.acc{fill:#8a4b08}.rule{stroke:#e4e1da}
+@media (prefers-color-scheme:dark){
+text{fill:#e8e6e3}.m{fill:#a3a3a8}.box{fill:#1f1f23;stroke:#3d3d44}.grp{stroke:#4a4a52}
+.ln{stroke:#9a9aa0}.ah{fill:#9a9aa0}.ok{fill:#1d2a1c;stroke:#4f7a48}.no{fill:#2e1f1c;stroke:#8a5a4e}
+.acc{fill:#f0b878}.rule{stroke:#2f2f33}}
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<rect class="box" x="70" y="20" width="350" height="40" rx="20"/>
+<text x="245" y="45" text-anchor="middle">Message, as this receiver's server accepted it</text>
+<path class="ln" marker-end="url(#a)" d="M245 60v14"/>
+<rect class="box" x="20" y="76" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="95">Steps 1–3 · Structure</text>
+<text class="s" x="36" y="112">One Colophon-Signature header, one From address</text>
+<path class="ln dash" d="M470 98H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 120v14"/>
+<rect class="box" x="20" y="136" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="155">Step 4 · Aligned DKIM</text>
+<text class="s" x="36" y="172">A DKIM pass for the From host, before any DNS lookup</text>
+<path class="ln dash" d="M470 158H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 180v14"/>
+<rect class="box" x="20" y="196" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="215">Steps 5–8 · Parse</text>
+<text class="s" x="36" y="232">The header and the credential; iss is the From host</text>
+<path class="ln dash" d="M470 218H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 240v14"/>
+<rect class="box" x="20" y="256" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="275">Steps 9–11 · The one DNS lookup</text>
+<text class="s" x="36" y="292">The domain key at &lt;kid&gt;._colophon.&lt;From host&gt;</text>
+<path class="ln dash" d="M470 278H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 300v14"/>
+<rect class="box" x="20" y="316" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="335">Steps 12–15 · Credential</text>
+<text class="s" x="36" y="352">Its signature, claims and time window; from is From</text>
+<path class="ln dash" d="M470 338H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 360v14"/>
+<rect class="box" x="20" y="376" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="395">Steps 16–19 · Message</text>
+<text class="s" x="36" y="412">Layout, signing input, agent signature</text>
+<path class="ln dash" d="M470 398H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 420v14"/>
+<rect class="box" x="20" y="436" width="450" height="44" rx="6"/>
+<text class="b" x="36" y="455">Steps 20–21 · This mailbox</text>
+<text class="s" x="36" y="472">Listed in To or Cc; not verified here before</text>
+<path class="ln dash" d="M470 458H520"/>
+<path class="ln" marker-end="url(#a)" d="M245 480v14"/>
+<rect class="ok" x="170" y="496" width="150" height="40" rx="20"/>
+<text class="b" x="245" y="521" text-anchor="middle">verified</text>
+
+<text class="m s" x="482" y="92">fails</text>
+<path class="ln dash" d="M520 98V458"/>
+<path class="ln" marker-end="url(#a)" d="M520 278H556"/>
+<rect class="no" x="560" y="258" width="140" height="40" rx="20"/>
+<text class="b" x="630" y="283" text-anchor="middle">not verified</text>
+<text class="m s" x="630" y="320" text-anchor="middle">with the reason of</text>
+<text class="m s" x="630" y="338" text-anchor="middle">the first failing step</text>
+</svg>

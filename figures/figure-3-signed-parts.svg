@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" role="img" aria-labelledby="t3">
+<title id="t3">Figure 3. What the agent signature covers</title>
+<style>
+text{font:14px system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#1d1d1f}
+.b{font-weight:600}.m{fill:#5f6368}.s{font-size:12.5px}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.box{fill:#f3f1ec;stroke:#cfc9bd}.grp{fill:none;stroke:#cfc9bd;stroke-dasharray:5 4}
+.ln{fill:none;stroke:#6b6f75;stroke-width:1.4}.dash{stroke-dasharray:4 3}.ah{fill:#6b6f75}
+.ok{fill:#e4efe0;stroke:#7fa676}.no{fill:#f6e6e1;stroke:#c48b7b}.acc{fill:#8a4b08}.rule{stroke:#e4e1da}
+@media (prefers-color-scheme:dark){
+text{fill:#e8e6e3}.m{fill:#a3a3a8}.box{fill:#1f1f23;stroke:#3d3d44}.grp{stroke:#4a4a52}
+.ln{stroke:#9a9aa0}.ah{fill:#9a9aa0}.ok{fill:#1d2a1c;stroke:#4f7a48}.no{fill:#2e1f1c;stroke:#8a5a4e}
+.acc{fill:#f0b878}.rule{stroke:#2f2f33}}
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<text class="b" x="20" y="26">In the message (Appendix A)</text>
+<text class="b" x="470" y="26">In the signing input</text>
+<path class="rule" d="M20 38H700"/>
+
+<text class="mono" x="20" y="62">From: <tspan class="m">Booking agent</tspan> &lt;Maple-Tiger-27@acme.example&gt;</text>
+<text x="470" y="62"><tspan class="mono acc b">from</tspan><tspan class="m s" dx="8">address only, lowercased</tspan></text>
+<text class="mono" x="20" y="90">To: <tspan class="m">Reservations</tspan> &lt;reservations@bistro.example&gt;</text>
+<text x="470" y="90"><tspan class="mono acc b">to</tspan><tspan class="m s" dx="8">addresses only</tspan></text>
+<text class="mono m" x="20" y="118">Cc:, Reply-To:  (absent here)</text>
+<text x="470" y="118"><tspan class="mono acc b">cc</tspan><tspan class="m s">, </tspan><tspan class="mono acc b">reply_to</tspan><tspan class="m s" dx="8">[] when absent</tspan></text>
+<text class="mono" x="20" y="146">Subject: Table for 2, Friday 7 November, 19:30</text>
+<text x="470" y="146"><tspan class="mono acc b">subject</tspan><tspan class="m s" dx="8">raw, as on the wire</tspan></text>
+<text class="mono m" x="20" y="174">Message-ID:, Date:, In-Reply-To:, References:</text>
+<text class="m s" x="470" y="174">not signed</text>
+<text class="mono" x="20" y="202">Colophon-Signature: v=0; c=…; b=…</text>
+<text x="470" y="202"><tspan class="mono acc b">v</tspan><tspan class="m s">, </tspan><tspan class="mono acc b">credential</tspan><tspan class="m s" dx="8">SHA-256 of c</tspan></text>
+<text class="mono" x="20" y="230">DKIM-Signature: d=acme.example; h=…</text>
+<text class="m s" x="470" y="230">not in the input: this is proof 1,</text>
+<text class="m s" x="470" y="248">and it covers Colophon-Signature</text>
+
+<path class="rule" d="M20 266H700"/>
+<text class="mono" x="20" y="292">multipart/mixed</text>
+<text class="m s" x="470" y="292">one of the two allowed layouts</text>
+<text class="mono" x="36" y="320">text/plain; charset="utf-8"</text>
+<text x="470" y="320"><tspan class="mono acc b">text</tspan><tspan class="m s" dx="8">SHA-256 of the canonical text</tspan></text>
+<text class="mono" x="36" y="348">text/csv; <tspan class="m">filename="booking.csv"</tspan></text>
+<text x="470" y="348"><tspan class="mono acc b">attachments</tspan><tspan class="m s" dx="8">type and SHA-256;</tspan></text>
+<text class="m s" x="470" y="366">the file name is not signed</text>
+<path class="ln" marker-end="url(#a)" d="M412 58H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 86H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 114H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 142H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 198H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 316H456"/>
+<path class="ln" marker-end="url(#a)" d="M412 344H456"/>
+
+<path class="rule" d="M20 386H700"/>
+<text class="m s" x="20" y="412">Grey text is not signed. A signed message has no text/html part, no nested multipart and no message/* part.</text>
+<text class="m s" x="20" y="434">Bcc is not signed either: a recipient only on the envelope gets not verified (not_addressed).</text>
+</svg>

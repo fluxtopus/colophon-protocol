@@ -32,13 +32,21 @@ _md = MarkdownIt("commonmark", {"html": False}).enable("table")
 
 _HEADING = re.compile(r"<h([23])>(.*?)</h\1>", re.DOTALL)
 _TAG = re.compile(r"<[^>]+>")
-# Text outside <pre>, <code>, <a> and headings may get cross-reference links.
+# Text outside <pre>, <code>, <a>, <img> and headings may get cross-reference links.
 _SKIP = re.compile(
-    r"(<pre>.*?</pre>|<code>.*?</code>|<a [^>]*>.*?</a>|<h[1-6][^>]*>.*?</h[1-6]>)", re.DOTALL
+    r"(<pre>.*?</pre>|<code>.*?</code>|<a [^>]*>.*?</a>|<img [^>]*>|<h[1-6][^>]*>.*?</h[1-6]>)",
+    re.DOTALL,
 )
 _SECTION_REF = re.compile(r"§(\d+(?:\.\d+)*)")
 _APPENDIX_REF = re.compile(r"\bAppendix ([A-E])\b")
 _RFC_REF = re.compile(r"\bRFC (\d{3,5})(?: §(\d+(?:\.\d+)*))?")
+# An image of figures/ alone in a paragraph, followed by its italic caption paragraph.
+_FIGURE = re.compile(
+    r'<p><img src="(figures/[a-z0-9-]+\.svg)" alt="([^"]*)" /></p>\n'
+    r"<p><em>(Figure \d+\..*?)</em></p>",
+    re.DOTALL,
+)
+_VIEWBOX = re.compile(r'viewBox="0 0 (\d+) (\d+)"')
 
 
 def heading_id(text: str) -> str:
@@ -113,6 +121,23 @@ def link_contents(source: str) -> str:
     return re.sub(r"(?<=## Contents\n).*?(?=\n## )", repl, source, count=1, flags=re.DOTALL)
 
 
+def make_figures(body: str) -> str:
+    """Turn each figure image and its caption into <figure>, sized from the SVG's viewBox."""
+
+    def repl(m: re.Match[str]) -> str:
+        src, alt, caption = m.groups()
+        size = _VIEWBOX.search((ROOT / src).read_text(encoding="utf-8"))
+        if size is None:
+            raise SystemExit(f"{src}: no viewBox")
+        width, height = size.groups()
+        return (
+            f'<figure><a href="{src}"><img src="{src}" alt="{alt}" width="{width}" '
+            f'height="{height}"></a><figcaption>{caption}</figcaption></figure>'
+        )
+
+    return _FIGURE.sub(repl, body)
+
+
 def wrap_tables(body: str) -> str:
     return body.replace("<table>", '<div class="table-wrap"><table>').replace(
         "</table>", "</table></div>"
@@ -122,6 +147,7 @@ def wrap_tables(body: str) -> str:
 def rewrite_readme_links(source: str) -> str:
     source = source.replace(f"]({SPEC_SOURCE})", f"]({SPEC_PATH})")
     source = source.replace("](reference/", f"]({SPEC_PATH}reference/")
+    source = source.replace("](figures/)", f"]({REPO_URL}/tree/main/figures)")
     return re.sub(r"\]\(((?:CONTRIBUTING|SECURITY)\.md)\)", rf"]({REPO_URL}/blob/main/\1)", source)
 
 
@@ -197,11 +223,14 @@ def build(out: Path) -> None:
     (out / SPEC_PATH).mkdir(parents=True)
     shutil.copy(ROOT / "site" / "style.css", out / "style.css")
     shutil.copytree(ROOT / "reference", out / SPEC_PATH / "reference")
+    shutil.copytree(ROOT / "figures", out / SPEC_PATH / "figures")
 
     spec_src = (ROOT / SPEC_SOURCE).read_text(encoding="utf-8")
     spec_title = spec_src.splitlines()[0].lstrip("# ").strip()
     spec_body, spec_toc = add_heading_ids(_md.render(link_contents(spec_src)))
-    spec_body = wrap_tables(link_references(spec_body, ""))
+    spec_body = wrap_tables(link_references(make_figures(spec_body), ""))
+    if "<p><img" in spec_body:
+        raise SystemExit(f"{SPEC_SOURCE}: an image without a figure caption")
     (out / SPEC_PATH / "index.html").write_text(
         page(
             title=spec_title,
