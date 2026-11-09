@@ -327,9 +327,11 @@ def cmd_report(args) -> int:
         info.get("sent_at", info["built_at"]), dt.timezone.utc
     ).strftime("%Y-%m-%d %H:%M UTC")
     out_dir = Path(args.out) if args.out else rd
+    rows = report.redact(rows, plan.private_domains)
     md, js = report.write(out_dir, rows, args.run_id, sent_at, info["sender"])
     hd = out_dir / "headers.md"
-    hd.write_text(report.headers_markdown(copies, args.run_id), encoding="utf-8")
+    headers = report.redact_text(report.headers_markdown(copies, args.run_id), plan.private_domains)
+    hd.write_text(headers, encoding="utf-8")
     print(md.read_text(encoding="utf-8"))
     print(f"wrote {md}, {js} and {hd}", file=sys.stderr)
     return 0

@@ -2,6 +2,9 @@
   "sender": "test@colophon-protocol.org",
   "display": "Colophon header test",
   "region": "us-east-2",
+  "private_domains": {
+    "forward.example": "<forwarding domain>"
+  },
   "receivers": {
     "ses-inbound": {
       "provider": "Amazon SES inbound",

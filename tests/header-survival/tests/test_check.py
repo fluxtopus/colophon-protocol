@@ -243,3 +243,38 @@ def test_headers_markdown_reproduces_only_the_colophon_field(built):
     assert fields[0] in text
     assert "(not captured)" in text
     assert "To:" not in text and "Subject:" not in text and "Received" not in text
+
+
+def test_private_domains_are_redacted_from_published_rows():
+    from survival import report
+
+    row = report.Row(
+        "hop",
+        "Gmail",
+        "",
+        ["Cloudflare Email Routing"],
+        "cap",
+        "identical",
+        True,
+        "verified",
+        2560,
+        2560,
+        30,
+        30,
+        ["amazonses.com", "cloudflare-email.net", "colophon-protocol.org", "fwd.example"],
+        [],
+        "topmost Received",
+        "live lookup",
+        "file",
+    )
+    out = report.redact([row], {"fwd.example": "<forwarding domain>"})[0]
+    assert out.dkim_pass_domains == [
+        "amazonses.com",
+        "cloudflare-email.net",
+        "colophon-protocol.org",
+        "<forwarding domain>",
+    ]
+    assert report.redact_text(
+        "signed by FWD.example today", {"fwd.example": "<forwarding domain>"}
+    ) == ("signed by <forwarding domain> today")
+    assert report.redact([row], {}) == [row]

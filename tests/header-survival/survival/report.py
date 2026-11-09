@@ -142,6 +142,31 @@ def markdown(rows: list[Row], run_id: str, sent_at: str, sender: str) -> str:
     return "\n".join(out) + "\n"
 
 
+def redact(rows: list[Row], private_domains: dict[str, str]) -> list[Row]:
+    """The rows with the operator's own domains replaced by their neutral labels wherever a
+    receiver reported them as DKIM signers. The sender's domain and public infrastructure
+    (amazonses.com, cloudflare-email.net) stay: they are the evidence."""
+    if not private_domains:
+        return rows
+    out = []
+    for r in rows:
+        d = dict(r.__dict__)
+        seen: list[str] = []
+        for dom in r.dkim_pass_domains:
+            label = private_domains.get(dom.lower(), dom)
+            if label not in seen:
+                seen.append(label)
+        d["dkim_pass_domains"] = seen
+        out.append(Row(**d))
+    return out
+
+
+def redact_text(text: str, private_domains: dict[str, str]) -> str:
+    for dom, label in private_domains.items():
+        text = re.sub(re.escape(dom), label, text, flags=re.IGNORECASE)
+    return text
+
+
 def write(
     out_dir: Path, rows: list[Row], run_id: str, sent_at: str, sender: str
 ) -> tuple[Path, Path]:

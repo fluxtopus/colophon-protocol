@@ -86,6 +86,9 @@ class Plan:
     display: str
     region: str
     receivers: tuple[Receiver, ...]
+    private_domains: dict[str, str] = field(default_factory=dict)
+    """Domains the operator owns besides the sender's, mapped to the neutral label that stands
+    for them in anything published (a forwarding domain shows up as a DKIM signer)."""
 
     def receiver(self, name: str) -> Receiver:
         for r in self.receivers:
@@ -118,4 +121,5 @@ def load(path: Path) -> Plan:
         display=doc.get("display", "Colophon header test"),
         region=doc.get("region", "us-east-2"),
         receivers=tuple(receivers),
+        private_domains=dict(doc.get("private_domains", {})),
     )

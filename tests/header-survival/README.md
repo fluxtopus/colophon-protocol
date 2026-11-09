@@ -127,4 +127,6 @@ real mailboxes and carry `Received` chains, provider headers and storage keys. T
 private. What a run publishes is `report --out results/<run-id>`: `results.md`, `results.json`
 and `headers.md`, the last holding each copy's `Colophon-Signature` field as sent and as
 stored, which names no mailbox, host or storage key. `.gitignore` keeps captures, sent copies
-and run metadata out of `results/`.
+and run metadata out of `results/`. Domains the operator owns besides the sender's go in
+`private_domains` in the receivers file, each with the neutral label that replaces it in the
+published files (a forwarding domain appears among the DKIM signers of a forwarded copy).
