@@ -1,0 +1,126 @@
+import re
+
+from survival import check
+from survival.reference import ref
+from tests.conftest import AUTHRES, DNS_NAME, header_block, received
+
+
+def inputs(dns, **changes):
+    base = {"mailbox": "box", "addresses": {"box@example.net"}, "dns": dns}
+    base.update(changes)
+    return check.ReceiverInputs(**base)
+
+
+def test_identical_header_verifies(built, dns, now):
+    sent = built["minimal"].raw
+    out = check.check(received(sent, now + 3), inputs(dns), sent)
+    assert out.verified, out.reason
+    assert out.header.status == "identical" and out.header.intact
+    assert out.dkim_pass_domains == ["amazonses.com", "colophon-protocol.org"]
+    assert out.authserv_id == "mx.example.net"
+    assert out.arrival == now + 3 and out.arrival_source == "topmost Received"
+    assert out.dns_name == DNS_NAME and out.dns_source == "given"
+    assert out.signed_fields_changed == []
+
+
+def test_refolded_header_still_verifies(built, dns, now):
+    sent = built["cap"].raw
+    block = header_block(sent)
+    flat = re.sub(r"[ \t\r\n]+", "", block.split(":", 1)[1])
+    refolded = (
+        "Colophon-Signature: "
+        + "\r\n ".join(flat[i : i + 76] for i in range(0, len(flat), 76))
+        + "\r\n"
+    )
+    captured = received(sent.replace(block.encode(), refolded.encode()), now + 3)
+    out = check.check(captured, inputs(dns), sent)
+    assert out.verified, out.reason
+    assert out.header.status == "refolded"
+    assert out.header.captured_octets == out.header.sent_octets == ref.MAX_HEADER_BYTES
+    assert out.header.captured_lines != out.header.sent_lines
+
+
+def test_missing_header(built, dns, now):
+    sent = built["minimal"].raw
+    captured = received(sent.replace(header_block(sent).encode(), b""), now + 3)
+    out = check.check(captured, inputs(dns), sent)
+    assert not out.verified and out.reason == "no_signature"
+    assert out.header.status == "missing" and out.header.captured_count == 0
+
+
+def test_truncated_header(built, dns, now):
+    sent = built["cap"].raw
+    block = header_block(sent)
+    cut = block[:900].rstrip() + "\r\n"
+    out = check.check(
+        received(sent.replace(block.encode(), cut.encode()), now + 3), inputs(dns), sent
+    )
+    assert not out.verified
+    assert out.header.status == "truncated"
+    assert out.header.detail.startswith("cut after")
+
+
+def test_altered_header(built, dns, now):
+    sent = built["minimal"].raw
+    block = header_block(sent)
+    altered = block.replace("b=", "b=A", 1)
+    out = check.check(
+        received(sent.replace(block.encode(), altered.encode()), now + 3), inputs(dns), sent
+    )
+    assert not out.verified
+    assert out.header.status == "altered"
+
+
+def test_duplicated_header(built, dns, now):
+    sent = built["minimal"].raw
+    block = header_block(sent).encode()
+    out = check.check(received(sent.replace(block, block + block), now + 3), inputs(dns), sent)
+    assert not out.verified and out.reason == "multiple_signatures"
+    assert out.header.status == "duplicated" and out.header.captured_count == 2
+
+
+def test_signed_field_change_is_reported(built, dns, now):
+    sent = built["attachments"].raw
+    captured = received(sent.replace(b"Subject: Colophon", b"Subject: Fwd: Colophon"), now + 3)
+    out = check.check(captured, inputs(dns), sent)
+    assert not out.verified and out.reason == "signature_invalid"
+    assert out.header.status == "identical"
+    assert out.signed_fields_changed == ["subject"]
+
+
+def test_dkim_not_aligned_skips_dns(built, now):
+    sent = built["minimal"].raw
+    authres = "Authentication-Results: mx.example.net; dkim=pass header.d=amazonses.com\r\n"
+    out = check.check(received(sent, now + 3, authres), inputs(None), sent)
+    assert not out.verified and out.reason == "dkim_unaligned"
+    assert out.dns_source.startswith("skipped")
+    assert out.dkim_pass_domains == ["amazonses.com"]
+
+
+def test_given_inputs_override_the_capture(built, dns, now):
+    sent = built["minimal"].raw
+    out = check.check(
+        received(sent, now + 3, authres=""),
+        inputs(dns, arrival=now + 9, dkim_pass_domains={"colophon-protocol.org"}),
+        sent,
+    )
+    assert out.verified, out.reason
+    assert out.arrival == now + 9 and out.arrival_source == "given"
+    assert out.dkim_note == "given"
+
+
+def test_capture_alone(built, dns, now):
+    sent = built["minimal"].raw
+    out = check.check(received(sent, now + 3), inputs(dns))
+    assert out.verified
+    assert out.header.status == "captured-only"
+
+
+def test_failed_lookup_is_reported(built, now):
+    sent = built["minimal"].raw
+    out = check.check(received(sent, now + 3), inputs({DNS_NAME: None}), sent)
+    assert not out.verified and out.reason == "dns_error"
+
+
+def test_authres_fixture_is_from_the_receiver():
+    assert AUTHRES.startswith("Authentication-Results: mx.example.net;")
