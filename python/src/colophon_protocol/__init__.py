@@ -10,13 +10,15 @@ Receiving::
         verdict.reason  # a Reason, §7.2
 
 ``colophon_protocol.aio.verify`` is the same, awaited. ``colophon_protocol.sansio`` is the pure
-core both drive.
+core both drive. Sending: ``DomainKey``, ``Issuer``, ``AgentKey`` and ``sign``.
 """
 
 from __future__ import annotations
 
 from colophon_protocol.blocking import ReplayStore, TxtResolver, verify
 from colophon_protocol.errors import ColophonError, DnsError, DnsLimited, IssueError, SigningError
+from colophon_protocol.issuer import Credential, Issuer
+from colophon_protocol.keys import AgentKey, DomainKey
 from colophon_protocol.model import (
     Agent,
     DnsFailure,
@@ -33,6 +35,7 @@ from colophon_protocol.model import (
     Verified,
     Withheld,
 )
+from colophon_protocol.signer import sign
 
 __version__ = "0.0.1.dev0"
 SPEC_VERSION = "v0-04"
@@ -41,11 +44,15 @@ SPEC_VERSION = "v0-04"
 __all__ = [
     "SPEC_VERSION",
     "Agent",
+    "AgentKey",
     "ColophonError",
+    "Credential",
     "DnsError",
     "DnsFailure",
     "DnsLimited",
+    "DomainKey",
     "IssueError",
+    "Issuer",
     "KeyQuery",
     "Named",
     "NotVerified",
@@ -62,5 +69,6 @@ __all__ = [
     "Verified",
     "Withheld",
     "__version__",
+    "sign",
     "verify",
 ]
