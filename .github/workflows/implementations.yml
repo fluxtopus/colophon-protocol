@@ -29,6 +29,8 @@ jobs:
         run: uv run --no-project --with cryptography python reference/colophon_v0.py
       - name: Check vectors.json reproduces
         run: uv run --no-project --with cryptography python reference/colophon_v0.py --json | cmp - reference/vectors.json
+      - name: Check example.txt reproduces
+        run: uv run --no-project --with cryptography python reference/colophon_v0.py --example | cmp - reference/example.txt
       - name: Conformance, reference sketch
         run: >-
           python3 conformance/run.py --quiet --
