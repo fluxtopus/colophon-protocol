@@ -150,11 +150,13 @@ def arrival_time(msg: Message) -> tuple[int | None, str]:
     return None, "none found"
 
 
-def credential_selector_and_host(msg: Message) -> tuple[str, str] | None:
-    """`<kid>._colophon.<host>` from the capture, when the header and From allow it."""
+def credential_selector_and_host(raw: bytes) -> tuple[str, str] | None:
+    """`<kid>._colophon.<host>` from the capture, when the header and From allow it. Read with
+    the sketch's own parser (section 6.1), leniently, as steps 1 and 2 count fields."""
     try:
-        froms = ref.address_list(msg, "From")
-        values = header_instances(msg, ref.HEADER)
+        part = ref.parse_part(raw, strict=False)
+        froms = ref.address_list(part, "From")
+        values = ref.raw_values(part, ref.HEADER)
         if len(froms) != 1 or len(values) != 1:
             return None
         t = ref.tags(compact(values[0]))
@@ -187,11 +189,12 @@ def lookup_txt(name: str) -> list[str] | None:
     return out
 
 
-def signed_fields_changed(captured: Message, sent: Message, credential: str) -> list[str]:
-    """Members of the signing input that differ between the message as sent and as captured."""
+def signed_fields_changed(captured: bytes, sent: bytes, credential: str) -> list[str]:
+    """Members of the signing input that differ between the message as sent and as captured,
+    each read with the sketch's own parser (section 6.1)."""
     try:
-        before = ref.signing_input(sent, credential)
-        after = ref.signing_input(captured, credential)
+        before = ref.signing_input(ref.parse_part(sent), credential)
+        after = ref.signing_input(ref.parse_part(captured), credential)
     except ref.Fail as failed:
         return [f"signing input not buildable: {failed.reason}"]
     return [k for k in before if before[k] != after.get(k)]
@@ -223,7 +226,7 @@ def check(captured_raw: bytes, inputs: ReceiverInputs, sent_raw: bytes | None = 
     dns_name: str | None = None
     answers: list[str] | None = None
     dns_source = "not needed"
-    located = credential_selector_and_host(captured)
+    located = credential_selector_and_host(captured_raw)
     if located:
         selector, host = located
         dns_name = f"{selector}._colophon.{host}"
@@ -248,10 +251,10 @@ def check(captured_raw: bytes, inputs: ReceiverInputs, sent_raw: bytes | None = 
     verdict = ref.verify(captured_raw, arrival_inputs)
 
     changed: list[str] = []
-    if sent is not None and diff.intact:
+    if sent is not None and sent_raw is not None and diff.intact:
         try:
             credential = ref.tags(compact(header_instances(sent, ref.HEADER)[0]))["c"]
-            changed = signed_fields_changed(captured, sent, credential)
+            changed = signed_fields_changed(captured_raw, sent_raw, credential)
         except (ref.Fail, KeyError):
             changed = ["sent header unreadable"]
 
