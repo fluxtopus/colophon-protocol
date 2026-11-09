@@ -19,6 +19,7 @@ To anyone who does not know Colophon, it is still ordinary email.
 | [`reference/example.txt`](reference/example.txt) | The sketch's output: the worked example of Appendix A and the vector results. |
 | [`reference/vectors.json`](reference/vectors.json) | The test vectors of Appendix B, machine-readable: each message as base64 of its octets, the receiver's inputs, and the expected verdict and reason. |
 | [`figures/`](figures/) | The specification's figures, as SVG. They are informative: the text is normative. |
+| [`tests/header-survival/`](tests/header-survival/) | The harness for the header-survival test of §15, issue 1: builds and sends the three messages, captures what receivers stored, verifies and reports. `PRIOR-EVIDENCE.md` there collects what public sources say. |
 
 Run the sketch (Python 3.10 or later):
 
