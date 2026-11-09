@@ -242,8 +242,7 @@ signed = sign(message, credential=credential, agent_key=agent_key, signed_at=now
 ```
 
 `signed` is the message's octets with `Colophon-Signature` added. Send them unchanged as a raw
-message, and have the mail system add DKIM with `d=` the From host afterwards, for example with
-Amazon SES and Easy DKIM:
+message; the mail system then adds DKIM with `d=` the From host. With Amazon SES:
 
 ```python
 ses.send_email(
@@ -253,11 +252,18 @@ ses.send_email(
 )
 ```
 
+§6.2 requires that the issuer's DKIM signature cover `Colophon-Signature`. Amazon SES Easy DKIM
+signs a fixed list of header fields, `From:To:Subject:Message-ID:Date:Content-Type:Content-Transfer-Encoding:MIME-Version`,
+so its signature does not cover `Colophon-Signature`. A sender that relies on Easy DKIM alone
+does not meet that rule of §6.2. Verifiers do not check it, and such messages still verify.
+
 Anything that changes the signed parts after `sign()` (§6.2) breaks the signature: footers,
 banners, subject tags and HTML parts belong in the message before it is signed. `sign()` raises
 `SigningError` when a verifier would reject the result for something in the sender's hands, such
-as a From that is not the credential's address or a credential too close to expiry. Whether a
-given mail system carries `Colophon-Signature` through unchanged has not been tested yet.
+as a From that is not the credential's address or a credential too close to expiry. The draft's
+header-survival test (§15, issue 1) found the header intact at Amazon SES inbound, Gmail (Google
+Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. Other mail
+systems have not been tested.
 
 Keys are Ed25519. `DomainKey.private_jwk()` and `DomainKey.from_jwk()` store and load them;
 keep private keys in a secret store, never in the repository or in logs.
