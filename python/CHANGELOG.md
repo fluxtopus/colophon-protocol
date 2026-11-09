@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased: draft v0-06
+## 0.1.0: draft v0-06
+
+The first release on PyPI. Version 0.0.0 there is a placeholder that holds the name.
 
 `SPEC_VERSION` is `"v0-06"`. The package scores 123/123 on the v0-06 conformance vectors, for
 verdicts and for the §7.8 resinfo, and agrees with the reference sketch on every message the

@@ -24,11 +24,14 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
 
 ## Install
 
-The package is not on PyPI. Install it from a checkout:
+Install it from PyPI:
 
 ```
-pip install './python[dns]'          # or: uv pip install './python[dns]'
+pip install 'colophon-protocol[dns]'      # or: uv add 'colophon-protocol[dns]'
 ```
+
+Or from a checkout of this repository: `pip install './python[dns]'`. Version 0.0.0 on PyPI is a
+placeholder that holds the name; use 0.1.0 or later.
 
 Python 3.10 or later. Import it as `colophon_protocol`.
 
