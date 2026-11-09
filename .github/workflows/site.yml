@@ -24,6 +24,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          cache-dependency-glob: site/build.py
       - name: Run the test vectors
         run: uv run --with cryptography python reference/colophon_v0.py
       - name: Check vectors.json reproduces
