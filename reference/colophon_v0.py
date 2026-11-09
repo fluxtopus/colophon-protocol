@@ -14,14 +14,20 @@ import hashlib
 import json
 import re
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from email import policy
-from email.message import EmailMessage, Message
-from email.parser import BytesParser
+from email.message import EmailMessage
+from typing import Protocol
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    PublicFormat,
+)
 
 HEADER = "Colophon-Signature"
 VERSION = 0
@@ -34,6 +40,7 @@ MAX_NAME_BYTES = 128
 MAX_HEADER_BYTES = 2560  # the Colophon-Signature value, whitespace removed
 MAX_CREDENTIAL_BYTES = 2048  # the c tag value
 MAX_INT = 2**53 - 1
+MISS_LIMIT = 20  # DNS misses per domain per hour (RECOMMENDED; the vectors use it)
 
 # Every grammar is matched against the whole value (fullmatch), never with match() or a $ anchor.
 LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
@@ -46,8 +53,13 @@ LOCAL_PART = re.compile(rf"(?:{ATEXT}|[^\x00-\x7f])+(?:\.(?:{ATEXT}|[^\x00-\x7f]
 LDH = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
 DOMAIN = re.compile(rf"{LDH}(?:\.{LDH})+")
 PHRASE = re.compile(rf"(?:{ATEXT}|[ \t.]|[^\x00-\x7f]|\"(?:[^\"\\\r\n]|\\.)*\")*")
+FIELD_NAME = re.compile(rb"[\x21-\x39\x3b-\x7e]+")  # RFC 5322 ftext: printable ASCII but ':'
 TOKEN = r"[A-Za-z0-9!#$%&'*+.^_`{|}~-]+"
-CONTENT_TYPE = re.compile(rf"\s*{TOKEN}/{TOKEN}\s*(?:;.*)?", re.DOTALL)
+MEDIA_TYPE = re.compile(rf"[ \t]*({TOKEN})/({TOKEN})[ \t]*(?=;|\Z)")
+PARAMETER = re.compile(
+    rf'[ \t]*;[ \t]*(?:({TOKEN})[ \t]*=[ \t]*({TOKEN}|"(?:[^"\\]|\\.)*")[ \t]*)?', re.DOTALL
+)
+BOUNDARY_CHARS = re.compile(r"[0-9A-Za-z'()+_,./:=? -]{0,69}[0-9A-Za-z'()+_,./:=?-]")  # RFC 2046
 TRANSFER_ENCODINGS = {"7bit", "8bit", "binary", "quoted-printable", "base64"}
 BASE64 = re.compile(rb"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?")
 # C0, DEL, C1 and the bidirectional controls: not allowed in scope or a named principal (§5.4).
@@ -80,8 +92,8 @@ def unb64u(text: object) -> bytes:
 
 
 def strict_json(data: bytes) -> object:
-    """I-JSON (RFC 7493) as v0 uses it: unique member names, and numbers are integers within
-    +/-(2^53 - 1). ValueError otherwise."""
+    """I-JSON (RFC 7493) as v0 uses it: unique member names, numbers are integers within
+    +/-(2^53 - 1), and no string holds a surrogate or a noncharacter. ValueError otherwise."""
 
     def pairs(items: list[tuple[str, object]]) -> dict:
         out: dict = {}
@@ -100,16 +112,34 @@ def strict_json(data: bytes) -> object:
             raise ValueError("integer out of range")
         return value
 
+    def check_strings(value: object) -> None:
+        """RFC 7493 §2.1: no surrogate or noncharacter, written as is or as a \\u escape."""
+        if isinstance(value, dict):
+            for k, v in value.items():
+                check_strings(k)
+                check_strings(v)
+        elif isinstance(value, list):
+            for v in value:
+                check_strings(v)
+        elif isinstance(value, str) and any(bad_code_point(ord(ch)) for ch in value):
+            raise ValueError("surrogate or noncharacter")
+
     try:
-        return json.loads(
+        value = json.loads(
             data.decode("utf-8"),
             object_pairs_hook=pairs,
             parse_float=not_an_integer,
             parse_int=integer,
             parse_constant=not_an_integer,
         )
+        check_strings(value)
+        return value
     except RecursionError:
         raise ValueError("nested too deeply") from None
+
+
+def bad_code_point(c: int) -> bool:
+    return 0xD800 <= c <= 0xDFFF or 0xFDD0 <= c <= 0xFDEF or c & 0xFFFE == 0xFFFE
 
 
 def jcs(value: object) -> bytes:
@@ -127,7 +157,13 @@ def public_x(key: Ed25519PrivateKey) -> str:
     return b64u(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw))
 
 
-def jws_sign(header: dict, payload: bytes, key: Ed25519PrivateKey) -> tuple[str, str, str]:
+class SigningKey(Protocol):
+    """An Ed25519 private key, or anything that signs like one (the vectors' crafted signatures)."""
+
+    def sign(self, data: bytes) -> bytes: ...
+
+
+def jws_sign(header: dict, payload: bytes, key: SigningKey) -> tuple[str, str, str]:
     h = b64u(jcs(header))
     p = b64u(payload)
     s = b64u(key.sign(f"{h}.{p}".encode("ascii")))
@@ -135,11 +171,68 @@ def jws_sign(header: dict, payload: bytes, key: Ed25519PrivateKey) -> tuple[str,
 
 
 def jws_check(h: str, p: str, s: str, public: bytes) -> bool:
+    """Ed25519 as §6.5 makes it exact. The cryptography package checks S < L and the equation
+    without the cofactor; the check on R is added here. Keys are checked where they are read."""
     try:
-        Ed25519PublicKey.from_public_bytes(public).verify(unb64u(s), f"{h}.{p}".encode("ascii"))
+        sig = unb64u(s)
+        if len(sig) == 64 and small_order(sig[:32]):
+            return False
+        Ed25519PublicKey.from_public_bytes(public).verify(sig, f"{h}.{p}".encode("ascii"))
         return True
     except (InvalidSignature, ValueError):
         return False
+
+
+# ---------------------------------------------------------------- Ed25519 points (§6.5)
+
+ED_P = 2**255 - 19
+ED_L = 2**252 + 27742317777372353535851937790883648493  # the group order
+ED_D = -121665 * pow(121666, ED_P - 2, ED_P) % ED_P
+Point = tuple[int, int, int, int]  # extended coordinates (X, Y, Z, T)
+
+
+def decode_point(data: bytes) -> Point | None:
+    """RFC 8032 §5.1.3. None if decoding fails, a y of p or more (not canonical) included."""
+    y = int.from_bytes(data, "little")
+    sign, y = y >> 255, y & ((1 << 255) - 1)
+    if len(data) != 32 or y >= ED_P:
+        return None
+    x2 = (y * y - 1) * pow(ED_D * y * y + 1, ED_P - 2, ED_P) % ED_P
+    x = pow(x2, (ED_P + 3) // 8, ED_P)
+    if (x * x - x2) % ED_P:
+        x = x * pow(2, (ED_P - 1) // 4, ED_P) % ED_P
+    if (x * x - x2) % ED_P or (x == 0 and sign):
+        return None
+    if x & 1 != sign:
+        x = ED_P - x
+    return (x, y, 1, x * y % ED_P)
+
+
+def add_points(a: Point, b: Point) -> Point:
+    """RFC 8032 §5.1.4."""
+    x1, y1, z1, t1 = a
+    x2, y2, z2, t2 = b
+    p = ED_P
+    aa, bb = (y1 - x1) * (y2 - x2) % p, (y1 + x1) * (y2 + x2) % p
+    cc, dd = 2 * t1 * t2 * ED_D % p, 2 * z1 * z2 % p
+    e, f, g, h = bb - aa, dd - cc, dd + cc, bb + aa
+    return (e * f % p, g * h % p, f * g % p, e * h % p)
+
+
+def small_order(data: bytes) -> bool:
+    """True if `data` decodes to a point P with 8P the identity."""
+    point = decode_point(data)
+    if point is None:
+        return False
+    for _ in range(3):
+        point = add_points(point, point)
+    x, y, z, _ = point
+    return x % ED_P == 0 and (y - z) % ED_P == 0
+
+
+def valid_key(data: bytes) -> bool:
+    """§6.5: a public key is the canonical encoding of a point that is not of small order."""
+    return decode_point(data) is not None and not small_order(data)
 
 
 def tags(value: str) -> dict[str, str]:
@@ -155,20 +248,61 @@ def tags(value: str) -> dict[str, str]:
     return out
 
 
-# ---------------------------------------------------------------- header fields
+# ---------------------------------------------------------------- header sections
 
 
-def raw_values(msg: Message, name: str) -> list[str]:
+@dataclass
+class Part:
+    """A message or a MIME part: its header fields, unfolded, and its body octets."""
+
+    fields: list[tuple[str, bytes]]
+    body: bytes
+
+
+def parse_part(data: bytes, strict: bool = True) -> Part:
+    """§6.1: a header section, then the body. A line ends at CRLF or at LF alone. Each line is a
+    field (a name, then a colon) or continues the one before it (it starts with SP or HTAB). The
+    first empty line ends the section. Anything else, a CR alone included, is malformed.
+
+    strict=False skips what is not a field, to count fields before the check (§7.2 steps 1, 2)."""
+    fields: list[tuple[str, bytes]] = []
+    pos = 0
+    while pos < len(data):
+        end = data.find(b"\n", pos)
+        if end == -1:
+            line, pos = data[pos:], len(data)
+        else:
+            line, pos = data[pos:end], end + 1
+            if line.endswith(b"\r"):
+                line = line[:-1]
+        if line == b"":
+            return Part(fields, data[pos:])
+        if strict and b"\r" in line:
+            raise Fail("malformed")
+        if line[:1] in (b" ", b"\t"):
+            if fields:
+                last, value = fields[-1]
+                fields[-1] = (last, value + line)  # unfolded: the line end is removed (§6.4)
+                continue
+        else:
+            name, colon, value = line.partition(b":")
+            if colon and FIELD_NAME.fullmatch(name):
+                fields.append((name.decode("ascii"), value))
+                continue
+        if strict:
+            raise Fail("malformed")
+    return Part(fields, b"")
+
+
+def raw_values(part: Part, name: str) -> list[str]:
     """Each instance of a header field, unfolded, as text. Header octets must be UTF-8 (RFC 6532)."""
     out = []
-    for key, value in msg.raw_items():
-        if key.lower() != name.lower():
-            continue
-        try:
-            text = value.encode("ascii", "surrogateescape").decode("utf-8")
-        except UnicodeError:
-            raise Fail("malformed") from None
-        out.append(re.sub(r"\r?\n(?=[ \t])", "", text))
+    for key, value in part.fields:
+        if key.lower() == name.lower():
+            try:
+                out.append(value.decode("utf-8"))
+            except UnicodeError:
+                raise Fail("malformed") from None
     return out
 
 
@@ -228,7 +362,7 @@ def canonical_mailbox(item: str) -> str:
     return canonical_addr_spec(item)
 
 
-def address_list(msg: Message, name: str) -> list[str]:
+def address_list(msg: Part, name: str) -> list[str]:
     values = raw_values(msg, name)
     if len(values) > 1:
         raise Fail("malformed")
@@ -242,7 +376,7 @@ def address_list(msg: Message, name: str) -> list[str]:
     return out
 
 
-def canonical_subject(msg: Message) -> str:
+def canonical_subject(msg: Part) -> str:
     """The raw value (§6.4): unfolded, whitespace collapsed, trimmed. Encoded words are not decoded."""
     values = raw_values(msg, "Subject")
     if len(values) > 1:
@@ -263,49 +397,124 @@ def canonical_text(text: str) -> bytes:
 # ---------------------------------------------------------------- MIME
 
 
-def check_part_headers(part: Message) -> str:
-    """§6.1: Content-* fields appear at most once and parse. Returns the transfer encoding."""
-    for name in ("Content-Type", "Content-Transfer-Encoding", "Content-Disposition"):
-        if len(part.get_all(name, [])) > 1:
-            raise Fail("malformed")
-    ctype = part.get("Content-Type")
-    if ctype is not None and not CONTENT_TYPE.fullmatch(str(ctype)):
+def content_field(part: Part, name: str) -> str | None:
+    """A Content-* field's value. Octets that are not UTF-8 stay opaque: no grammar matches them."""
+    values = [v for k, v in part.fields if k.lower() == name.lower()]
+    return values[0].decode("utf-8", "surrogateescape") if values else None
+
+
+def content_type(part: Part, read_params: bool) -> tuple[str, dict[str, str]]:
+    """§6.1: `type/subtype`, lowercase. Parameters are read only where Colophon uses them, in the
+    top level and the body part: there they follow RFC 2045 §5.1, or the message is malformed."""
+    value = content_field(part, "Content-Type")
+    if value is None:
+        return "text/plain", {}
+    m = MEDIA_TYPE.match(value)
+    if not m:
         raise Fail("malformed")
-    cte = str(part.get("Content-Transfer-Encoding", "7bit")).strip().lower()
+    params: dict[str, str] = {}
+    pos = m.end()
+    while read_params and pos < len(value):
+        p = PARAMETER.match(value, pos)
+        if not p or (p.end() < len(value) and value[p.end()] != ";"):
+            raise Fail("malformed")  # no `=`, or a value that is neither token nor quoted string
+        if p[1] is not None:  # an empty item, such as a trailing `;`, is ignored
+            name, v = p[1].lower(), p[2]
+            if name in params:
+                raise Fail("malformed")
+            params[name] = re.sub(r"\\(.)", r"\1", v[1:-1], flags=re.DOTALL) if v[0] == '"' else v
+        pos = p.end()
+    return f"{m[1]}/{m[2]}".lower(), params
+
+
+def extended(params: dict[str, str], names: tuple[str, ...]) -> bool:
+    """An RFC 2231 form (`name*`, `name*0`, `name*0*`) of a parameter Colophon reads."""
+    return any("*" in k and k.split("*")[0] in names for k in params)
+
+
+def disposition(part: Part) -> str:
+    return (content_field(part, "Content-Disposition") or "").split(";")[0].strip(" \t").lower()
+
+
+def part_headers(part: Part, read_params: bool = False) -> tuple[str, dict[str, str], str]:
+    """§6.1, step 16: the Content-* fields appear at most once and Content-Type parses
+    (malformed), then the transfer encoding is one of five (layout)."""
+    for name in ("Content-Type", "Content-Transfer-Encoding", "Content-Disposition"):
+        if sum(1 for k, _ in part.fields if k.lower() == name.lower()) > 1:
+            raise Fail("malformed")
+    media, params = content_type(part, read_params)
+    cte = (content_field(part, "Content-Transfer-Encoding") or "7bit").strip(" \t").lower()
     if cte not in TRANSFER_ENCODINGS:
         raise Fail("layout")
-    return cte
+    return media, params, cte
 
 
-def check_body_part(part: Message) -> None:
-    check_part_headers(part)
-    if part.get_content_type() != "text/plain" or part.get_content_disposition() == "attachment":
+def check_body_part(part: Part) -> str:
+    """The body part's type, disposition, charset and format (§6.1). Returns the charset."""
+    media, params, _ = part_headers(part, read_params=True)
+    if media != "text/plain" or disposition(part) == "attachment":
         raise Fail("layout")
-    if (part.get_content_charset() or "us-ascii") not in ("us-ascii", "utf-8"):
+    if extended(params, ("charset", "format")):
+        raise Fail("layout")
+    charset = params.get("charset", "us-ascii").lower()
+    if charset not in ("us-ascii", "utf-8"):
         raise Fail("layout")  # names only: no aliases such as utf8
-    if str(part.get_param("format", "fixed")).lower() == "flowed":
+    if params.get("format", "fixed").lower() == "flowed":
         raise Fail("layout")
+    return charset
 
 
-def parts(msg: Message) -> tuple[Message, list[Message]]:
+def split_multipart(body: bytes, boundary: str | None) -> list[bytes]:
+    """§6.1: RFC 2046 §5.1.1, strictly. Returns each part's octets."""
+    if boundary is None or not BOUNDARY_CHARS.fullmatch(boundary):
+        raise Fail("malformed")
+    dash = b"--" + boundary.encode("ascii")
+    out: list[bytes] = []
+    start: int | None = None  # where the current part begins; None in the preamble
+    closed = False
+    pos = 0
+    while pos < len(body):
+        end = body.find(b"\n", pos)
+        line = body[pos:] if end == -1 else body[pos:end].removesuffix(b"\r")
+        nxt = len(body) if end == -1 else end + 1
+        if line.startswith(dash):
+            rest = line[len(dash) :]
+            close = rest.startswith(b"--")
+            if closed or (rest[2:] if close else rest).strip(b" \t"):
+                raise Fail("malformed")  # a delimiter after the close one, or `--boundaryX`
+            if start is not None:
+                if pos == start:
+                    raise Fail("malformed")  # two delimiter lines with no line end between
+                cut = pos - 2 if body[pos - 2 : pos] == b"\r\n" else pos - 1
+                out.append(body[start:cut])  # the line end before a delimiter belongs to it
+            start, closed = nxt, close
+        pos = nxt
+    if not closed or not out:
+        raise Fail("malformed")
+    return out
+
+
+def parts(msg: Part) -> tuple[Part, list[Part]]:
     """§7.2 step 16: walk the parts from the top; the first failure gives the reason."""
-    check_part_headers(msg)
-    if msg.get_content_type() == "text/plain":
+    media, params, cte = part_headers(msg, read_params=True)
+    if media == "text/plain":
         check_body_part(msg)
         return msg, []
-    if msg.get_content_type() != "multipart/mixed":
+    if media != "multipart/mixed" or cte not in ("7bit", "8bit", "binary"):
         raise Fail("layout")
-    children = msg.get_payload()
-    if not isinstance(children, list) or not children:
+    if extended(params, ("boundary",)):
         raise Fail("layout")
-    check_body_part(children[0])
-    for child in children[1:]:
-        check_part_headers(child)
-        if child.get_content_maintype() in ("multipart", "message"):
+    chunks = split_multipart(msg.body, params.get("boundary"))
+    body = parse_part(chunks[0])
+    check_body_part(body)
+    attachments = []
+    for chunk in chunks[1:]:
+        child = parse_part(chunk)
+        media, _, _ = part_headers(child)
+        if media.split("/")[0] in ("multipart", "message") or disposition(child) != "attachment":
             raise Fail("layout")
-        if child.get_content_disposition() != "attachment":
-            raise Fail("layout")
-    return children[0], children[1:]
+        attachments.append(child)
+    return body, attachments
 
 
 def decode_qp(data: bytes) -> bytes:
@@ -334,13 +543,10 @@ def decode_qp(data: bytes) -> bytes:
     return bytes(out)
 
 
-def decoded(part: Message) -> bytes:
-    """A part's body with its transfer encoding removed."""
-    raw = part.get_payload(decode=False)
-    if not isinstance(raw, str):
-        raise Fail("layout")
-    data = raw.encode("ascii", "surrogateescape")
-    cte = check_part_headers(part)
+def decoded(part: Part) -> bytes:
+    """A part's body with its transfer encoding removed (§6.4). 8-bit octets are kept as sent."""
+    _, _, cte = part_headers(part)
+    data = part.body
     if cte == "base64":
         compact = re.sub(rb"[ \t\r\n]+", b"", data)
         if not BASE64.fullmatch(compact):
@@ -351,21 +557,22 @@ def decoded(part: Message) -> bytes:
     return data
 
 
-def body_text(part: Message) -> str:
+def body_text(part: Part) -> str:
+    charset = check_body_part(part)
     try:
-        return decoded(part).decode(part.get_content_charset() or "us-ascii")  # a BOM is content
+        return decoded(part).decode(charset)  # a BOM is content
     except UnicodeError:
         raise Fail("malformed") from None
 
 
-def signing_input(msg: Message, credential: str) -> dict:
+def signing_input(msg: Part, credential: str) -> dict:
     """§6.3. Layout first (step 16), then the rest (step 17)."""
     body, attachments = parts(msg)
     froms = address_list(msg, "From")
     if len(froms) != 1:
         raise Fail("malformed")
     return {
-        "attachments": [{"sha256": sha256(decoded(a)), "type": a.get_content_type()} for a in attachments],
+        "attachments": [{"sha256": sha256(decoded(a)), "type": part_headers(a)[0]} for a in attachments],
         "cc": address_list(msg, "Cc"),
         "credential": sha256(credential.encode("ascii")),
         "from": froms[0],
@@ -384,7 +591,7 @@ def dns_record(domain_key: Ed25519PrivateKey) -> str:
     return f"v=COLOPHON0; k=ed25519; p={public_x(domain_key)}"
 
 
-def issue_credential(domain_key: Ed25519PrivateKey, selector: str, claims: dict) -> str:
+def issue_credential(domain_key: SigningKey, selector: str, claims: dict) -> str:
     header = {"alg": "EdDSA", "kid": selector, "typ": "colophon-cred+jwt"}
     h, p, s = jws_sign(header, jcs(claims), domain_key)
     return f"{h}.{p}.{s}"
@@ -412,7 +619,7 @@ def fold_header(name: str, value: str) -> bytes:
 def sign(
     raw: bytes,
     credential: str,
-    agent_key: Ed25519PrivateKey,
+    agent_key: SigningKey,
     iat: int,
     nonce: str,
     strict: bool = True,
@@ -424,8 +631,7 @@ def sign(
         claims = strict_json(unb64u(credential.split(".")[1]))
         if claims["exp"] - iat < MIN_REMAINING:
             raise ValueError("credential too close to expiry to sign with")
-    msg = BytesParser(policy=policy.compat32).parsebytes(raw)
-    payload = jcs(signing_input(msg, credential))
+    payload = jcs(signing_input(parse_part(raw), credential))
     header = {"alg": "EdDSA", "iat": iat, "nonce": nonce, "typ": "colophon-sig"}
     h, _, s = jws_sign(header, payload, agent_key)
     value = f"v={VERSION}; c={credential}; b={h}..{s}"
@@ -447,6 +653,8 @@ class Arrival:
     mailbox_addresses: set[str]  # every address that mailbox receives at: its own and its aliases
     dns: dict[str, list[str] | None]  # TXT answers; a missing name is NXDOMAIN, None a failed lookup
     envelope_recipient: str = ""  # the RCPT TO; the receiver maps it to the mailbox. Not used here.
+    dns_misses: int = 0  # misses for the From host this hour, before this message (§7.4)
+    replay_store_available: bool = True  # whether the replay store can be read and written (§7.6)
     seen: set[tuple] = field(default_factory=set)  # the replay store for the mailbox
 
 
@@ -459,7 +667,7 @@ class Verdict:
 
 
 AR_PROPERTIES = ("from", "sub", "s", "principal", "cred")
-TEMPERROR = {"dns_error", "dns_limited"}
+TEMPERROR = {"dns_error", "dns_limited", "replay_unchecked"}
 
 
 def authentication_results(verdict: Verdict) -> str:
@@ -481,6 +689,8 @@ def domain_key(answers: list[str]) -> bytes:
     """§7.4: the one Colophon record at the name, or Fail."""
     records = []
     for answer in answers:
+        if not answer.isascii():
+            continue  # records are octets, never decoded: a non-ASCII one is not a Colophon record
         try:
             record = tags(answer)
         except Fail:
@@ -498,7 +708,7 @@ def domain_key(answers: list[str]) -> bytes:
         key = unb64u(record["p"])
     except ValueError:
         raise Fail("key_not_found") from None
-    if len(key) != 32:
+    if len(key) != 32 or not valid_key(key):
         raise Fail("key_not_found")
     return key
 
@@ -553,7 +763,7 @@ def agent_key(claims: dict) -> bytes:
         key = unb64u(jwk.get("x"))
     except ValueError:
         raise Fail("credential_invalid") from None
-    if len(key) != 32:
+    if len(key) != 32 or not valid_key(key):
         raise Fail("credential_invalid")
     return key
 
@@ -568,17 +778,17 @@ def verify(raw: bytes, arrival: Arrival) -> Verdict:
 
 def _verify(raw: bytes, arrival: Arrival) -> tuple[dict, dict]:
     """§7.2, step by step. The first failing step gives the reason."""
-    msg = BytesParser(policy=policy.compat32).parsebytes(raw)
     t_arr = arrival.accepted_at
 
-    # 1, 2. exactly one Colophon-Signature
-    count = sum(1 for key, _ in msg.raw_items() if key.lower() == HEADER.lower())
+    # 1, 2. exactly one Colophon-Signature, counted before the header section is checked
+    count = sum(1 for key, _ in parse_part(raw, strict=False).fields if key.lower() == HEADER.lower())
     if count == 0:
         raise Fail("no_signature")
     if count > 1:
         raise Fail("multiple_signatures")
 
-    # 3. exactly one From address; H is its host
+    # 3. a well-formed header section (§6.1), and exactly one From address; H is its host
+    msg = parse_part(raw)
     froms = address_list(msg, "From")
     if len(froms) != 1:
         raise Fail("malformed")
@@ -628,8 +838,10 @@ def _verify(raw: bytes, arrival: Arrival) -> tuple[dict, dict]:
     ):
         raise Fail("credential_invalid")
 
-    # 9 to 11. the domain key (the DNS budget of §7.4 is the receiver's; not modelled here)
+    # 9 to 11. the domain key. Nothing is cached here, so every lookup counts against the budget.
     name = f"{selector}._colophon.{host}"
+    if arrival.dns_misses >= MISS_LIMIT:
+        raise Fail("dns_limited")
     if name in arrival.dns and arrival.dns[name] is None:
         raise Fail("dns_error")
     key = domain_key(arrival.dns.get(name) or [])
@@ -670,6 +882,8 @@ def _verify(raw: bytes, arrival: Arrival) -> tuple[dict, dict]:
 
     # 21. not verified before for this mailbox
     seen_key = (arrival.mailbox, host, claims["sub"], nonce)
+    if not arrival.replay_store_available:
+        raise Fail("replay_unchecked")  # never verified without the check
     if seen_key in arrival.seen:
         raise Fail("replay")
     arrival.seen.add(seen_key)
@@ -754,17 +968,80 @@ def signed(
     unsigned: bytes | None = None,
     iat: int = SIGNED,
     credential: str | None = None,
+    agent: SigningKey = AGENT_KEY,
 ) -> bytes:
     if credential is None:
         credential = issue_credential(DOMAIN_KEY, "s1", claims or example_claims())
     raw = unsigned or example_unsigned()
-    return sign(raw, credential, AGENT_KEY, iat=iat, nonce=EXAMPLE_NONCE, strict=False)
+    return sign(raw, credential, agent, iat=iat, nonce=EXAMPLE_NONCE, strict=False)
 
 
 def credential_with_payload(payload: bytes) -> str:
     """A credential over exact payload bytes, for vectors whose JSON JCS cannot produce."""
     h, p, s = jws_sign({"alg": "EdDSA", "kid": "s1", "typ": "colophon-cred+jwt"}, payload, DOMAIN_KEY)
     return f"{h}.{p}.{s}"
+
+
+class Crafted:
+    """Stands in for a private key: `sign` returns whatever signature a vector needs."""
+
+    def __init__(self, sign: Callable[[bytes], bytes]) -> None:
+        self.sign = sign
+
+
+def ed_mul(n: int, point: Point) -> Point:
+    out: Point = (0, 1, 1, 0)
+    while n:
+        if n & 1:
+            out = add_points(out, point)
+        point, n = add_points(point, point), n >> 1
+    return out
+
+
+def ed_encode(point: Point) -> bytes:
+    x, y, z, _ = point
+    zi = pow(z, ED_P - 2, ED_P)
+    x, y = x * zi % ED_P, y * zi % ED_P
+    return (y | (x & 1) << 255).to_bytes(32, "little")
+
+
+def base_point() -> Point:
+    point = decode_point((4 * pow(5, ED_P - 2, ED_P) % ED_P).to_bytes(32, "little"))
+    assert point is not None
+    return point
+
+
+ED_BASE = base_point()
+IDENTITY = ed_encode((0, 1, 1, 0))  # a public key that every signature R = identity, S = 0 verifies under
+ORDER_8 = bytes.fromhex("c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a")
+
+
+def secret_scalar(key: Ed25519PrivateKey) -> int:
+    """RFC 8032 §5.1.5: the scalar a, with A = aB."""
+    seed = key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+    a = int.from_bytes(hashlib.sha512(seed).digest()[:32], "little")
+    return (a & ((1 << 254) - 8)) | (1 << 254)
+
+
+def agent_signature(r_point: Point, s_of: Callable[[int], int]) -> Crafted:
+    """An agent signature with a chosen R, and S computed from k = SHA-512(R || A || M) mod L."""
+    public = AGENT_KEY.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    def sign(data: bytes) -> bytes:
+        r = ed_encode(r_point)
+        k = int.from_bytes(hashlib.sha512(r + public + data).digest(), "little") % ED_L
+        return r + (s_of(k) % ED_L).to_bytes(32, "little")
+
+    return Crafted(sign)
+
+
+def non_canonical_key() -> bytes:
+    """The encoding y + p of a point of large order with a small y: decoders that reduce y accept it."""
+    for y in range(2, 19):
+        good = y.to_bytes(32, "little")
+        if decode_point(good) is not None and not small_order(good):
+            return (y + ED_P).to_bytes(32, "little")
+    raise AssertionError
 
 
 MAILBOX = {
@@ -831,6 +1108,25 @@ def vectors() -> list[Case]:
         forwarded.rstrip(),
         edit(attachment_part, rfc822_part),
     )
+    veg = "végétarien".encode()
+    eight_bit = edit(b"vegetarian", veg, edit(b"quoted-printable", b"8bit", unsigned))
+    surrogate = payload.replace(b'"sub":"ag_7Hq2"', b'"sub":"ag_\\ud800"')
+    nonchar = payload.replace(b'"scope":"Books', '"scope":"￿Books'.encode())
+    delimiter = f"--{BOUNDARY}\r\n".encode()
+    close = f"--{BOUNDARY}--\r\n".encode()
+    boundary_70 = (BOUNDARY + "x" * (70 - len(BOUNDARY))).encode()
+    # Ed25519 (§6.5): keys and signatures that RFC 8032's equation alone lets through
+    forge = Crafted(lambda data: IDENTITY + bytes(32))  # R = identity, S = 0
+    identity_agent = example_claims(cnf={"jwk": {"crv": "Ed25519", "kty": "OKP", "x": b64u(IDENTITY)}})
+    a = secret_scalar(AGENT_KEY)
+    r = int.from_bytes(hashlib.sha256(b"colophon-v0 test r").digest(), "little") % ED_L
+    order_8 = decode_point(ORDER_8)
+    assert order_8 is not None and small_order(ORDER_8)
+
+    def s_plus_l(data: bytes) -> bytes:
+        sig = AGENT_KEY.sign(data)
+        return sig[:32] + (int.from_bytes(sig[32:], "little") + ED_L).to_bytes(32, "little")
+
     other_mailbox = {
         "mailbox": "mbx-tables",
         "mailbox_addresses": {"tables@bistro.example", "reservations@bistro.example"},
@@ -881,6 +1177,46 @@ def vectors() -> list[Case]:
         ),
         one("arrived exactly at exp + grace", raw, "verified", accepted_at=ISSUED + MAX_LIFETIME + GRACE),
         one("signed 1 hour before the credential's iat", signed(iat=ISSUED - 3600), "verified"),
+        one("body in 8bit with non-ASCII text", signed(unsigned=eight_bit), "verified"),
+        one(
+            "8-bit octets inside a quoted-printable body",
+            signed(unsigned=edit(b"vegetarian", veg, unsigned)),
+            "verified",
+        ),
+        one("lines end in LF alone", raw.replace(crlf, b"\n"), "verified"),
+        one("a CR alone ends a body line", edit(b"vegetarian.\r\n", b"vegetarian.\r"), "verified"),
+        one("empty display name in To", set_header(b"To", b"<reservations@bistro.example>"), "verified"),
+        one("quoted-pair in the charset", edit(b'charset="utf-8"', b'charset="utf\\-8"'), "verified"),
+        one("empty parameter items", edit(b'charset="utf-8"', b'; charset="utf-8";'), "verified"),
+        one(
+            "attachment name in RFC 2231 form",
+            edit(b"Content-Type: text/csv", b"Content-Type: text/csv; name*=utf-8''r%C3%A9servation.csv"),
+            "verified",
+        ),
+        one(
+            "attachment parameter that does not parse (not read)",
+            edit(b"Content-Type: text/csv", "Content-Type: text/csv; name=réservation csv".encode()),
+            "verified",
+        ),
+        one("boundary of 70 characters", raw.replace(BOUNDARY.encode(), boundary_70), "verified"),
+        one(
+            "preamble and epilogue",
+            edit(b"\r\n\r\n" + delimiter, b"\r\n\r\nThis is a multi-part message.\r\n" + delimiter)
+            + b"Epilogue\r\n",
+            "verified",
+        ),
+        one(
+            "agent signature with another valid R (R need not be the RFC 8032 one)",
+            signed(agent=agent_signature(ed_mul(r, ED_BASE), lambda k: r + k * a)),
+            "verified",
+        ),
+        one(
+            "a non-ASCII Colophon record beside the record (not a Colophon record)",
+            raw,
+            "verified",
+            dns={DNS_NAME: ["v=COLOPHON0; k=ed25519; n=clé; p=", record]},
+        ),
+        one("19 DNS misses for the host this hour", raw, "verified", dns_misses=19),
         # covered content changed
         one("subject changed", edit(b"Subject: Table for 2", b"Subject: Table for 4"), "signature_invalid"),
         one(
@@ -910,6 +1246,12 @@ def vectors() -> list[Case]:
         ),
         one("unknown transfer encoding", edit(b"quoted-printable", b"x-uuencode"), "layout"),
         one("message/rfc822 attachment", rfc822, "layout"),
+        one("charset in RFC 2231 form", edit(b'charset="utf-8"', b"charset*=utf-8''utf-8"), "layout"),
+        one(
+            "transfer encoding on the multipart",
+            before(b"Content-Type: multipart", b"Content-Transfer-Encoding: base64"),
+            "layout",
+        ),
         # malformed
         one("second To field", before(b"Subject:", b"To: x@evil.example"), "malformed"),
         one("second Subject field", before(b"Message-ID:", b"Subject: Table for 8"), "malformed"),
@@ -964,6 +1306,28 @@ def vectors() -> list[Case]:
             signed(example_claims(**{"example.com:pad": "x" * 1200})),
             "malformed",
         ),
+        one("escaped surrogate in sub", signed(credential=credential_with_payload(surrogate)), "malformed"),
+        one("noncharacter U+FFFF in scope", signed(credential=credential_with_payload(nonchar)), "malformed"),
+        one("a CR alone in To", edit(b"To: Reservations", b"To: Reserv\rations"), "malformed"),
+        one("a header line that is not a field", before(b"Subject:", b"X-Note"), "malformed"),
+        one(
+            "charset given twice", edit(b'charset="utf-8"', b'charset="utf-8"; charset=utf-8'), "malformed"
+        ),
+        one("a parameter without a value", edit(b'charset="utf-8"', b'charset="utf-8"; flowed'), "malformed"),
+        one(
+            "boundary given twice",
+            edit(f'boundary="{BOUNDARY}"'.encode(), f'boundary="{BOUNDARY}"; boundary=x'.encode()),
+            "malformed",
+        ),
+        one("boundary of 71 characters", raw.replace(BOUNDARY.encode(), boundary_70 + b"x"), "malformed"),
+        one("no close delimiter", edit(close, b""), "malformed"),
+        one("two delimiter lines in a row", edit(delimiter, delimiter + delimiter), "malformed"),
+        one(
+            "a line that starts with the delimiter",
+            edit(b"Thank you", f"Thank you\r\n--{BOUNDARY}x".encode()),
+            "malformed",
+        ),
+        one("a delimiter in the epilogue", raw + delimiter, "malformed"),
         # count, DKIM, version
         one("second Colophon-Signature", before(b"From:", b"Colophon-Signature: v=0"), "multiple_signatures"),
         one("no Colophon-Signature", raw[raw.index(b"From:") :], "no_signature"),
@@ -1000,6 +1364,24 @@ def vectors() -> list[Case]:
         dns("key of the wrong length", ["v=COLOPHON0; k=ed25519; p=AAAA"], "key_not_found"),
         dns("key in padded base64", [record + "="], "key_not_found"),
         dns("record with empty p=", ["v=COLOPHON0; k=ed25519; p="], "key_revoked"),
+        dns("the record with a non-ASCII tag added", [record + "; n=clé"], "key_not_found"),
+        one(
+            "domain key is the identity point (every credential verifies under it)",
+            signed(credential=issue_credential(forge, "s1", example_claims())),
+            "key_not_found",
+            dns={DNS_NAME: [f"v=COLOPHON0; k=ed25519; p={b64u(IDENTITY)}"]},
+        ),
+        dns(
+            "domain key of 32 zero octets (small order)",
+            [f"v=COLOPHON0; k=ed25519; p={b64u(bytes(32))}"],
+            "key_not_found",
+        ),
+        dns(
+            "domain key not in canonical encoding",
+            [f"v=COLOPHON0; k=ed25519; p={b64u(non_canonical_key())}"],
+            "key_not_found",
+        ),
+        one("20 DNS misses for the host this hour", raw, "dns_limited", dns_misses=20),
         dns("record holds a different key", [dns_record(test_key("other"))], "credential_invalid"),
         # credential contents
         claims("iss in capitals", "credential_invalid", iss="ACME.EXAMPLE"),
@@ -1017,6 +1399,22 @@ def vectors() -> list[Case]:
             "agent key of 31 octets",
             "credential_invalid",
             cnf={"jwk": {"crv": "Ed25519", "kty": "OKP", "x": b64u(b"\x01" * 31)}},
+        ),
+        one(
+            "agent key is the identity point (every signature verifies under it)",
+            signed(identity_agent, agent=forge),
+            "credential_invalid",
+        ),
+        one("agent signature with S + L in place of S", signed(agent=Crafted(s_plus_l)), "signature_invalid"),
+        one(
+            "agent signature with R the identity point",
+            signed(agent=agent_signature((0, 1, 1, 0), lambda k: k * a)),
+            "signature_invalid",
+        ),
+        one(
+            "agent signature that only a cofactored check accepts",
+            signed(agent=agent_signature(add_points(ed_mul(r, ED_BASE), order_8), lambda k: r + k * a)),
+            "signature_invalid",
         ),
         # time and address
         one(
@@ -1053,6 +1451,7 @@ def vectors() -> list[Case]:
             mailbox_addresses={"x@bistro.example"},
             envelope_recipient="x@bistro.example",
         ),
+        one("replay store unavailable", raw, "replay_unchecked", replay_store_available=False),
     ]
 
 
@@ -1089,6 +1488,8 @@ def vector_json(cases: list[Case]) -> list[dict]:
                     "mailbox": a.mailbox,
                     "mailbox_addresses": sorted(a.mailbox_addresses),
                     "dns_txt": a.dns,
+                    "dns_misses": a.dns_misses,
+                    "replay_store_available": a.replay_store_available,
                     "expected": want,
                     "expected_authentication_results": report,
                 }
@@ -1099,7 +1500,7 @@ def vector_json(cases: list[Case]) -> list[dict]:
 
 def print_example() -> None:
     raw = signed()
-    parsed = BytesParser(policy=policy.compat32).parsebytes(raw)
+    parsed = parse_part(raw)
     value = tags(raw_values(parsed, HEADER)[0])
     credential = value["c"]
     print("## DNS\n")
@@ -1126,7 +1527,10 @@ def main() -> int:
         doc = {
             "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. "
             "Deliveries run in order and share one replay store; a missing DNS name is "
-            "NXDOMAIN and null is a failed lookup. expected_authentication_results is the "
+            "NXDOMAIN, null is a failed lookup, and a TXT string stands for its UTF-8 octets. "
+            "dns_misses counts the From host's misses this hour before the delivery, with no "
+            "key cached (section 7.4); replay_store_available false means the replay store "
+            "cannot be read or written (section 7.6). expected_authentication_results is the "
             "colophon resinfo of section 7.8, unfolded.",
             "cases": vector_json(cases),
         }

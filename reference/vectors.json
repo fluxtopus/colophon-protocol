@@ -1,5 +1,5 @@
 {
- "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. Deliveries run in order and share one replay store; a missing DNS name is NXDOMAIN and null is a failed lookup. expected_authentication_results is the colophon resinfo of section 7.8, unfolded.",
+ "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. Deliveries run in order and share one replay store; a missing DNS name is NXDOMAIN, null is a failed lookup, and a TXT string stands for its UTF-8 octets. dns_misses counts the From host's misses this hour before the delivery, with no key cached (section 7.4); replay_store_available false means the replay store cannot be read or written (section 7.6). expected_authentication_results is the colophon resinfo of section 7.8, unfolded.",
  "cases": [
   {
    "name": "replay: one mailbox, its alias, and a second mailbox",
@@ -21,6 +21,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     },
@@ -40,6 +42,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "replay",
      "expected_authentication_results": "colophon=fail reason=\"replay\""
     },
@@ -59,6 +63,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "replay",
      "expected_authentication_results": "colophon=fail reason=\"replay\""
     },
@@ -78,6 +84,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -103,6 +111,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -128,6 +138,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -153,6 +165,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -178,6 +192,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -203,6 +219,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -228,6 +246,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -253,6 +273,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -278,6 +300,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -303,6 +327,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -329,6 +355,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -355,6 +383,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -380,6 +410,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -405,6 +437,387 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "body in 8bit with non-ASCII text",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi4yaUdfLXRIdU45UUxpdTVCNUZLOW9Tc1RueFN4WkZFelB4Ng0KIGJucVNOOG5VYXBydFIzQkY2ZEIzOWJfLXh6Q1BubnM5OEdDN3BRMVFfWnVTdG44RGdBUQ0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IDhiaXQNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHbDqWfDqXRhcmllbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "8-bit octets inside a quoted-printable body",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi4yaUdfLXRIdU45UUxpdTVCNUZLOW9Tc1RueFN4WkZFelB4Ng0KIGJucVNOOG5VYXBydFIzQkY2ZEIzOWJfLXh6Q1BubnM5OEdDN3BRMVFfWnVTdG44RGdBUQ0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHbDqWfDqXRhcmllbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "lines end in LF alone",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7CiBjPWV5SmhiR2NpT2lKRlpFUlRRU0lzSW10cFpDSTZJbk14SWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0WTNKbFpDdHFkM1FpZlEuZXlKagogYm1ZaU9uc2lhbmRySWpwN0ltTnlkaUk2SWtWa01qVTFNVGtpTENKcmRIa2lPaUpQUzFBaUxDSjRJam9pYkVNNVVISnJURmN5VVcxUVkKIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqCiBvaWJXRndiR1V0ZEdsblpYSXRNamRBWVdOdFpTNWxlR0Z0Y0d4bElpd2lhV0YwSWpveE56a3pPRFkxTmpBd0xDSnBjM01pT2lKaFkyMQogbExtVjRZVzF3YkdVaUxDSndjbWx1WTJsd1lXd2lPbnNpYVdRaU9pSndYMWhyTWpraUxDSnRiMlJsSWpvaWNITmxkV1J2Ym5sdGIzVnoKIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJCiBDUTFNREFnY0dWeUlHSnZiMnRwYm1jdUlpd2ljM1ZpSWpvaVlXZGZOMGh4TWlKOS5SWFpNTENHR1NmMWgySDJ2bTZSNjJGVWVId0VwQgogbHRsNHZxb3VBNDNnTDI0bzVjQ3pVTXg4dHNrVkVnRFdFT0tjQlJZSHc4cTRQdXhOZnFtR0ROTkF3OwogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYKIDBZakkxYzJWUklpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dGMybG5JbjAuLmxtSXZSb3YydjZVMy1kUlUtbjA4bUMtUmg0czZsWVAzNlhWCiAzdmUtT3JzRWt5WG1IQ2pFSWMyakxJZ216bmNqcUw5S0JXaUYwUXFrczRzY2c5WlM4QXcKRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPgpUbzogUmVzZXJ2YXRpb25zIDxyZXNlcnZhdGlvbnNAYmlzdHJvLmV4YW1wbGU+ClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzAKTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+CkRhdGU6IFRodSwgMDUgTm92IDIwMjYgMDk6MTU6MDAgKzAwMDAKTUlNRS1WZXJzaW9uOiAxLjAKQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSIKCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEKQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCIKQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQoKSGVsbG8sCgpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uCgpUaGFuayB5b3UKCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEKQ29udGVudC1UeXBlOiB0ZXh0L2NzdgpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQKQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2IgpNSU1FLVZlcnNpb246IDEuMAoKWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289CgotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "a CR alone ends a body line",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQ0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "empty display name in To",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IDxyZXNlcnZhdGlvbnNAYmlzdHJvLmV4YW1wbGU+DQpTdWJqZWN0OiBUYWJsZSBmb3IgMiwgRnJpZGF5IDcgTm92ZW1iZXIsIDE5OjMwDQpNZXNzYWdlLUlEOiA8ZXhhbXBsZS0xQGFjbWUuZXhhbXBsZT4NCkRhdGU6IFRodSwgMDUgTm92IDIwMjYgMDk6MTU6MDAgKzAwMDANCk1JTUUtVmVyc2lvbjogMS4wDQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9taXhlZDsgYm91bmRhcnk9Ij1fY29sb3Bob25fZXhhbXBsZV8xIg0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9InV0Zi04Ig0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpIZWxsbywNCg0KQ291bGQgeW91IGhvbGQgYSB0YWJsZSBmb3IgMiB0aGlzIEZyaWRheSwgNyBOb3ZlbWJlciwgYXQgMTk6MzA/DQpPbmUgZ3Vlc3QgaXMgdmVnZXRhcmlhbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "quoted-pair in the charset",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGZcLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "empty parameter items",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyA7IGNoYXJzZXQ9InV0Zi04IjsNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "attachment name in RFC 2231 form",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2OyBuYW1lKj11dGYtOCcnciVDMyVBOXNlcnZhdGlvbi5jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "attachment parameter that does not parse (not read)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2OyBuYW1lPXLDqXNlcnZhdGlvbiBjc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "boundary of 70 characters",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMXh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4Ig0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHgNCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMXh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4DQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHgtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "preamble and epilogue",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KVGhpcyBpcyBhIG11bHRpLXBhcnQgbWVzc2FnZS4NCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQpFcGlsb2d1ZQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "agent signature with another valid R (R need not be the RFC 8032 one)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5EZUtLY1pNQkJEZ1BrdjJMVWhYTWpNLWRpSHdJUHhwNmtiMA0KIDlwcWEzMFRRck9oTVk1VVBzZDRJUE5WREJRWFFXTGx6bkVuYWpGSnFJeU9LclJlOHlBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "a non-ASCII Colophon record beside the record (not a Colophon record)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; n=clé; p=",
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "verified",
+     "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
+    }
+   ]
+  },
+  {
+   "name": "19 DNS misses for the host this hour",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 19,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -430,6 +843,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -455,6 +870,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -480,6 +897,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -505,6 +924,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -530,6 +951,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -555,6 +978,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -580,6 +1005,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -605,6 +1032,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -630,6 +1059,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -655,6 +1086,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -680,6 +1113,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -705,6 +1140,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -730,6 +1167,62 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "layout",
+     "expected_authentication_results": "colophon=fail reason=\"layout\""
+    }
+   ]
+  },
+  {
+   "name": "charset in RFC 2231 form",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0Kj11dGYtOCcndXRmLTgNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "layout",
+     "expected_authentication_results": "colophon=fail reason=\"layout\""
+    }
+   ]
+  },
+  {
+   "name": "transfer encoding on the multipart",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9taXhlZDsgYm91bmRhcnk9Ij1fY29sb3Bob25fZXhhbXBsZV8xIg0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9InV0Zi04Ig0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpIZWxsbywNCg0KQ291bGQgeW91IGhvbGQgYSB0YWJsZSBmb3IgMiB0aGlzIEZyaWRheSwgNyBOb3ZlbWJlciwgYXQgMTk6MzA/DQpPbmUgZ3Vlc3QgaXMgdmVnZXRhcmlhbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "layout",
      "expected_authentication_results": "colophon=fail reason=\"layout\""
     }
@@ -755,6 +1248,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -780,6 +1275,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -805,6 +1302,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -830,6 +1329,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -855,6 +1356,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -880,6 +1383,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -905,6 +1410,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -930,6 +1437,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -955,6 +1464,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -980,6 +1491,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1005,6 +1518,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1030,6 +1545,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1055,6 +1572,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1080,6 +1599,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1105,6 +1626,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1130,6 +1653,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1155,6 +1680,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1180,6 +1707,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1205,6 +1734,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1230,6 +1761,332 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "escaped surrogate in sub",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmWEhWa09EQXdJbjAuSzdpNl80cW1jSXRMM0p3TnlVSzJWYVhyM2ENCiA3RTdtQjVhRDdjbnVYRVFhWmVOYU1ieXNKbGpzTGdrcWFUV2Z0YUhROXExUjQwaUU2QTZoTld0eDBKQkE7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi50TnVwS1hQTWltWi1NVVZ5cXZnS2NGSjRfRkt4bm1CczlfQg0KIGx0TFpkNTJVZTM1d3dLVng0cl91RmEtNEtSbHM0WWxUTEVnUFZhT2YwZDFXWGk2eVFBZw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "noncharacter U+FFFF in scope",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2k3Ny1fUW05dmEzTWdjbVZ6ZEdGMWNtRnVkQ0IwWVdKc1pYTWdabTl5SUc5dVpTQndaWEp6YjI0c0lIVndJDQogSFJ2SUNRMU1EQWdjR1Z5SUdKdmIydHBibWN1SWl3aWMzVmlJam9pWVdkZk4waHhNaUo5LnpId3FfQ3kwR1hwZ2hSRFJldWxjTEd6eTYNCiBoX195QzVWX0FSMllXQTI1LUk5RkRWbTdMbllSWUd2Q3FEbTUxamN3eDU2amJ1bm1YYzg0US01ZWFsZERROw0KIGI9ZXlKaGJHY2lPaUpGWkVSVFFTSXNJbWxoZENJNk1UYzVNemczTURFd01Dd2libTl1WTJVaU9pSmFiVGw1VEZkV05GbFhNWGRpUjFWDQogMFlqSTFjMlZSSWl3aWRIbHdJam9pWTI5c2IzQm9iMjR0YzJsbkluMC4uVHMyTVI2TEI0NjQ2Z0pVQ1FRU2dHT3lQYndleGJIYkplU3QNCiB6QzVuYlhhbUZnRzhZSnlQbUpDYy1OMG5hUzVFcnpZcWl3eVVYb1hIbXk2VVVzaElIRFENCkZyb206IEJvb2tpbmcgYWdlbnQgPE1hcGxlLVRpZ2VyLTI3QGFjbWUuZXhhbXBsZT4NClRvOiBSZXNlcnZhdGlvbnMgPHJlc2VydmF0aW9uc0BiaXN0cm8uZXhhbXBsZT4NClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzANCk1lc3NhZ2UtSUQ6IDxleGFtcGxlLTFAYWNtZS5leGFtcGxlPg0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAwOToxNTowMCArMDAwMA0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iPV9jb2xvcGhvbl9leGFtcGxlXzEiDQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "a CR alone in To",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2Vydg1hdGlvbnMgPHJlc2VydmF0aW9uc0BiaXN0cm8uZXhhbXBsZT4NClN1YmplY3Q6IFRhYmxlIGZvciAyLCBGcmlkYXkgNyBOb3ZlbWJlciwgMTk6MzANCk1lc3NhZ2UtSUQ6IDxleGFtcGxlLTFAYWNtZS5leGFtcGxlPg0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAwOToxNTowMCArMDAwMA0KTUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iPV9jb2xvcGhvbl9leGFtcGxlXzEiDQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNCkhlbGxvLA0KDQpDb3VsZCB5b3UgaG9sZCBhIHRhYmxlIGZvciAyIHRoaXMgRnJpZGF5LCA3IE5vdmVtYmVyLCBhdCAxOTozMD8NCk9uZSBndWVzdCBpcyB2ZWdldGFyaWFuLg0KDQpUaGFuayB5b3UNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "a header line that is not a field",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KWC1Ob3RlDQpTdWJqZWN0OiBUYWJsZSBmb3IgMiwgRnJpZGF5IDcgTm92ZW1iZXIsIDE5OjMwDQpNZXNzYWdlLUlEOiA8ZXhhbXBsZS0xQGFjbWUuZXhhbXBsZT4NCkRhdGU6IFRodSwgMDUgTm92IDIwMjYgMDk6MTU6MDAgKzAwMDANCk1JTUUtVmVyc2lvbjogMS4wDQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9taXhlZDsgYm91bmRhcnk9Ij1fY29sb3Bob25fZXhhbXBsZV8xIg0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9InV0Zi04Ig0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpIZWxsbywNCg0KQ291bGQgeW91IGhvbGQgYSB0YWJsZSBmb3IgMiB0aGlzIEZyaWRheSwgNyBOb3ZlbWJlciwgYXQgMTk6MzA/DQpPbmUgZ3Vlc3QgaXMgdmVnZXRhcmlhbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "charset given twice",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCI7IGNoYXJzZXQ9dXRmLTgNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "a parameter without a value",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCI7IGZsb3dlZA0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpIZWxsbywNCg0KQ291bGQgeW91IGhvbGQgYSB0YWJsZSBmb3IgMiB0aGlzIEZyaWRheSwgNyBOb3ZlbWJlciwgYXQgMTk6MzA/DQpPbmUgZ3Vlc3QgaXMgdmVnZXRhcmlhbi4NCg0KVGhhbmsgeW91DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCkNvbnRlbnQtVHlwZTogdGV4dC9jc3YNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IGJhc2U2NA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9ImJvb2tpbmcuY3N2Ig0KTUlNRS1WZXJzaW9uOiAxLjANCg0KWkdGMFpTeDBhVzFsTEhCaGNuUjVDakl3TWpZdE1URXRNRGNzTVRrNk16QXNNZ289DQoNCi0tPV9jb2xvcGhvbl9leGFtcGxlXzEtLQ0K",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "boundary given twice",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSI7IGJvdW5kYXJ5PXgNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "boundary of 71 characters",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMXh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eCINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMXh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4DQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4LS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "no close delimiter",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "two delimiter lines in a row",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "a line that starts with the delimiter",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KLS09X2NvbG9waG9uX2V4YW1wbGVfMXgNCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L2Nzdg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBhdHRhY2htZW50OyBmaWxlbmFtZT0iYm9va2luZy5jc3YiDQpNSU1FLVZlcnNpb246IDEuMA0KDQpaR0YwWlN4MGFXMWxMSEJoY25SNUNqSXdNall0TVRFdE1EY3NNVGs2TXpBc01nbz0NCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMS0tDQo=",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "malformed",
+     "expected_authentication_results": "colophon=fail reason=\"malformed\""
+    }
+   ]
+  },
+  {
+   "name": "a delimiter in the epilogue",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCi0tPV9jb2xvcGhvbl9leGFtcGxlXzENCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "malformed",
      "expected_authentication_results": "colophon=fail reason=\"malformed\""
     }
@@ -1255,6 +2112,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "multiple_signatures",
      "expected_authentication_results": "colophon=fail reason=\"multiple_signatures\""
     }
@@ -1280,6 +2139,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "no_signature",
      "expected_authentication_results": "colophon=none reason=\"no_signature\""
     }
@@ -1305,6 +2166,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "dkim_unaligned",
      "expected_authentication_results": "colophon=fail reason=\"dkim_unaligned\""
     }
@@ -1331,6 +2194,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -1357,6 +2222,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "dkim_unaligned",
      "expected_authentication_results": "colophon=fail reason=\"dkim_unaligned\""
     }
@@ -1382,6 +2249,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"
     }
@@ -1407,6 +2276,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "unsupported_version",
      "expected_authentication_results": "colophon=fail reason=\"unsupported_version\""
     }
@@ -1430,6 +2301,8 @@
      "dns_txt": {
       "s1._colophon.acme.example": null
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "dns_error",
      "expected_authentication_results": "colophon=temperror reason=\"dns_error\""
     }
@@ -1451,6 +2324,8 @@
       "reservations@bistro.example"
      ],
      "dns_txt": {},
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1477,6 +2352,8 @@
        "v=COLOPHON0; k=ed25519; p=1Qerbvjlmpt35-DgbU5RWP_1hp28kak0XqErNaH9P6Y"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1503,6 +2380,8 @@
        "v=COLOPHON0; k=rsa; p=AAAA"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1528,6 +2407,8 @@
        "v=COLOPHON0; k=ed25519"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1553,6 +2434,8 @@
        "v=COLOPHON0; k=ed25519; p=AAAA"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1578,6 +2461,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI="
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_not_found",
      "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
     }
@@ -1603,8 +2488,145 @@
        "v=COLOPHON0; k=ed25519; p="
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "key_revoked",
      "expected_authentication_results": "colophon=fail reason=\"key_revoked\""
+    }
+   ]
+  },
+  {
+   "name": "the record with a non-ASCII tag added",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI; n=clé"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "key_not_found",
+     "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
+    }
+   ]
+  },
+  {
+   "name": "domain key is the identity point (every credential verifies under it)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuQVFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUENCiBBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi40U2NrcnpZODRDNWpueXdheHlBRmhjS2pqcFBjZ21yQ01JTA0KIGt5QUYxV3YwdW1OOG9pRmQySmFYZmlJNFBXRnRlNnlpeHZ3TVJYcERjNFdpTkJ0RHVEZw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "key_not_found",
+     "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
+    }
+   ]
+  },
+  {
+   "name": "domain key of 32 zero octets (small order)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "key_not_found",
+     "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
+    }
+   ]
+  },
+  {
+   "name": "domain key not in canonical encoding",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=8P_______________________________________38"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "key_not_found",
+     "expected_authentication_results": "colophon=fail reason=\"key_not_found\""
+    }
+   ]
+  },
+  {
+   "name": "20 DNS misses for the host this hour",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 20,
+     "replay_store_available": true,
+     "expected": "dns_limited",
+     "expected_authentication_results": "colophon=temperror reason=\"dns_limited\""
     }
    ]
   },
@@ -1628,6 +2650,8 @@
        "v=COLOPHON0; k=ed25519; p=1Qerbvjlmpt35-DgbU5RWP_1hp28kak0XqErNaH9P6Y"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1653,6 +2677,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1678,6 +2704,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1703,6 +2731,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1728,6 +2758,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1753,6 +2785,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1778,6 +2812,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1803,6 +2839,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
     }
@@ -1828,8 +2866,118 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_invalid",
      "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
+    }
+   ]
+  },
+  {
+   "name": "agent key is the identity point (every signature verifies under it)",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2lRVkZCUVVGQlFVRkJRVUZCUQ0KIFVGQlFVRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuMXVsd0tnZ0dpTlNWWjRDSGFKenZDNWR2cVFPQUoNCiBVeHRnYjdfcExaOHlrZllrNzV3OVVOTW5CZ3hHbWFlbVFFVjY4NXJ6RUNTeFdIdFJId2JSaG8xREE7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5BUUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ0KIEFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "credential_invalid",
+     "expected_authentication_results": "colophon=fail reason=\"credential_invalid\""
+    }
+   ]
+  },
+  {
+   "name": "agent signature with S + L in place of S",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFUm5XX2tKSlFheXo1b0dxeVJsNmZfTDlLQldpRjBRcWtzNHNjZzlaUzhFdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "signature_invalid",
+     "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
+    }
+   ]
+  },
+  {
+   "name": "agent signature with R the identity point",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5BUUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ0KIEFBQUFBQUFEQmVEUWVmRXgwWTlQRGFtNS0zOFR1a1pvS1lKem91ZFN1MnRGRXZVTUFBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "signature_invalid",
+     "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
+    }
+   ]
+  },
+  {
+   "name": "agent signature that only a cofactored check accepts",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5aUllQTUw1VUZ1ZWszZVJxdmhiSGx1NV83a0N4RmIxc1lvdw0KIHp1YWt6TnhVQ3VJenY1V1pRd00tMkxNdnB4V1hBZHNJWHJlTE9tdkw5dU9NMGFMcnpBUQ0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": true,
+     "expected": "signature_invalid",
+     "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
    ]
   },
@@ -1853,6 +3001,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "credential_expired",
      "expected_authentication_results": "colophon=fail reason=\"credential_expired\""
     }
@@ -1878,6 +3028,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "from_mismatch",
      "expected_authentication_results": "colophon=fail reason=\"from_mismatch\""
     }
@@ -1903,6 +3055,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "verified",
      "expected_authentication_results": "colophon=pass header.from=josé@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=w8FLEYEcW-CflOYtnXXO3q2_c8RpIBDiGiSlKd58McU"
     }
@@ -1928,6 +3082,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "from_mismatch",
      "expected_authentication_results": "colophon=fail reason=\"from_mismatch\""
     }
@@ -1953,6 +3109,8 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "signature_invalid",
      "expected_authentication_results": "colophon=fail reason=\"signature_invalid\""
     }
@@ -1977,8 +3135,37 @@
        "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
       ]
      },
+     "dns_misses": 0,
+     "replay_store_available": true,
      "expected": "not_addressed",
      "expected_authentication_results": "colophon=fail reason=\"not_addressed\""
+    }
+   ]
+  },
+  {
+   "name": "replay store unavailable",
+   "message": "Q29sb3Bob24tU2lnbmF0dXJlOiB2PTA7DQogYz1leUpoYkdjaU9pSkZaRVJUUVNJc0ltdHBaQ0k2SW5NeElpd2lkSGx3SWpvaVkyOXNiM0JvYjI0dFkzSmxaQ3RxZDNRaWZRLmV5SmoNCiBibVlpT25zaWFuZHJJanA3SW1OeWRpSTZJa1ZrTWpVMU1Ua2lMQ0pyZEhraU9pSlBTMUFpTENKNElqb2liRU01VUhKclRGY3lVVzFRWQ0KIFV0eFFXVmxRMWs1TkU5Tk0wMDNOVTFsUkRsVmVXYzJiMVJvWjA5TVJTSjlmU3dpWlhod0lqb3hOemt6T1RVeU1EQXdMQ0ptY205dElqDQogb2liV0Z3YkdVdGRHbG5aWEl0TWpkQVlXTnRaUzVsZUdGdGNHeGxJaXdpYVdGMElqb3hOemt6T0RZMU5qQXdMQ0pwYzNNaU9pSmhZMjENCiBsTG1WNFlXMXdiR1VpTENKd2NtbHVZMmx3WVd3aU9uc2lhV1FpT2lKd1gxaHJNamtpTENKdGIyUmxJam9pY0hObGRXUnZibmx0YjNWeg0KIEluMHNJbk5qYjNCbElqb2lRbTl2YTNNZ2NtVnpkR0YxY21GdWRDQjBZV0pzWlhNZ1ptOXlJRzl1WlNCd1pYSnpiMjRzSUhWd0lIUnZJDQogQ1ExTURBZ2NHVnlJR0p2YjJ0cGJtY3VJaXdpYzNWaUlqb2lZV2RmTjBoeE1pSjkuUlhaTUxDR0dTZjFoMkgydm02UjYyRlVlSHdFcEINCiBsdGw0dnFvdUE0M2dMMjRvNWNDelVNeDh0c2tWRWdEV0VPS2NCUllIdzhxNFB1eE5mcW1HRE5OQXc7DQogYj1leUpoYkdjaU9pSkZaRVJUUVNJc0ltbGhkQ0k2TVRjNU16ZzNNREV3TUN3aWJtOXVZMlVpT2lKYWJUbDVURmRXTkZsWE1YZGlSMVYNCiAwWWpJMWMyVlJJaXdpZEhsd0lqb2lZMjlzYjNCb2IyNHRjMmxuSW4wLi5sbUl2Um92MnY2VTMtZFJVLW4wOG1DLVJoNHM2bFlQMzZYVg0KIDN2ZS1PcnNFa3lYbUhDakVJYzJqTElnbXpuY2pxTDlLQldpRjBRcWtzNHNjZzlaUzhBdw0KRnJvbTogQm9va2luZyBhZ2VudCA8TWFwbGUtVGlnZXItMjdAYWNtZS5leGFtcGxlPg0KVG86IFJlc2VydmF0aW9ucyA8cmVzZXJ2YXRpb25zQGJpc3Ryby5leGFtcGxlPg0KU3ViamVjdDogVGFibGUgZm9yIDIsIEZyaWRheSA3IE5vdmVtYmVyLCAxOTozMA0KTWVzc2FnZS1JRDogPGV4YW1wbGUtMUBhY21lLmV4YW1wbGU+DQpEYXRlOiBUaHUsIDA1IE5vdiAyMDI2IDA5OjE1OjAwICswMDAwDQpNSU1FLVZlcnNpb246IDEuMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9X2NvbG9waG9uX2V4YW1wbGVfMSINCg0KLS09X2NvbG9waG9uX2V4YW1wbGVfMQ0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJ1dGYtOCINCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KSGVsbG8sDQoNCkNvdWxkIHlvdSBob2xkIGEgdGFibGUgZm9yIDIgdGhpcyBGcmlkYXksIDcgTm92ZW1iZXIsIGF0IDE5OjMwPw0KT25lIGd1ZXN0IGlzIHZlZ2V0YXJpYW4uDQoNClRoYW5rIHlvdQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xDQpDb250ZW50LVR5cGU6IHRleHQvY3N2DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCkNvbnRlbnQtRGlzcG9zaXRpb246IGF0dGFjaG1lbnQ7IGZpbGVuYW1lPSJib29raW5nLmNzdiINCk1JTUUtVmVyc2lvbjogMS4wDQoNClpHRjBaU3gwYVcxbExIQmhjblI1Q2pJd01qWXRNVEV0TURjc01UazZNekFzTWdvPQ0KDQotLT1fY29sb3Bob25fZXhhbXBsZV8xLS0NCg==",
+   "deliveries": [
+    {
+     "accepted_at": 1793870110,
+     "dkim_pass_domains": [
+      "acme.example"
+     ],
+     "envelope_recipient": "reservations@bistro.example",
+     "mailbox": "mbx-reservations",
+     "mailbox_addresses": [
+      "reservations+web@bistro.example",
+      "reservations@bistro.example"
+     ],
+     "dns_txt": {
+      "s1._colophon.acme.example": [
+       "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
+      ]
+     },
+     "dns_misses": 0,
+     "replay_store_available": false,
+     "expected": "replay_unchecked",
+     "expected_authentication_results": "colophon=temperror reason=\"replay_unchecked\""
     }
    ]
   }
