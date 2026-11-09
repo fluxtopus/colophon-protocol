@@ -768,6 +768,8 @@ def vectors() -> list[Case]:
     raw = signed()
     crlf = b"\r\n"
     record = dns_record(DOMAIN_KEY)
+    unsigned = example_unsigned()
+    utf8_claims = example_claims(**{"from": "jos\u00e9@acme.example"})
     c_start = raw.index(b"c=")
     c_end = raw[raw.index(b";", c_start) - 7 : raw.index(b";", c_start) + 1]  # the end of c, then ";"
 
@@ -943,6 +945,19 @@ def vectors() -> list[Case]:
             "dkim_unaligned",
             dkim_pass_domains={"mail.acme.example"},
         ),
+        one(
+            "DKIM passes for mail.acme.example and acme.example",
+            raw,
+            "verified",
+            dkim_pass_domains={"mail.acme.example", "acme.example"},
+        ),
+        one(
+            "DKIM passes for two unaligned domains",
+            raw,
+            "dkim_unaligned",
+            dkim_pass_domains={"mail.acme.example", "esp.example"},
+        ),
+        one("DKIM passes for ACME.EXAMPLE", raw, "verified", dkim_pass_domains={"ACME.EXAMPLE"}),
         one("v=1", edit(b"Colophon-Signature: v=0", b"Colophon-Signature: v=1"), "unsupported_version"),
         # DNS
         dns("DNS lookup failed", None, "dns_error"),
@@ -959,6 +974,7 @@ def vectors() -> list[Case]:
         dns("record with empty p=", ["v=COLOPHON0; k=ed25519; p="], "key_revoked"),
         dns("record holds a different key", [dns_record(test_key("other"))], "credential_invalid"),
         # credential contents
+        claims("iss in capitals", "credential_invalid", iss="ACME.EXAMPLE"),
         claims("sub with a trailing newline", "credential_invalid", sub="ag_7Hq2\n"),
         claims("sub as a number", "credential_invalid", sub=12345),
         claims("no from claim", "credential_invalid", **{"from": None}),
@@ -984,6 +1000,20 @@ def vectors() -> list[Case]:
         one(
             "From is another address on the same host",
             edit(b"<Maple-Tiger-27@", b"<oak-fox-11@"),
+            "from_mismatch",
+        ),
+        one(
+            "SMTPUTF8 local part, ASCII letters lowercased",
+            signed(
+                utf8_claims, set_header(b"From", "Booking agent <Jos\u00e9@acme.example>".encode(), unsigned)
+            ),
+            "verified",
+        ),
+        one(
+            "SMTPUTF8 local part with non-ASCII in another case",
+            signed(
+                utf8_claims, set_header(b"From", "Booking agent <JOS\u00c9@acme.example>".encode(), unsigned)
+            ),
             "from_mismatch",
         ),
         one("signature iat 10 minutes after arrival", signed(iat=ARRIVED + 600), "signature_invalid"),

@@ -136,6 +136,9 @@ ok    malformed            credential over 2,048 octets
 ok    multiple_signatures  second Colophon-Signature
 ok    no_signature         no Colophon-Signature
 ok    dkim_unaligned       DKIM passes only for mail.acme.example
+ok    verified             DKIM passes for mail.acme.example and acme.example
+ok    dkim_unaligned       DKIM passes for two unaligned domains
+ok    verified             DKIM passes for ACME.EXAMPLE
 ok    unsupported_version  v=1
 ok    dns_error            DNS lookup failed
 ok    key_not_found        no record at the selector
@@ -146,6 +149,7 @@ ok    key_not_found        key of the wrong length
 ok    key_not_found        key in padded base64
 ok    key_revoked          record with empty p=
 ok    credential_invalid   record holds a different key
+ok    credential_invalid   iss in capitals
 ok    credential_invalid   sub with a trailing newline
 ok    credential_invalid   sub as a number
 ok    credential_invalid   no from claim
@@ -155,5 +159,7 @@ ok    credential_invalid   bidi control in scope
 ok    credential_invalid   agent key of 31 octets
 ok    credential_expired   arrived 1 second after exp + grace
 ok    from_mismatch        From is another address on the same host
+ok    verified             SMTPUTF8 local part, ASCII letters lowercased
+ok    from_mismatch        SMTPUTF8 local part with non-ASCII in another case
 ok    signature_invalid    signature iat 10 minutes after arrival
 ok    not_addressed        delivered to a mailbox not in To or Cc (Bcc)

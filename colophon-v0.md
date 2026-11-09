@@ -1,6 +1,6 @@
 # Colophon v0: Agent Signatures for Email
 
-Draft v0-03, 2026-11-08. For review. Not for production use.
+Draft v0-04, 2026-11-08. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -204,7 +204,7 @@ A verifier MUST reject a protected header that contains `crit`. It ignores any o
 
 | Claim | Required | Value |
 | --- | --- | --- |
-| `iss` | yes | A string: the issuer host. It MUST equal the host of `from`. |
+| `iss` | yes | A string: the issuer host, in lowercase. It MUST equal the host of `from`. |
 | `sub` | yes | A string: the agent ID, unique within the issuer. Grammar: `[A-Za-z0-9._-]{1,64}`. |
 | `from` | yes | A string: the one address the agent sends from, already in canonical form (§6.4). |
 | `cnf` | yes | An object: `{"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "<base64url public key>"}}`, where `x` decodes to 32 octets. This is the agent key, as a proof-of-possession key (RFC 7800). |
@@ -359,7 +359,7 @@ DKIM still covers whatever the issuer's DKIM signature lists.
    - the local part is a dot-atom of atext and non-ASCII characters (RFC 6532). A quoted local part, such as `"john doe"@example.com`, is malformed;
    - the domain is two or more labels separated by `.`. Each label is 1 to 63 ASCII letters, digits and hyphens, and does not start or end with a hyphen. An internationalized domain MUST be written as A-labels (`xn--...`). Verifiers do not convert or check A-labels. A non-ASCII domain, a domain literal such as `[192.0.2.1]`, and a trailing dot are malformed.
 4. Outside quoted strings, `(`, `)`, `:`, `;`, `[`, `]` and `\` are malformed, and so is any `<` or `>` beyond one pair per mailbox. This rules out comments, groups (`undisclosed-recipients:;` included), domain literals and route syntax. An empty member, as in `a@x.example, , b@x.example`, is malformed too.
-5. Canonical form: lowercase the ASCII letters A to Z in the local part and the domain. Leave all other characters as they are. Apply no Unicode normalization.
+5. Canonical form: lowercase the ASCII letters A to Z in the local part and the domain. Leave all other octets as they are. Apply no Unicode normalization and no other case folding. Two addresses are equal when their canonical forms are equal octet for octet.
 6. Keep header order. Drop later duplicates.
 7. If the header is absent, the list is `[]`. If it appears more than once, or is empty, the message is malformed.
 
@@ -440,7 +440,7 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | 5 | With whitespace removed, the header value is at most 2,560 octets, parses as a tag list (§6.2), and has a `v` tag. | `malformed` |
 | 6 | `v` is `0`. | `unsupported_version` |
 | 7 | It has `c` and `b`, and `c` is at most 2,048 octets. Both parse as compact JWS in strict base64url, `b` with an empty payload. Their protected headers and the claims are JSON objects that follow the JSON rules of §5.1. | `malformed` |
-| 8 | The credential header has `alg` `EdDSA`, `typ` `colophon-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H. | `credential_invalid` |
+| 8 | The credential header has `alg` `EdDSA`, `typ` `colophon-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H exactly, octet for octet, so it must be lowercase. | `credential_invalid` |
 | 9 | Look up TXT at `<kid>._colophon.H` (§7.4). | `dns_error`, `dns_limited` |
 | 10 | The answer holds exactly one Colophon record, and it has `k=ed25519` and a `p` tag (§7.4). | `key_not_found` |
 | 11 | `p` is not empty, and is 32 octets in strict base64url (§7.4). | `key_revoked` if empty, otherwise `key_not_found` |
@@ -519,6 +519,8 @@ The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it ver
 
 ### 7.7 Limits
 
+These values are set for v0. A later version may revise them from real traffic. The 30-day agent-key replacement is an example, not a limit (§5.2).
+
 | Item | Limit |
 | --- | --- |
 | `Colophon-Signature` value, whitespace removed | 2,560 octets |
@@ -574,7 +576,7 @@ It does not mean:
 
 **A compromised mail system and domain key** together let an attacker send as any agent of that domain. That is the issuer's full compromise. Colophon cannot do better than the issuer it trusts.
 
-**Addresses that differ only in case.** Verifiers lowercase ASCII in local parts. An issuer MUST NOT issue credentials for two addresses that are equal after that lowercasing.
+**Addresses that differ only in case.** Verifiers lowercase the ASCII letters A to Z in local parts, and compare every other octet as it is, with no Unicode normalization or case folding (§6.4). A mail system may still deliver two such addresses to one place, for example by folding the case of non-ASCII letters. An issuer MUST NOT issue credentials for two addresses that are equal after ASCII lowercasing, or that its mail system treats as one address. Distinct addresses that one mailbox receives at, such as an agent's pairwise addresses (§5.3), are allowed: each has its own credential (§5.2).
 
 **Resending a captured message.** DKIM passes again on an unchanged resend. The addressing check (§7.5) and the replay store (§7.6) stop it from verifying anywhere it was not sent.
 
@@ -583,6 +585,8 @@ It does not mean:
 **Relays that change messages.** Mailing lists and gateways that change a covered part or break DKIM make a message not verified. This is deliberate: a verdict that could be true for some receivers and false for others would make implementations disagree. ARC (RFC 8617) is not used in v0.
 
 **Strict alignment.** The DKIM domain must equal the `From` host. Relaxed alignment would need the Public Suffix List, and its versions differ between implementations. A provider that signs subdomain mail with the parent domain must sign Colophon mail with the exact host.
+
+**DKIM strength.** Which DKIM signatures pass, including the minimum key size and the accepted algorithms, is left to the receiver's DKIM verifier, which follows RFC 8301. Colophon adds no rule of its own.
 
 **Denial of service.**
 - Key lookups happen only after aligned DKIM passes, have a 2-second budget, and misses are rate-limited.
@@ -643,17 +647,20 @@ Two verifiers given the same four inputs (§7.1) and the same DNS answers MUST r
 
 ## 13. Registrations
 
-None has been requested yet. If Colophon goes ahead, it would ask for:
+None has been requested yet. Two will be filed when v0 is final:
 
-- **Header field:** `Colophon-Signature`, in the Permanent Message Header Field Names registry (RFC 3864), provisional at first.
 - **Underscored DNS name:** `_colophon`, for TXT, in the Underscored and Globally Scoped DNS Node Names registry (RFC 8552).
-- **Media types** for the JWS `typ` values: `application/colophon-cred+jwt` and `application/colophon-sig`.
-- **JWT claims:** `from`, `principal` and `scope`, in the JSON Web Token Claims registry, or renamed to collision-resistant names if the registry's experts prefer.
+- **Header field:** `Colophon-Signature`, in the Permanent Message Header Field Names registry (RFC 3864), as provisional.
+
+No other registration is sought:
+- **JWS `typ` values.** Verifiers match `colophon-cred+jwt` and `colophon-sig` exactly. RFC 7515 §4.1.9 leaves the processing of `typ` to the application, and v0 accepts no other spelling. They are not registered as media types: names in the standards tree need an IETF or other standards-body publication.
+- **Claims.** `from`, `principal` and `scope` are defined only for credentials of type `colophon-cred+jwt`.
 
 ## 14. Relation to A2A and Colophon Tasks
 
-**A2A.** Colophon is independent of A2A (the Agent2Agent protocol), with a defined bridge planned.
-- An agent that also speaks A2A may publish an Agent Card. A later extension will say how a card names its Colophon addresses, and how a credential points to a card.
+**A2A.** Colophon is independent of A2A (the Agent2Agent protocol).
+- An agent that also speaks A2A may publish an Agent Card. A credential can point to it with an extension claim, whose name contains a colon, for example `a2a:card` (§5.1, §11).
+- A bridge, if one is written, will be a separate informative document, after Colophon Tasks.
 - Both use JOSE, so keys and signatures move between them without conversion.
 - Mapping A2A task states onto email belongs to Colophon Tasks.
 
@@ -666,22 +673,20 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 ## 15. Open issues
 
-These are open for review. Each needs a decision before v0 is final.
+Issue 1 is the one blocker for v0 final. The others do not block it.
 
-1. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope and the 20-miss DNS budget. Real traffic should set them. The 30-day key replacement is only an example (§5.2).
-2. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for Colophon. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
-3. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
-4. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
-   - Tag letters `c` and `b`.
-   - base64url everywhere, the DNS record included, where DKIM uses base64. It is decoded strictly in every place (§2).
-   - A standard detached JWS rather than RFC 7797 unencoded payloads.
-   - A message-level `exp` was dropped: the credential's `exp` and arrival time bound a message already.
-5. **Test vectors.** Appendix B lists them, and `reference/vectors.json` has them in machine-readable form: each message as octets, the receiver's inputs, and the expected verdict and reason. Still missing:
-   - multiple DKIM signatures on one message;
-   - SMTPUTF8 addresses;
-   - a corpus of real mail from the systems in issue 2.
-6. **The formal model** (Appendix C) is not built yet.
-7. **Name.** "Colophon" replaced the draft's first name in v0-03 (Appendix E). It still needs a trademark clearance before v0 is final; until then the name and its wire forms may change.
+1. **Will the header survive?** Header carriage (§6.2) is the default. Whether a folded header of 800 to 2,560 octets reaches common mail systems intact is untested. Verifiers remove whitespace, so refolding is safe for Colophon; DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. The test:
+   - **Sender.** A domain whose mail Amazon SES signs with DKIM.
+   - **Messages.** Three, signed as §6.6 says: a minimal one, with a header of about 800 octets; one at the 2,560-octet header cap, with a 280-octet scope and a 128-octet named principal; and one with two attachments.
+   - **Receivers.** Gmail, Microsoft 365, Outlook.com, iCloud, Fastmail, Yahoo, Proton, Zoho, and Amazon SES inbound.
+   - **Forwarding.** One copy also goes through a Gmail automatic forward, and one through Cloudflare Email Routing. These are recorded; the pass rule below is for direct receivers.
+   - **Capture.** The raw message as delivered, pulled over IMAP or Microsoft Graph, with the receiver's `Authentication-Results`.
+   - **Check.** The reference sketch verifies each capture, with the DKIM results taken from the receiver's `Authentication-Results`.
+   - **Pass.** At every direct receiver, the header arrives intact after whitespace removal, DKIM passes aligned, and the verdict is verified.
+   - **Fail.** If the header does not survive at Gmail, Microsoft 365 or Outlook.com, iCloud, or Fastmail, v0-05 specifies the fallback: the credential and signature in an `application/colophon-sig` MIME part.
+2. **Real mail in the vectors.** The captures from issue 1 are checked in beside `reference/vectors.json`, each with the receiver's `Authentication-Results`, as a corpus of real mail.
+3. **The formal model** (Appendix C) is planned. v0 can be final without it. Colophon Tasks waits for it.
+4. **Name.** "Colophon" is final for this text, but its trademark clearance is pending. A conflict would force a new version with new wire names. Production deployment waits for the clearance.
 
 ## Appendix A. Worked example
 
@@ -846,6 +851,9 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Second Colophon-Signature | `multiple_signatures` |
 | No Colophon-Signature | `no_signature` |
 | DKIM passes only for mail.acme.example | `dkim_unaligned` |
+| DKIM passes for mail.acme.example and acme.example | verified |
+| DKIM passes for two unaligned domains | `dkim_unaligned` |
+| DKIM passes for ACME.EXAMPLE | verified |
 | V=1 | `unsupported_version` |
 | DNS lookup failed | `dns_error` |
 | No record at the selector | `key_not_found` |
@@ -856,6 +864,7 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Key in padded base64 | `key_not_found` |
 | Record with empty p= | `key_revoked` |
 | Record holds a different key | `credential_invalid` |
+| Iss in capitals | `credential_invalid` |
 | Sub with a trailing newline | `credential_invalid` |
 | Sub as a number | `credential_invalid` |
 | No from claim | `credential_invalid` |
@@ -865,23 +874,27 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Agent key of 31 octets | `credential_invalid` |
 | Arrived 1 second after exp + grace | `credential_expired` |
 | From is another address on the same host | `from_mismatch` |
+| SMTPUTF8 local part, ASCII letters lowercased (`José@acme.example`, credential `josé@acme.example`) | verified |
+| SMTPUTF8 local part with non-ASCII in another case (`JOSÉ@acme.example`, same credential) | `from_mismatch` |
 | Signature iat 10 minutes after arrival | `signature_invalid` |
 | Delivered to a mailbox not in To or Cc (Bcc) | `not_addressed` |
 
 Some of these changes would also break DKIM in real mail. The vectors test the Colophon checks alone, with the DKIM result given as an input.
 
-The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts and ASCII domains.
+The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts, non-ASCII ones included, and ASCII domains.
 
 ## Appendix C. Formal model
 
-A formal model of v0 (Tamarin or ProVerif) is planned, to be built alongside this draft and run on every change. It assumes perfect cryptography and an attacker who controls the network or plays one side.
+A formal model of v0 is planned, in Tamarin. v0 can be final without it. Colophon Tasks waits for it.
 
-It is to prove:
-1. a verified message traces to a credential the domain issued for a delegating principal;
-2. a captured message cannot verify for a mailbox it was not addressed to, and verifies at most once per mailbox;
-3. a verifier's work per message is bounded: at most one DNS lookup and two signature verifications.
+- **What it covers.** Steps 4, 12 to 15 and 19 to 21 of §7.2: aligned DKIM, the credential's signature, claims, time and address, the agent signature, the addressing check and the replay check. It assumes perfect cryptography, and an attacker who controls the network, plays one side, or holds a stolen agent key.
+- **What it proves.** Two lemmas:
+  1. a verified message traces to a credential the domain issued for a delegating principal, and was sent through the domain's DKIM-signing mail system;
+  2. a captured message cannot verify for a mailbox it was not addressed to, and verifies at most once per mailbox.
+- **Mutants.** Two altered models must yield attack traces: one without step 20, and one without step 4. This shows the lemmas depend on those steps.
+- **Where it runs.** In the repository's CI, on every change.
 
-It does not exist yet.
+A verifier's bounded work per message is not a model property. §9 states it.
 
 ## Appendix D. Decision log
 
@@ -908,10 +921,30 @@ The design was settled one question at a time. Each decision has a longer record
 | Agent key replacement | Guidance only: SHOULD replace regularly, every 30 days for example, and at once on suspected compromise. No key-age claim, and verifiers do not check it. |
 | Addressing check | A message verifies only for a mailbox in `To` or `Cc`. `Bcc` copies and unknown forwards are not verified. Signed `Bcc` copies may come later as an extension. |
 | Subject and Reply-To | Both signed. The subject is signed raw, not decoded. |
+| Limits | Fixed for v0; v1 may revise them from traffic. |
+| Tag letters | `c` for the credential and `b` for the agent signature. |
+| Encoding | base64url everywhere, the DNS record included, decoded strictly. |
+| JWS form | A standard detached JWS, not RFC 7797 unencoded payloads: RFC 7797 needs `crit`, which v0 rejects. |
+| Message expiry | None. The credential's `exp` and the arrival time bound a message. |
+| Non-ASCII local parts | ASCII letters lowercased, other octets compared as they are, no Unicode normalization or folding. |
+| Registrations | `_colophon` (RFC 8552) and a provisional `Colophon-Signature` (RFC 3864), filed at v0 final. No media types. |
+| Formal model | Tamarin, planned. Not required for v0 final; required before Colophon Tasks. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
 | Relation to A2A | Independent, with a defined bridge. |
 
 ## Appendix E. Changes
+
+### v0-04
+
+- **Open issues.** The numbers, local parts, wire choices and the formal model are settled, and §15 is rewritten. Header survival is the one blocker for v0 final, with a test plan (§15, issue 1). The name is final for this text, pending clearance.
+- **Limits.** The values in §7.7 are set for v0.
+- **Wire choices.** The tag letters, base64url, the standard detached JWS and the absence of a message-level `exp` are fixed (Appendix D).
+- **Local parts.** Non-ASCII octets compare as they are, with no normalization or folding (§6.4). An issuer must not issue credentials for two addresses its mail system treats as one (§9).
+- **Clarifications.** `iss` is compared exactly and is lowercase (§5.1, §7.2 step 8). DKIM strength is left to the receiver's DKIM verifier (§9). No change on the wire.
+- **Registrations.** Two, filed at v0 final; no media types (§13).
+- **A2A.** The hook is an extension claim such as `a2a:card` (§14).
+- **Formal model.** Planned in Tamarin, with two lemmas and two mutants (Appendix C).
+- **Vectors.** Three for multiple DKIM signatures, two for SMTPUTF8 local parts, and one for `iss` in capitals: 80 deliveries.
 
 ### v0-03
 
