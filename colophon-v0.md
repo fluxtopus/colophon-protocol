@@ -1,6 +1,6 @@
 # Colophon v0: Agent Signatures for Email
 
-Draft v0-05, 2026-11-09. For review. Not for production use.
+Draft v0-06, 2026-11-09. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -122,7 +122,7 @@ A Colophon message carries two proofs. A receiver believes "agent X of acme.exam
 
 The issuer reissues each credential automatically, at least once a day. To revoke an agent, the issuer stops reissuing its credential. The credential then lapses within 26 hours: its 24-hour life plus a 2-hour grace for mail in transit.
 
-![A timeline of one credential, from iat to exp, which is at most 24 hours later, and on to exp plus 2 hours. Four bars. The credential is valid from iat to exp. The signer uses it from iat until 6 hours are left; it should not sign in the last 6 hours. A message may arrive from iat minus 5 minutes to exp plus 2 hours. The replay record for a verified message is kept from the moment it verifies to exp plus 2 hours. A bracket under the whole span says: revoke by not reissuing; the last credential's mail stops verifying within 26 hours.](figures/figure-2-credential-times.svg)
+![A timeline of one credential, from iat to exp, which is at most 24 hours later, and on to exp plus 2 hours. Four bars. The credential is valid from iat to exp. The signer uses it from iat until 6 hours are left; it should not sign in the last 6 hours. A message may arrive from iat minus 5 minutes to exp plus 2 hours. The replay record for a verified message is kept from the moment it verifies to exp plus 2 hours, then for the verifier's delay D, shown as an arrow past the end. A bracket under the whole span says: revoke by not reissuing; the last credential's mail stops verifying within 26 hours.](figures/figure-2-credential-times.svg)
 
 *Figure 2. One credential's times. The limits are in §7.7; the arrival check is step 14 of §7.2, and the replay record is in §7.6.*
 
@@ -153,6 +153,7 @@ v=COLOPHON0; k=ed25519; p=<base64url of the 32-byte Ed25519 public key>
 - `p` is the raw 32-octet public key (RFC 8032), in base64url. An empty `p=` means the key is revoked.
 - The record is parsed like the header (§6.2): all whitespace is removed, then it is a list of `name=value` items separated by `;`. Unknown tags are ignored. A record with a duplicate tag is not a Colophon record.
 - If a TXT record has several character strings, they are joined with nothing between them before parsing, as in DKIM.
+- A record is a string of octets, and is never decoded as text. A record with an octet above 0x7F is not a Colophon record (§7.4).
 
 A selector is one DNS label: lowercase letters, digits and hyphens, from 1 to 63 characters, not starting or ending with a hyphen. Its grammar is `[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?`.
 
@@ -201,7 +202,7 @@ A verifier MUST reject a protected header that contains `crit`. It ignores any o
 | `iss` | yes | A string: the issuer host, in lowercase. It MUST equal the host of `from`. |
 | `sub` | yes | A string: the agent ID, unique within the issuer. Grammar: `[A-Za-z0-9._-]{1,64}`. |
 | `from` | yes | A string: the one address the agent sends from, already in canonical form (§6.4). |
-| `cnf` | yes | An object: `{"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "<base64url public key>"}}`, where `x` decodes to 32 octets. This is the agent key, as a proof-of-possession key (RFC 7800). |
+| `cnf` | yes | An object: `{"jwk": {"kty": "OKP", "crv": "Ed25519", "x": "<base64url public key>"}}`, where `x` decodes to 32 octets that are a valid public key (§6.5). This is the agent key, as a proof-of-possession key (RFC 7800). |
 | `principal` | yes | An object: the disclosure (§5.3). |
 | `scope` | no | A string: a statement of the agent's authority, in plain words (§5.4). |
 | `iat` | yes | An integer: the time the credential was issued. |
@@ -211,7 +212,8 @@ Each claim MUST have the JSON type its row gives, and match its grammar where on
 
 **JSON rules.** The payload, and the protected headers of both JWS in a message, MUST be I-JSON (RFC 7493), with these rules made exact:
 - member names are unique;
-- every number is an integer between -(2^53 - 1) and 2^53 - 1, written without a fraction or an exponent. `1.0`, `1e3`, `NaN` and `Infinity` are not allowed.
+- every number is an integer between -(2^53 - 1) and 2^53 - 1, written without a fraction or an exponent. `1.0`, `1e3`, `NaN` and `Infinity` are not allowed;
+- no string, member names included, holds a surrogate (U+D800 to U+DFFF) or a noncharacter (U+FDD0 to U+FDEF, and every code point that ends in FFFE or FFFF), written as it is or as a `\u` escape (RFC 7493 §2.1). A lone surrogate escape such as `\ud800` is not allowed. An escaped surrogate pair stands for the one character it encodes, and is allowed if that character is.
 
 JSON that breaks these rules makes the message malformed (§7.2 step 7).
 
@@ -291,7 +293,25 @@ Every part MUST use one of the transfer encodings `7bit`, `8bit`, `binary`, `quo
 
 A forwarded email cannot be a `message/*` attachment: libraries serialize those parts differently. In v0 it is quoted in the text, or attached under another type.
 
-In every part, the top level included, `Content-Type`, `Content-Transfer-Encoding` and `Content-Disposition` each appear at most once, and `Content-Type` starts with `type/subtype`. A part that breaks this makes the message malformed.
+In every part, the top level included, `Content-Type`, `Content-Transfer-Encoding` and `Content-Disposition` each appear at most once, and `Content-Type` is `type/subtype`, then optionally `;` and parameters. A part that breaks this makes the message malformed. Of `Content-Disposition`, only the value before the first `;` is read.
+
+**Header sections.** The message's header section, and each part's, is read line by line. A line ends at CRLF, or at LF alone. Each line is either a header field, which starts with a name of printable ASCII characters other than `:` followed by `:` (RFC 5322 §2.2), or a continuation of the field before it, which starts with SP or HTAB. The first empty line ends the header section. Any other line, a continuation with no field before it, or a CR that is not followed by LF, makes the message malformed. In a body, a CR alone is data: in the text it ends a line (§6.4).
+
+**Parameters.** Verifiers read parameters only from the `Content-Type` of the top level and of the body part. There they follow RFC 2045 §5.1, made exact:
+- each parameter is `;`, a token, `=`, then a token or a quoted string. SP and HTAB are allowed around each of these. Comments are not.
+- empty items, such as a trailing `;`, are ignored. In a quoted string, a backslash and the character after it stand for that character.
+- a parameter without `=`, a value that is neither a token nor a quoted string, and a parameter name that appears twice make the message malformed. Parameter names compare case-insensitively.
+- the RFC 2231 forms of `boundary`, `charset` and `format`, such as `charset*=utf-8''utf-8` or `boundary*0`, are not used in v0. A message with one breaks the layout. Other RFC 2231 parameters are ignored.
+
+Of an attachment's `Content-Type`, only `type/subtype` is read, so its parameters, a file name in any form included, never change the verdict.
+
+**Multipart.** A `multipart/mixed` top level follows RFC 2046 §5.1.1, strictly:
+- `boundary` is 1 to 70 characters of RFC 2046's `bchars`, and does not end in SP. A missing or invalid boundary makes the message malformed.
+- a delimiter line is `--` and the boundary, then `--` for the close delimiter, then optionally SP and HTAB. Any other line that starts with `--` and the boundary makes the message malformed.
+- the line end just before a delimiter line belongs to the delimiter.
+- there is at least one part, and a close delimiter. A delimiter line directly followed by another delimiter line, a part of zero octets, makes the message malformed.
+- text before the first delimiter (the preamble) and after the close delimiter (the epilogue) is ignored. A line in the epilogue that starts with `--` and the boundary makes the message malformed.
+- the top level's transfer encoding is `7bit`, `8bit` or `binary` (RFC 2045 §6.4). Any other breaks the layout.
 
 ### 6.2 The `Colophon-Signature` header
 
@@ -348,10 +368,10 @@ DKIM still covers whatever the issuer's DKIM signature lists.
 
 ### 6.4 Canonical forms
 
-**Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Colophon-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every CRLF followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
+**Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Colophon-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every line end (§6.1) followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
 
 **Addresses.** `From`, `To`, `Cc` and `Reply-To` use a strict subset of RFC 5322, so that every verifier reads them alike. A value outside the subset makes the message malformed. Verifiers do not repair it.
-1. The value is a list of mailboxes separated by commas. Each mailbox, with SP and HTAB trimmed at both ends, is either an addr-spec alone, or a display name followed by an addr-spec in angle brackets.
+1. The value is a list of mailboxes separated by commas. Each mailbox, with SP and HTAB trimmed at both ends, is either an addr-spec alone, or a display name followed by an addr-spec in angle brackets. The display name may be empty: `<reservations@bistro.example>` is a mailbox.
 2. A display name is made of atext, `.`, SP, HTAB, non-ASCII characters and quoted strings. Anything else in it, an unquoted `@` for example, is malformed.
 3. An addr-spec is `local@domain`, with no whitespace:
    - the local part is a dot-atom of atext and non-ASCII characters (RFC 6532). A quoted local part, such as `"john doe"@example.com`, is malformed;
@@ -371,9 +391,9 @@ An absent `Subject` is `""`. More than one `Subject` makes the message malformed
 
 **Text.**
 1. Decode the body part's transfer encoding, strictly. Attachments are decoded the same way.
-   - `quoted-printable` follows RFC 2045 §6.7. SP and HTAB at the end of a line are removed. A line that then ends in `=` joins the next. Every other line end decodes to CRLF. An `=` that is not followed by two hex digits is malformed.
+   - `quoted-printable` follows RFC 2045 §6.7. A line ends at CRLF or LF. SP and HTAB at the end of a line are removed. A line that then ends in `=` joins the next. Every other line end decodes to CRLF. An `=` that is not followed by two hex digits is malformed. Any other octet, an 8-bit one or a CR alone included, stands for itself.
    - `base64`: remove SP, HTAB, CR and LF, then decode as RFC 4648 §4, padding required. Any other character, or wrong padding, is malformed. Unused bits are ignored.
-   - `7bit`, `8bit` and `binary` are taken as they are.
+   - `7bit`, `8bit` and `binary` are taken octet for octet. Verifiers do not check that `7bit` data is 7-bit.
 2. Decode the charset to Unicode. Bytes that are invalid in the charset make the message malformed. A byte order mark is text, and is kept.
 3. Split into lines at CRLF, CR or LF.
 4. Remove trailing SP and HTAB from each line.
@@ -400,6 +420,13 @@ A verifier MUST reject `crit`, and ignores other members.
 
 The signature is computed as in RFC 7515: Ed25519 over `ASCII(BASE64URL(header) || "." || BASE64URL(JCS(signing input)))`.
 
+**Ed25519 verification.** Both signatures in a message, the credential's and the agent's, are checked as RFC 8032 §5.1.7 says, with the choices it leaves open made exact. Ed25519 libraries differ on them, and a verifier that is more lenient than these rules accepts signatures that others reject.
+- A public key, the domain key or the agent key, is valid when it decodes as RFC 8032 §5.1.3 says, which fails when the encoded y is p (2^255 - 19) or more, and the point is not of small order: 8 times the point is not the identity. The identity key is invalid, for example: under it, the signature R = identity, S = 0 verifies for every message. An invalid domain key is `key_not_found` (§7.4). An invalid agent key makes the credential invalid (§5.1).
+- In a signature R || S, S is less than the group order L, and R is not of small order.
+- With k = SHA-512(R || A || M) mod L, the signature verifies when the encoding of [S]B - [k]A equals R, octet for octet. This is the equation without the cofactor. A signature that only the cofactored equation, [8][S]B = [8]R + [8][k]A, accepts does not verify.
+
+These are the rules libsodium applies by default. Signers that follow RFC 8032 meet them.
+
 ### 6.6 Signing
 
 The signer:
@@ -421,6 +448,10 @@ A verifier works on four inputs from the receiving system, never from the messag
 3. **The DKIM results.** These come from the receiver's own checks, in one of two ways:
    - the verifier checks the message's DKIM signatures itself (RFC 6376);
    - the verifier reads an `Authentication-Results` field (RFC 8601) added by the receiver's own boundary mail server, identified by its authserv-id. It MUST ignore any such field that came with the message.
+
+   A passing signature counts for its `d=` domain, reported as `header.d`. The `i=` identity, reported as `header.i`, does not count on its own: it may name a subdomain of `d=`.
+
+   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, or `@` and its `d=` when it has no `i=`. If exactly one `DKIM-Signature` field in the message has an identity equal to `header.i`, the signature counts for that field's `d=`. Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case. Otherwise, with no such field or more than one, the signature does not count.
 4. **The mailbox.** This is the mailbox this copy was delivered to: a stable identifier the receiver chooses, and every address the mailbox receives at, its own and its aliases. The receiver maps the envelope recipient (RCPT TO) to the mailbox. Two envelope recipients that reach one mailbox, such as an address and its `+tag` form, are one mailbox.
 
 A verifier SHOULD verify soon after arrival. The domain key in DNS may change later.
@@ -437,7 +468,7 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | --- | --- | --- |
 | 1 | The message has a `Colophon-Signature` header. | `no_signature` |
 | 2 | It has exactly one. | `multiple_signatures` |
-| 3 | `From` has exactly one address. Let H be its host. | `malformed` |
+| 3 | The header section is well formed (§6.1), and `From` has exactly one address. Let H be its host. | `malformed` |
 | 4 | At least one DKIM signature passed with `d=` equal to H (compared case-insensitively). If none did, stop here, before any DNS lookup. | `dkim_unaligned` |
 | 5 | With whitespace removed, the header value is at most 2,560 octets, parses as a tag list (§6.2), and has a `v` tag. | `malformed` |
 | 6 | `v` is `0`. | `unsupported_version` |
@@ -445,19 +476,21 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | 8 | The credential header has `alg` `EdDSA`, `typ` `colophon-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H exactly, octet for octet, so it must be lowercase. | `credential_invalid` |
 | 9 | Look up TXT at `<kid>._colophon.H` (§7.4). | `dns_error`, `dns_limited` |
 | 10 | The answer holds exactly one Colophon record, and it has `k=ed25519` and a `p` tag (§7.4). | `key_not_found` |
-| 11 | `p` is not empty, and is 32 octets in strict base64url (§7.4). | `key_revoked` if empty, otherwise `key_not_found` |
-| 12 | The credential's signature verifies with that key. | `credential_invalid` |
-| 13 | Every claim has its JSON type and grammar (§5.1 to §5.4): `sub`, `from`, `principal`, `scope`, `cnf`, and `0 < exp - iat <= 86400`. | `credential_invalid` |
+| 11 | `p` is not empty, and is a valid public key (§6.5) of 32 octets in strict base64url (§7.4). | `key_revoked` if empty, otherwise `key_not_found` |
+| 12 | The credential's signature verifies with that key (§6.5). | `credential_invalid` |
+| 13 | Every claim has its JSON type and grammar (§5.1 to §5.4): `sub`, `from`, `principal`, `scope`, `cnf` with a valid public key (§6.5), and `0 < exp - iat <= 86400`. | `credential_invalid` |
 | 14 | `iat - 300 <= arrival <= exp + 7200`. | `credential_expired` |
 | 15 | `from` equals the canonical `From` address. | `from_mismatch` |
-| 16 | The layout is valid (§6.1). Parts are checked from the top. For each part, its `Content-*` fields are checked first: a duplicate field or a `Content-Type` that does not parse is `malformed`. Then its type, charset, `format`, transfer encoding and disposition: a failure there is `layout`. | `layout`, `malformed` |
+| 16 | The layout is valid (§6.1). Parts are checked from the top, and the first failure gives the reason. For each part, its header section and `Content-*` fields are checked first: a line that is not a field, a duplicate field, or a `Content-Type` or parameter that does not parse is `malformed`. Then its type, charset, `format`, transfer encoding and disposition: a failure there is `layout`. The multipart structure is checked after the top level's type and transfer encoding, and before the parts: a failure there is `malformed`. | `layout`, `malformed` |
 | 17 | The signing input can be built (§6.3, §6.4). | `malformed` |
 | 18 | The signature header has `alg` `EdDSA`, `typ` `colophon-sig`, a `nonce` that matches its grammar, an integer `iat`, and no `crit`. `iat <= min(exp, arrival + 300)`. | `signature_invalid` |
-| 19 | The agent signature verifies with the key in `cnf`, over the rebuilt signing input. | `signature_invalid` |
+| 19 | The agent signature verifies with the key in `cnf`, over the rebuilt signing input (§6.5). | `signature_invalid` |
 | 20 | `To` or `Cc` lists an address of the mailbox (§7.5). | `not_addressed` |
-| 21 | The tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay` |
+| 21 | The replay store can be read and written, the message is verified within the verifier's delay D after arrival, and the tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay_unchecked`, `replay` |
 
 If every step passes, the verdict is **verified**.
+
+Steps 1 and 2 count the header lines that start a field named `Colophon-Signature`, before step 3 checks the rest of the header section.
 
 A verifier does at most one DNS lookup and two Ed25519 verifications per message.
 
@@ -489,17 +522,17 @@ A verdict never blocks delivery by itself. Receivers may still apply their own p
 - A verifier MUST NOT make the lookup while the SMTP session is open.
 - A lookup has 2 seconds, wall clock, retries included. A timeout or a server failure is `dns_error`.
 - Answers are cached for their TTL. A name with no usable record is cached for at least 5 minutes.
-- A verifier MUST limit misses: lookups that find no usable record. After 20 misses for one domain in an hour (RECOMMENDED), it refuses uncached lookups for that domain until the hour is over. A refused lookup is `dns_limited`. Lookups that find a key do not count. Any sender at a shared domain can still spend the budget with made-up selectors, so `dns_limited` is a plain not verified: a receiver MUST NOT treat it as evidence against the sender.
+- A verifier MUST limit misses. A miss is a lookup that does not give a key: one that ends in `dns_error`, `key_not_found` or `key_revoked` (§7.2 steps 9 to 11). An answer from the cache is not a lookup, and a refused lookup is not a miss. After 20 misses for one domain in an hour (RECOMMENDED), it refuses uncached lookups for that domain until the hour is over. A refused lookup is `dns_limited`. Lookups that give a key do not count, even when the credential's signature then fails. Any sender at a shared domain can still spend the budget with made-up selectors, so `dns_limited` is a plain not verified: a receiver MUST NOT treat it as evidence against the sender.
 - Like DKIM, a lookup tells the sender's DNS operator that a message arrived. See §10.
 
 **Which record is the key.** The answer to the lookup is a set of TXT records. The verifier:
 1. joins each record's character strings, with nothing between them;
 2. parses each record as a tag list, as §6.2 does;
-3. discards every record that does not parse, has a duplicate tag, or has no `v=COLOPHON0` tag. These are not Colophon records;
+3. discards every record that has an octet above 0x7F, does not parse, has a duplicate tag, or has no `v=COLOPHON0` tag. These are not Colophon records;
 4. if no Colophon record remains, or more than one, stops with `key_not_found`. NXDOMAIN and an answer with no TXT records count as none;
 5. if the record has no `k=ed25519` tag, or no `p` tag, stops with `key_not_found`;
 6. if `p` is empty, stops with `key_revoked`;
-7. if `p` is not strict base64url of exactly 32 octets, stops with `key_not_found`.
+7. if `p` is not strict base64url of exactly 32 octets, or they are not a valid public key (§6.5), stops with `key_not_found`.
 
 Otherwise `p` is the domain key.
 
@@ -515,7 +548,10 @@ Signed copies for `Bcc` recipients are a possible extension (§11).
 
 ### 7.6 Replays
 
-The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp` plus the 2-hour grace. After that, step 14 rejects the message anyway.
+The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp`, plus the 2-hour grace, plus D. D is the longest time the verifier allows between a message's arrival and its verification: 24 hours, for example. After that, a copy that arrives fails step 14, and a copy that arrived in time is past D. A receiver that verifies messages again after a failure or an outage chooses a D that covers its retry window.
+
+- A message verified more than D after its arrival is not verified (`replay_unchecked`): its tuple may already be gone from the store.
+- If the store cannot be read or written, the verifier MUST NOT return verified. The verdict is `replay_unchecked`, which §7.8 reports as `temperror`: verifying again once the store is back may pass.
 
 - The tuple names the mailbox, not the envelope recipient. A message verifies at most once per mailbox: a copy sent again to the same mailbox, through an alias or a `+tag` address, is a replay. One message delivered to two mailboxes at the same receiver verifies for each.
 - The check comes after the signatures, so a forged message cannot fill the store.
@@ -542,6 +578,9 @@ These values are set for v0. A later version may revise them from real traffic. 
 | Negative cache | at least 5 minutes |
 | DNS misses per domain | 20 per hour (RECOMMENDED) |
 | Work per message | at most 1 DNS lookup and 2 Ed25519 verifications |
+| Message size | none of its own: the receiver's SMTP limit applies (RFC 1870) |
+| Multipart boundary | 1 to 70 characters (RFC 2046) |
+| Delay from arrival to verification (D) | the verifier's choice, 24 hours for example; replay tuples are kept for it |
 | Agent key replaced | every 30 days, for example (SHOULD) |
 | Domain key TTL | at most 1 hour (SHOULD) |
 | Retired selector kept | at least 7 days after last use (SHOULD) |
@@ -556,11 +595,11 @@ The method is `colophon`, version 1, written without a version: `colophon=pass`.
 | --- | --- | --- |
 | `pass` | verified | none |
 | `none` | not verified | `no_signature` |
-| `temperror` | not verified | `dns_error`, `dns_limited` |
+| `temperror` | not verified | `dns_error`, `dns_limited`, `replay_unchecked` |
 | `fail` | not verified | every other reason |
 
 - **Reason.** Every result but `pass` carries its §7.2 reason code in the `reason` clause, spelled exactly as there: `colophon=fail reason="signature_invalid"`.
-- **What a result means.** `temperror` may pass on a later attempt, and is never evidence against the sender (§7.4). `fail` is not evidence of forgery: a `Bcc` copy and a text a mail system rewrote fail as a forgery does. A receiver SHOULD handle `fail` as it handles mail with no Colophon signature. As §7.3 says, the reason is for diagnosis.
+- **What a result means.** `temperror` may pass on a later attempt, and is never evidence against the sender (§7.4). A receiver MAY hold a message whose result is `temperror` and verify it again later, rather than deliver it as not verified. The later attempt uses the same arrival time (§7.1), so it must come within D (§7.6). `fail` is not evidence of forgery: a `Bcc` copy and a text a mail system rewrote fail as a forgery does. A receiver SHOULD handle `fail` as it handles mail with no Colophon signature. As §7.3 says, the reason is for diagnosis.
 - **Properties.** With `pass`, and only with `pass`, the verifier reports these properties, all of ptype `header`:
 
   | Property | Value |
@@ -621,6 +660,8 @@ It does not mean:
 
 **The subject is signed as octets.** A receiver decodes encoded words to show the subject, and mail libraries disagree on unusual input: a character split across two encoded words, an unknown charset, invalid octets. The signature binds the octets, not one reading of them. A receiver SHOULD show a subject it cannot decode cleanly in its raw form, not a repaired one. A signer SHOULD send an ASCII subject as plain text and encode a non-ASCII subject as whole `utf-8` encoded words, or as UTF-8 (RFC 6532).
 
+**Ed25519 edge cases.** Ed25519 libraries disagree on non-canonical encodings, keys and points of small order, and the cofactor. A key of small order, the identity above all, lets one signature verify for every message. §6.5 fixes every one of these choices, so that such keys are rejected and every verifier reaches the same verdict on every signature.
+
 **Lookalike domains.** Colophon proves which domain spoke, not that it is the domain the user expects. A receiver SHOULD make internationalized and lookalike domains visible, for example by showing A-labels or by flagging confusable characters.
 
 **A stolen agent key** can sign only for its one address, and still needs the domain's mail system to pass DKIM. It is not bounded by the credential's 24 hours. Credentials are public: every message the agent sent carries one, so a thief who holds the key can attach any current credential for it. The key stays usable for as long as the issuer certifies it, and for up to 26 hours after the issuer stops. Ending it is the issuer's job: it replaces the agent key (§5.2). Regular replacement bounds how long an unnoticed theft lasts.
@@ -644,7 +685,7 @@ It does not mean:
 **Denial of service.**
 - Key lookups happen only after aligned DKIM passes, have a 2-second budget, and misses are rate-limited.
 - A message costs at most one DNS lookup and two Ed25519 verifications.
-- Size limits (§7.7) bound parsing. Grammars are strict, and verifiers reject what they cannot read rather than repair it.
+- Size limits (§7.7) bound parsing. Colophon sets no limit on the message itself: the receiver's SMTP size limit applies (RFC 1870), and parsing and hashing take time linear in the message's size. Grammars are strict, and verifiers reject what they cannot read rather than repair it.
 - JSON must be I-JSON, which rejects duplicate keys, a common source of parser disagreement.
 
 **Time.** Verification uses arrival time, so a signer cannot backdate. The signature's `iat` is only checked not to be later than the credential's `exp`, or than arrival plus 5 minutes.
@@ -727,7 +768,7 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 ## 15. Open issues
 
-No open issue blocks v0 final. Issues 1 and 2 are resolved, and stay here for the record.
+No open issue blocks v0 final. Issues 1, 2 and 5 are resolved, and stay here for the record.
 
 1. **Will the header survive?** Resolved in v0-05: header carriage (§6.2) stays. The test is in `tests/header-survival/` of this specification's repository.
    - **Sender.** A domain whose mail Amazon SES signs with DKIM.
@@ -740,6 +781,17 @@ No open issue blocks v0 final. Issues 1 and 2 are resolved, and stay here for th
 2. **Real mail in the vectors.** Resolved in v0-05: the results are published as a summary, in `tests/header-survival/results/`. For each copy, it gives the header state, the verdict, and the `Colophon-Signature` field as sent and as stored. The stored messages are not published, because they carry mailbox addresses and the receivers' internal data. The vectors in Appendix B stay synthetic.
 3. **The formal model** (Appendix C) is planned. v0 can be final without it. Colophon Tasks waits for it.
 4. **Name.** "Colophon" is final for this text, but its trademark clearance is pending. A conflict would force a new version with new wire names. Production deployment waits for the clearance.
+5. **Wire rules added in v0-06.** Resolved in v0-06, on 2026-11-09. Building the Python library and a receiver against the sketch found places where the draft was silent and readers disagreed. v0-06 settles each of them, and each choice changes which messages verify. Every rule is decided as the draft states it. The alternatives that were considered stay here for the record.
+   - **Line ends (§6.1).** Decided: a line ends at CRLF or LF alone. A CR alone is malformed in a header section and is data in a body. Not chosen: CRLF only, which rejects messages that a mail store saved with LF line ends; or a CR alone ends a line everywhere, as v0-05's sketch did.
+   - **Header lines (§6.1).** Decided: a line that is neither a field nor a continuation is malformed. Not chosen: such a line ends the header section, as many mail libraries read it. Readers would then disagree on where the body starts.
+   - **Parameters (§6.1).** Decided: strict RFC 2045 in the top-level and body-part `Content-Type`, where a duplicate or a parameter without `=` is malformed; the RFC 2231 forms of `boundary`, `charset` and `format` break the layout; an attachment's parameters are not read. Not chosen: every RFC 2231 parameter breaks the layout, which also rejects attachments with non-ASCII file names, as mail clients commonly send them; or the first of two duplicates wins.
+   - **Multipart (§6.1).** Decided: strict RFC 2046, with a valid boundary, a close delimiter, no empty parts and no delimiter in the epilogue, each malformed if broken. Not chosen: accept a missing close delimiter and drop empty parts, as lenient readers do; or report these as `layout`.
+   - **Ed25519 (§6.5).** Decided: canonical keys not of small order, S < L, R not of small order, and the equation without the cofactor, as libsodium does by default. Not chosen: the ZIP-215 rules, which accept every encoding and use the cofactor, so that batch and single verification agree; or no rule, which leaves verifiers to disagree on crafted signatures.
+   - **DNS misses (§7.4).** Decided: `dns_error`, `key_not_found` and `key_revoked` each count as a miss, so a domain whose DNS times out on purpose spends its budget too. Not chosen: count only lookups that return no Colophon record; or leave `dns_limited` out of the vectors.
+   - **DKIM identity (§7.1).** Decided: a passing signature counts for its `d=`. A verifier whose boundary server reports only `header.i` recovers `d=` from the one `DKIM-Signature` field whose identity equals `header.i`, and counts nothing if there is not exactly one. Not chosen: count `d=` from a field whose `d=` is the domain of `header.i` and whose identity equals `header.i`, even when other fields share that identity: a signature by a parent domain with `i=` in a subdomain could then make an unverified field for the subdomain count; or `header.d` only, so that such a verifier must check DKIM itself.
+   - **Replay store unavailable (§7.6).** Decided: a new reason, `replay_unchecked`, reported as `temperror`, which a receiver may hold and verify again within D (§7.8). Not chosen: report it as `replay`, a `fail`; or give no verdict, and leave the retry to the receiver.
+   - **Late verification (§7.6).** Decided: tuples are kept until `exp` + 2 hours + D, where D is the verifier's longest delay from arrival to verification, chosen to cover its retry window, and a message verified later than D is `replay_unchecked`. Not chosen: fix D in the spec, 24 hours for example, which covers retry windows of minutes to hours; or extend retention only, with no rule for messages verified later than D.
+   - **Message size (§7.7).** Decided: no limit of Colophon's own; the receiver's SMTP size limit applies. Not chosen: a RECOMMENDED maximum size for signed messages.
 
 ## Appendix A. Worked example
 
@@ -851,6 +903,8 @@ Each delivery also gives `expected_authentication_results`: the `colophon` resul
 
 A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
+Two inputs stand for the receiver's state. `dns_misses` is the number of misses (§7.4) for the `From` host in the hour before the delivery, with no key cached; 20 or more means the lookup is refused. `replay_store_available` is false when the replay store cannot be read or written (§7.6). Unless a row says otherwise, they are 0 and true. A string in `dns_txt` stands for its UTF-8 octets. The vectors do not cover the delay D of §7.6.
+
 | Change to the message or inputs | Expected |
 | --- | --- |
 | None | verified |
@@ -870,6 +924,20 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | A Colophon record with a duplicate tag beside the record | verified |
 | Arrived exactly at exp + grace | verified |
 | Signed 1 hour before the credential's iat | verified |
+| Body in 8bit with non-ASCII text | verified |
+| 8-bit octets inside a quoted-printable body | verified |
+| Lines end in LF alone | verified |
+| A CR alone ends a body line | verified |
+| Empty display name in To | verified |
+| Quoted-pair in the charset | verified |
+| Empty parameter items | verified |
+| Attachment name in RFC 2231 form | verified |
+| Attachment parameter that does not parse (not read) | verified |
+| Boundary of 70 characters | verified |
+| Preamble and epilogue | verified |
+| Agent signature with another valid R (R need not be the RFC 8032 one) | verified |
+| A non-ASCII Colophon record beside the record (not a Colophon record) | verified |
+| 19 DNS misses for the host this hour | verified |
 | Subject changed | `signature_invalid` |
 | Subject re-encoded as an encoded word after signing | `signature_invalid` |
 | Text changed | `signature_invalid` |
@@ -883,6 +951,8 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Body marked format=flowed | `layout` |
 | Unknown transfer encoding | `layout` |
 | Message/rfc822 attachment | `layout` |
+| Charset in RFC 2231 form | `layout` |
+| Transfer encoding on the multipart | `layout` |
 | Second To field | `malformed` |
 | Second Subject field | `malformed` |
 | Second Content-Type in the body part | `malformed` |
@@ -903,6 +973,18 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | A fraction in exp | `malformed` |
 | A duplicate claim | `malformed` |
 | Credential over 2,048 octets | `malformed` |
+| Escaped surrogate in sub | `malformed` |
+| Noncharacter U+FFFF in scope | `malformed` |
+| A CR alone in To | `malformed` |
+| A header line that is not a field | `malformed` |
+| Charset given twice | `malformed` |
+| A parameter without a value | `malformed` |
+| Boundary given twice | `malformed` |
+| Boundary of 71 characters | `malformed` |
+| No close delimiter | `malformed` |
+| Two delimiter lines in a row | `malformed` |
+| A line that starts with the delimiter | `malformed` |
+| A delimiter in the epilogue | `malformed` |
 | Second Colophon-Signature | `multiple_signatures` |
 | No Colophon-Signature | `no_signature` |
 | DKIM passes only for mail.acme.example | `dkim_unaligned` |
@@ -918,6 +1000,11 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Key of the wrong length | `key_not_found` |
 | Key in padded base64 | `key_not_found` |
 | Record with empty p= | `key_revoked` |
+| The record with a non-ASCII tag added | `key_not_found` |
+| Domain key is the identity point (every credential verifies under it) | `key_not_found` |
+| Domain key of 32 zero octets (small order) | `key_not_found` |
+| Domain key not in canonical encoding | `key_not_found` |
+| 20 DNS misses for the host this hour | `dns_limited` |
 | Record holds a different key | `credential_invalid` |
 | Iss in capitals | `credential_invalid` |
 | Sub with a trailing newline | `credential_invalid` |
@@ -927,16 +1014,21 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Lifetime of 25 hours | `credential_invalid` |
 | Bidi control in scope | `credential_invalid` |
 | Agent key of 31 octets | `credential_invalid` |
+| Agent key is the identity point (every signature verifies under it) | `credential_invalid` |
+| Agent signature with S + L in place of S | `signature_invalid` |
+| Agent signature with R the identity point | `signature_invalid` |
+| Agent signature that only a cofactored check accepts | `signature_invalid` |
 | Arrived 1 second after exp + grace | `credential_expired` |
 | From is another address on the same host | `from_mismatch` |
 | SMTPUTF8 local part, ASCII letters lowercased (`José@acme.example`, credential `josé@acme.example`) | verified |
 | SMTPUTF8 local part with non-ASCII in another case (`JOSÉ@acme.example`, same credential) | `from_mismatch` |
 | Signature iat 10 minutes after arrival | `signature_invalid` |
 | Delivered to a mailbox not in To or Cc (Bcc) | `not_addressed` |
+| Replay store unavailable | `replay_unchecked` |
 
 Some of these changes would also break DKIM in real mail. The vectors test the Colophon checks alone, with the DKIM result given as an input.
 
-The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts, non-ASCII ones included, and ASCII domains.
+The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts, non-ASCII ones included, and ASCII domains. It reads header sections and MIME structure with its own parser, as §6.1 specifies, not with a mail library, and checks Ed25519 keys and signatures as §6.5 specifies.
 
 ## Appendix C. Formal model
 
@@ -977,6 +1069,9 @@ The design was settled one question at a time. Each decision has a longer record
 | Addressing check | A message verifies only for a mailbox in `To` or `Cc`. `Bcc` copies and unknown forwards are not verified. Signed `Bcc` copies may come later as an extension. |
 | Subject and Reply-To | Both signed. The subject is signed raw, not decoded. |
 | Limits | Fixed for v0; v1 may revise them from traffic. |
+| Message syntax | Header sections and MIME read strictly, with their own rules (§6.1): what a strict reader cannot read is malformed, not repaired. Decided in v0-06 (§15, issue 5). |
+| Ed25519 | RFC 8032 with its open choices made exact: valid keys, S < L, R not of small order, no cofactor (§6.5). Decided in v0-06 (§15, issue 5). |
+| Replay store | A verifier that cannot check the store does not verify. Tuples are kept for the verifier's delay from arrival to verification (§7.6). Decided in v0-06 (§15, issue 5). |
 | Tag letters | `c` for the credential and `b` for the agent signature. |
 | Encoding | base64url everywhere, the DNS record included, decoded strictly. |
 | JWS form | A standard detached JWS, not RFC 7797 unencoded payloads: RFC 7797 needs `crit`, which v0 rejects. |
@@ -990,6 +1085,21 @@ The design was settled one question at a time. Each decision has a longer record
 | Relation to A2A | Independent, with a defined bridge. |
 
 ## Appendix E. Changes
+
+### v0-06
+
+v0-06 answers the review of the reference sketch made while building the Python library. Where the draft was silent and readers could disagree, it now states one rule. The choices between wire behaviours were decided on 2026-11-09. §15, issue 5 records them, with the alternatives considered. The worked example's message, credential and signatures are unchanged, and every v0-05 vector keeps its verdict.
+
+- **Header sections and MIME.** A line ends at CRLF or LF. A CR alone, and a header line that is neither a field nor a continuation, are malformed in a header section (§6.1). `Content-Type` parameters follow RFC 2045, read only in the top level and the body part. The multipart structure follows RFC 2046 strictly (§6.1, §7.2 step 16).
+- **8-bit text.** Octets in an `8bit` or `binary` body, and 8-bit octets in a quoted-printable one, are taken as they are (§6.4). The v0-05 sketch rejected them, and could not sign them.
+- **Display names.** An empty display name, as in `<reservations@bistro.example>`, is allowed (§6.4).
+- **JSON.** Surrogates and noncharacters are not allowed in strings, escaped or not, and make the message malformed (§5.1).
+- **Ed25519.** Keys must be valid, and signatures are checked with RFC 8032's open choices made exact (§6.5). The identity key and other keys of small order are rejected.
+- **DNS.** A TXT record with an octet above 0x7F is not a Colophon record (§4.1, §7.4). A miss is defined (§7.4).
+- **DKIM results.** A signature counts for its `d=`, not its `i=`. A verifier whose boundary server reports only `header.i` recovers `d=` from the message (§7.1).
+- **Replay store.** A new reason, `replay_unchecked`, reported as `temperror`, when the store cannot be checked or a message is verified too late. Tuples are kept for the verifier's delay D as well, which covers its retry window. A receiver may hold a `temperror` message and verify it again (§7.6, §7.8).
+- **Limits.** The message size, the boundary length and D are in §7.7.
+- **Vectors.** Two new delivery inputs, `dns_misses` and `replay_store_available`, and 38 new deliveries: 118 in all (Appendix B). The sketch now reads MIME with its own parser.
 
 ### v0-05
 
