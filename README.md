@@ -43,3 +43,9 @@ uv run --with cryptography python reference/colophon_v0.py --json > reference/ve
 ## Licence
 
 Apache 2.0, for the text and the code.
+
+A royalty-free patent promise is planned; until then the Apache-2.0 license covers the reference code.
+
+## Contributing and security
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Report security flaws privately, as [SECURITY.md](SECURITY.md) describes.
