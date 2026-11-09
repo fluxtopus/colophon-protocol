@@ -26,6 +26,9 @@ dependencies = ["cryptography>=42"]
 # Live DNS lookups for the CLI's `check` and `verify`, and the dnspython resolver adapters.
 dns = ["dnspython>=2.6"]
 
+[project.scripts]
+colophon-protocol = "colophon_protocol.cli:main"
+
 [project.urls]
 Specification = "https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md"
 Source = "https://github.com/fluxtopus/colophon-protocol"
@@ -64,6 +67,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S311", "PLC0415", "S603"]
+"src/colophon_protocol/cli.py" = ["T201"]
 
 [tool.mypy]
 strict = true
