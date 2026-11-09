@@ -205,6 +205,13 @@ def file(cap: Capture, token: str, default_dir: Path) -> Captured:
 
 
 def fetch(cap: Capture, token: str, *, since: float, state_dir: Path, export_dir: Path) -> Captured:
+    """A message exported by hand into the receiver's directory wins over any live capture, so a
+    mailbox whose credential never arrived can still be collected."""
+    if cap.kind != "file" and export_dir.is_dir():
+        try:
+            return file(Capture("file"), token, export_dir)
+        except NotFound:
+            pass
     if cap.kind == "imap":
         return imap(cap, token)
     if cap.kind == "graph":

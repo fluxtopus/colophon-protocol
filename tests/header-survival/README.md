@@ -78,7 +78,8 @@ Where to find the raw source:
 | Proton Mail | More, Export; the download is the full `.eml` (the "view headers" `.txt` is not enough) |
 | Zoho Mail | More options, Show original; save as `.eml` |
 
-Line endings are normalised to CRLF on read, so an export saved with LF is fine. Only Gmail is
+Line endings are normalised to CRLF on read, so an export saved with LF is fine. An export
+dropped into a receiver's directory is used even when that receiver is set up for IMAP or Graph. Only Gmail is
 collected over IMAP with an app password; the password file lives in the operator's private
 storage, never in the repository or the shell history.
 

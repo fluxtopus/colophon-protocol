@@ -180,3 +180,13 @@ def test_missing_password_file_is_reported_not_fatal(tmp_path):
         pass
     else:
         raise AssertionError("expected the missing file to raise")
+
+
+def test_hand_export_wins_over_live_capture(tmp_path, built):
+    from survival import capture
+    from survival.receivers import Capture
+
+    (tmp_path / "from-gmail.eml").write_bytes(built["cap"].raw)
+    cap = Capture("imap", {"host": "imap.invalid", "user": "x", "password_env": "UNSET_PW"})
+    got = capture.fetch(cap, "test-run/cap", since=0, state_dir=tmp_path, export_dir=tmp_path)
+    assert got.kind == "file" and got.raw == built["cap"].raw
