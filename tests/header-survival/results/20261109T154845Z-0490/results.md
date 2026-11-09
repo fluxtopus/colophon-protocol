@@ -14,6 +14,7 @@ value on different line breaks, which the spec allows (section 6.2).
 |---|---|---|---|---|---|---|
 | ses-inbound | Amazon SES inbound (S3) | - | s3 | intact; verified | intact; verified | intact; verified |
 | gmail-workspace | Gmail (Google Workspace) | business | file | intact; verified | intact; verified | intact; verified |
+| fastmail | Fastmail | personal | file | intact; verified | intact; verified | intact; verified |
 
 ### Recorded forwards (behaviour of the whole path, not one provider)
 
@@ -32,3 +33,6 @@ value on different line breaks, which the spec allows (section 6.2).
 - cloudflare-to-gmail / minimal: DKIM pass for amazonses.com, cloudflare-email.net, colophon-protocol.org, <forwarding domain>; arrival from topmost Received; DNS live lookup
 - cloudflare-to-gmail / cap: DKIM pass for amazonses.com, cloudflare-email.net, colophon-protocol.org, <forwarding domain>; arrival from topmost Received; DNS live lookup
 - cloudflare-to-gmail / attachments: DKIM pass for amazonses.com, cloudflare-email.net, colophon-protocol.org, <forwarding domain>; arrival from topmost Received; DNS live lookup
+- fastmail / minimal: DKIM pass for amazonses.com, colophon-protocol.org; arrival from topmost Received; DNS live lookup
+- fastmail / cap: DKIM pass for amazonses.com, colophon-protocol.org; arrival from topmost Received; DNS live lookup
+- fastmail / attachments: DKIM pass for amazonses.com, colophon-protocol.org; arrival from topmost Received; DNS live lookup

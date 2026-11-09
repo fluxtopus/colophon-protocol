@@ -217,5 +217,74 @@
   "dns_source": "live lookup",
   "capture_kind": "file",
   "note": ""
+ },
+ {
+  "receiver": "fastmail",
+  "provider": "Fastmail",
+  "account_type": "personal",
+  "hops": [],
+  "label": "minimal",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 700,
+  "captured_octets": 700,
+  "sent_lines": 11,
+  "captured_lines": 11,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "fastmail",
+  "provider": "Fastmail",
+  "account_type": "personal",
+  "hops": [],
+  "label": "cap",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 2560,
+  "captured_octets": 2560,
+  "sent_lines": 35,
+  "captured_lines": 35,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "fastmail",
+  "provider": "Fastmail",
+  "account_type": "personal",
+  "hops": [],
+  "label": "attachments",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 1009,
+  "captured_octets": 1009,
+  "sent_lines": 15,
+  "captured_lines": 15,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
  }
 ]
