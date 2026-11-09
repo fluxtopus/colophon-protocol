@@ -1,0 +1,69 @@
+{
+  "sender": "test@colophon-protocol.org",
+  "display": "Colophon header test",
+  "region": "us-east-2",
+  "receivers": {
+    "ses-inbound": {
+      "provider": "Amazon SES inbound",
+      "address": "colophon-test@example.net",
+      "mailbox": "ses:colophon-test@example.net",
+      "addresses": ["colophon-test@example.net"],
+      "authserv_ids": ["amazonses.com"],
+      "capture": {"kind": "s3", "bucket": "example-inbound-bucket", "prefix": "inbound/", "profile": "example", "region": "us-east-2"}
+    },
+    "gmail": {
+      "provider": "Gmail",
+      "account_type": "Google Workspace",
+      "address": "someone@example.com",
+      "mailbox": "gmail:someone@example.com",
+      "addresses": ["someone@example.com"],
+      "authserv_ids": ["mx.google.com"],
+      "capture": {"kind": "imap", "host": "imap.gmail.com", "user": "someone@example.com", "password_env": "GMAIL_APP_PASSWORD"}
+    },
+    "outlook": {
+      "provider": "Outlook.com",
+      "account_type": "personal",
+      "address": "someone@outlook.com",
+      "mailbox": "outlook:someone@outlook.com",
+      "addresses": ["someone@outlook.com"],
+      "authserv_ids": ["outlook.com"],
+      "capture": {"kind": "graph", "client_id": "00000000-0000-0000-0000-000000000000", "tenant": "consumers"},
+      "notes": "Graph returns MIME regenerated from the store, not the octets on the wire."
+    },
+    "icloud": {
+      "provider": "iCloud Mail",
+      "address": "someone@icloud.com",
+      "mailbox": "icloud:someone@icloud.com",
+      "addresses": ["someone@icloud.com"],
+      "authserv_ids": ["icloud.com"],
+      "capture": {"kind": "imap", "host": "imap.mail.me.com", "user": "someone", "password_env": "ICLOUD_APP_PASSWORD"}
+    },
+    "fastmail": {
+      "provider": "Fastmail",
+      "address": "someone@fastmail.com",
+      "mailbox": "fastmail:someone@fastmail.com",
+      "addresses": ["someone@fastmail.com"],
+      "authserv_ids": ["mx.messagingengine.com"],
+      "capture": {"kind": "imap", "host": "imap.fastmail.com", "user": "someone@fastmail.com", "password_env": "FASTMAIL_APP_PASSWORD"}
+    },
+    "proton": {
+      "provider": "Proton Mail",
+      "address": "someone@proton.me",
+      "mailbox": "proton:someone@proton.me",
+      "addresses": ["someone@proton.me"],
+      "authserv_ids": ["mail.protonmail.ch"],
+      "capture": {"kind": "file", "path": "runs/exports/proton"},
+      "notes": "No IMAP without Bridge: export each message as .eml into the path."
+    },
+    "cloudflare-to-gmail": {
+      "provider": "Gmail",
+      "account_type": "Google Workspace",
+      "address": "test@forwarding-domain.example",
+      "mailbox": "gmail:someone@example.com",
+      "addresses": ["someone@example.com", "test@forwarding-domain.example"],
+      "authserv_ids": ["mx.google.com"],
+      "hops": ["Cloudflare Email Routing"],
+      "capture": {"kind": "imap", "host": "imap.gmail.com", "user": "someone@example.com", "password_env": "GMAIL_APP_PASSWORD"}
+    }
+  }
+}
