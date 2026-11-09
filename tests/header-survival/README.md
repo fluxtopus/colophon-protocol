@@ -57,8 +57,8 @@ uv run python -m survival report --run-id <run-id>
 `receivers.json` (never committed; copy `receivers.example.json`) names the sender address and
 each receiver: where to send, how to capture (`imap`, `graph`, `s3` or `file`), the receiver's
 authserv-id, and any forwarding hops. Credentials are never in that file: an IMAP password is
-read from a file outside the repository (`password_file`) or from an environment variable
-(`password_env`), and Microsoft Graph signs in with the device code flow against an app
+read from a file outside the repository (`password_file`, a bare value or a dotenv line) or
+from an environment variable (`password_env`), and Microsoft Graph signs in with the device code flow against an app
 registration whose client id is in the file.
 
 Most providers need no API access at all. A receiver with `"capture": {"kind": "file"}` is

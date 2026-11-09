@@ -150,6 +150,16 @@ def test_secret_from_file_then_environment(tmp_path, monkeypatch):
     secret = tmp_path / "pw"
     secret.write_text("s3cret\n")
     assert Capture("imap", {"password_file": str(secret)}).secret("password") == "s3cret"
+    secret.write_text('# written by a secrets form\nGMAIL_APP_PASSWORD="abcd efgh"\n')
+    assert Capture("imap", {"password_file": str(secret)}).secret("password") == "abcd efgh"
+    cap = Capture("imap", {"password_file": str(secret), "password_key": "GMAIL_APP_PASSWORD"})
+    assert cap.secret("password") == "abcd efgh"
+    try:
+        Capture("imap", {"password_file": str(secret), "password_key": "OTHER"}).secret("password")
+    except ValueError as err:
+        assert "no OTHER" in str(err)
+    else:
+        raise AssertionError("expected ValueError")
     monkeypatch.setenv("PW_TEST", "from-env")
     assert Capture("imap", {"password_env": "PW_TEST"}).secret("password") == "from-env"
     try:

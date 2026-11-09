@@ -20,13 +20,16 @@ class Capture:
 
     def secret(self, name: str) -> str:
         """A credential read from the file named by `<name>_file` in the options, else from the
-        environment variable named by `<name>_env`. Never from the options themselves."""
+        environment variable named by `<name>_env`. Never from the options themselves.
+
+        The file holds either the bare value or dotenv lines (`NAME=value`); with dotenv lines
+        the variable is the one named by `<name>_key`, else the only assignment in the file."""
         path = self.options.get(f"{name}_file")
         if path:
-            value = Path(path).expanduser().read_text(encoding="utf-8").strip()
-            if not value:
+            text = Path(path).expanduser().read_text(encoding="utf-8").strip()
+            if not text:
                 raise ValueError(f"{path} is empty")
-            return value
+            return self._from_dotenv(text, self.options.get(f"{name}_key"), path)
         var = self.options.get(f"{name}_env")
         if not var:
             raise ValueError(f"capture needs {name}_file or {name}_env in receivers.json")
@@ -34,6 +37,29 @@ class Capture:
         if not value:
             raise ValueError(f"environment variable {var} is not set")
         return value
+
+    @staticmethod
+    def _from_dotenv(text: str, key: str | None, path: str) -> str:
+        pairs = {}
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            k = k.strip().removeprefix("export ").strip()
+            v = v.strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
+                v = v[1:-1]
+            pairs[k] = v
+        if not pairs:
+            return text
+        if key:
+            if key not in pairs:
+                raise ValueError(f"{path} has no {key} assignment")
+            return pairs[key]
+        if len(pairs) != 1:
+            raise ValueError(f"{path} has several assignments; name one with _key")
+        return next(iter(pairs.values()))
 
 
 @dataclass(frozen=True)

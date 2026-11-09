@@ -36,7 +36,8 @@
         "kind": "imap",
         "host": "imap.gmail.com",
         "user": "someone@example.com",
-        "password_file": "/thread-storage/secrets/gmail-app-password"
+        "password_file": "/private/secrets/gmail.env",
+        "password_key": "GMAIL_APP_PASSWORD"
       }
     },
     "m365": {
@@ -167,7 +168,8 @@
         "kind": "imap",
         "host": "imap.gmail.com",
         "user": "someone@example.com",
-        "password_file": "/thread-storage/secrets/gmail-app-password"
+        "password_file": "/private/secrets/gmail.env",
+        "password_key": "GMAIL_APP_PASSWORD"
       }
     },
     "cloudflare-to-gmail": {
@@ -189,7 +191,8 @@
         "kind": "imap",
         "host": "imap.gmail.com",
         "user": "someone@example.com",
-        "password_file": "/thread-storage/secrets/gmail-app-password"
+        "password_file": "/private/secrets/gmail.env",
+        "password_key": "GMAIL_APP_PASSWORD"
       }
     }
   }
