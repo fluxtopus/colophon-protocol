@@ -33,6 +33,19 @@ class Unavailable(Exception):
     """The mailbox cannot be read right now (sign-in refused, service down)."""
 
 
+def addressed_to(raw: bytes, recipient: str) -> bool:
+    """True when the message's To header names `recipient` (the harness sends every message to
+    exactly one address, so this tells a direct copy from a forwarded one in a shared mailbox)."""
+    if not recipient:
+        return True
+    head = raw.split(b"\r\n\r\n", 1)[0].split(b"\n\n", 1)[0]
+    unfolded = re.sub(rb"\r?\n[ \t]+", b" ", head)
+    for line in unfolded.split(b"\n"):
+        if line.lower().startswith(b"to:") and recipient.lower().encode() in line.lower():
+            return True
+    return False
+
+
 # ---------------------------------------------------------------- IMAP
 
 
@@ -53,7 +66,7 @@ def _imap_folders(conn: imaplib.IMAP4) -> list[str]:
     return inbox_first or ["INBOX"]
 
 
-def imap(cap: Capture, token: str) -> Captured:
+def imap(cap: Capture, token: str, recipient: str = "") -> Captured:
     host, port = cap.options["host"], int(cap.options.get("port", 993))
     user = cap.options["user"]
     password = cap.secret("password")
@@ -73,11 +86,16 @@ def imap(cap: Capture, token: str) -> Captured:
             # Some servers do not index custom headers; the subject carries the same token.
             for query in (f'HEADER {TOKEN_HEADER} "{token}"', f'SUBJECT "{token}"'):
                 status, data = conn.search(None, query)
-                if status == "OK" and data and data[0]:
-                    uid = data[0].split()[-1]
+                if status != "OK" or not data or not data[0]:
+                    continue
+                for uid in reversed(data[0].split()):
                     status, parts = conn.fetch(uid, "(BODY.PEEK[])")
                     for part in parts:
-                        if isinstance(part, tuple) and len(part) >= 2:
+                        if (
+                            isinstance(part, tuple)
+                            and len(part) >= 2
+                            and addressed_to(part[1], recipient)
+                        ):
                             return Captured(part[1], folder, "imap")
         raise NotFound(f"{token} not found in any folder of {user}@{host}")
     finally:
@@ -183,7 +201,7 @@ def normalise(raw: bytes) -> bytes:
     return raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n").replace(b"\n", b"\r\n")
 
 
-def file(cap: Capture, token: str, default_dir: Path) -> Captured:
+def file(cap: Capture, token: str, default_dir: Path, recipient: str = "") -> Captured:
     """A message exported by hand from a provider's "show original" or "save as", dropped as a
     file into the receiver's export directory. Found by the token in its subject or tracking
     header, whatever the file is called."""
@@ -191,35 +209,51 @@ def file(cap: Capture, token: str, default_dir: Path) -> Captured:
     if root.is_file():
         paths = [root]
     elif root.is_dir():
-        paths = sorted(
-            q for q in root.iterdir() if q.is_file() and q.name.lower().endswith(EXPORT_SUFFIXES)
-        )
+        # The receiver's own directory first, then its siblings: several receivers that share
+        # one mailbox can be exported into one directory and are told apart by recipient.
+        dirs = [root]
+        if root.parent.name == "exports":
+            dirs += sorted(d for d in root.parent.iterdir() if d.is_dir() and d != root)
+        paths = [
+            q
+            for d in dirs
+            for q in sorted(d.iterdir())
+            if q.is_file() and q.name.lower().endswith(EXPORT_SUFFIXES)
+        ]
     else:
         raise NotFound(f"no export directory {root}; create it and drop the exported message there")
     needle = token.encode()
     for path in paths:
         data = path.read_bytes()
-        if needle in data:
+        if needle in data and addressed_to(data, recipient):
             return Captured(normalise(data), str(path), "file")
-    raise NotFound(f"{token} not in {root} ({len(paths)} exported files)")
+    raise NotFound(f"{token} for {recipient or 'any recipient'} not in {root} ({len(paths)} files)")
 
 
-def fetch(cap: Capture, token: str, *, since: float, state_dir: Path, export_dir: Path) -> Captured:
+def fetch(
+    cap: Capture,
+    token: str,
+    *,
+    since: float,
+    state_dir: Path,
+    export_dir: Path,
+    recipient: str = "",
+) -> Captured:
     """A message exported by hand into the receiver's directory wins over any live capture, so a
     mailbox whose credential never arrived can still be collected."""
     if cap.kind != "file" and export_dir.is_dir():
         try:
-            return file(Capture("file"), token, export_dir)
+            return file(Capture("file"), token, export_dir, recipient)
         except NotFound:
             pass
     if cap.kind == "imap":
-        return imap(cap, token)
+        return imap(cap, token, recipient)
     if cap.kind == "graph":
         return graph(cap, token, state_dir / f".graph-token-cache-{cap.options['client_id']}")
     if cap.kind == "s3":
         return s3(cap, token, since)
     if cap.kind == "file":
-        return file(cap, token, export_dir)
+        return file(cap, token, export_dir, recipient)
     raise ValueError(f"unknown capture kind {cap.kind!r}")
 
 
@@ -232,11 +266,19 @@ def wait_for(
     export_dir: Path,
     timeout: float,
     every: float = 20,
+    recipient: str = "",
 ) -> Captured:
     deadline = time.time() + timeout
     while True:
         try:
-            return fetch(cap, token, since=since, state_dir=state_dir, export_dir=export_dir)
+            return fetch(
+                cap,
+                token,
+                since=since,
+                state_dir=state_dir,
+                export_dir=export_dir,
+                recipient=recipient,
+            )
         except NotFound:
             if time.time() >= deadline:
                 raise

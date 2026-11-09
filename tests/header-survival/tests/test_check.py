@@ -139,7 +139,7 @@ def test_exported_file_is_found_and_normalised(tmp_path, built):
     try:
         capture.file(Capture("file"), "test-run/cap", tmp_path)
     except capture.NotFound as missing:
-        assert "2 exported files" in str(missing)
+        assert "(2 files)" in str(missing)
     else:
         raise AssertionError("expected NotFound")
 
@@ -190,3 +190,42 @@ def test_hand_export_wins_over_live_capture(tmp_path, built):
     cap = Capture("imap", {"host": "imap.invalid", "user": "x", "password_env": "UNSET_PW"})
     got = capture.fetch(cap, "test-run/cap", since=0, state_dir=tmp_path, export_dir=tmp_path)
     assert got.kind == "file" and got.raw == built["cap"].raw
+
+
+def test_shared_mailbox_exports_are_told_apart_by_recipient(tmp_path, keys, now):
+    from survival import capture, messages
+    from survival.receivers import Capture
+
+    direct = messages.build(
+        "minimal",
+        keys=keys,
+        sender="test@example.org",
+        recipient="me@example.com",
+        run_id="test-run",
+        now=now,
+        display="Test",
+    )
+    hop = messages.build(
+        "minimal",
+        keys=keys,
+        sender="test@example.org",
+        recipient="alias@hop.example",
+        run_id="test-run",
+        now=now,
+        display="Test",
+    )
+    shared = tmp_path / "exports" / "gmail"
+    other = tmp_path / "exports" / "hop"
+    shared.parent.mkdir()
+    shared.mkdir()
+    other.mkdir()
+    (shared / "a.eml").write_bytes(hop.raw)
+    (shared / "b.eml").write_bytes(direct.raw)
+    got = capture.file(Capture("file"), "test-run/minimal", other, "alias@hop.example")
+    assert got.raw == hop.raw  # found in the sibling directory, by recipient
+    got = capture.file(Capture("file"), "test-run/minimal", shared, "me@example.com")
+    assert got.raw == direct.raw
+    assert capture.addressed_to(b"To: Someone <ME@example.com>\r\n\r\n", "me@example.com")
+    assert not capture.addressed_to(
+        b"Delivered-To: me@example.com\r\nTo: x@y\r\n\r\n", "me@example.com"
+    )

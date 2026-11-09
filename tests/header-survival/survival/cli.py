@@ -201,6 +201,7 @@ def cmd_capture(args) -> int:
                     state_dir=HERE,
                     export_dir=export_dir(receiver.name),
                     timeout=0 if receiver.capture.kind == "file" else args.timeout,
+                    recipient=receiver.address,
                 )
             except cap_mod.NotFound as missing:
                 print(f"missing {receiver.name}/{label}: {missing}", file=sys.stderr)
