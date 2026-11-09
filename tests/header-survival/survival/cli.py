@@ -206,6 +206,12 @@ def cmd_capture(args) -> int:
                 print(f"missing {receiver.name}/{label}: {missing}", file=sys.stderr)
                 failures += 1
                 continue
+            except (ValueError, OSError, cap_mod.Unavailable) as unavailable:
+                # A credential not there yet or a mailbox that cannot be reached: report the
+                # receiver and go on to the next one, so one gap does not block the others.
+                print(f"unavailable {receiver.name}: {unavailable}", file=sys.stderr)
+                failures += 1
+                break
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_bytes(got.raw)
             out.with_suffix(".json").write_text(

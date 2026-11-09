@@ -29,6 +29,10 @@ class NotFound(Exception):
     pass
 
 
+class Unavailable(Exception):
+    """The mailbox cannot be read right now (sign-in refused, service down)."""
+
+
 # ---------------------------------------------------------------- IMAP
 
 
@@ -53,9 +57,15 @@ def imap(cap: Capture, token: str) -> Captured:
     host, port = cap.options["host"], int(cap.options.get("port", 993))
     user = cap.options["user"]
     password = cap.secret("password")
-    conn = imaplib.IMAP4_SSL(host, port)
     try:
-        conn.login(user, password)
+        conn = imaplib.IMAP4_SSL(host, port)
+    except OSError as err:
+        raise Unavailable(f"{host}:{port}: {err}") from err
+    try:
+        try:
+            conn.login(user, password)
+        except imaplib.IMAP4.error as err:
+            raise Unavailable(f"{host} refused the sign-in for {user}: {err}") from err
         for folder in _imap_folders(conn):
             status, _ = conn.select(folder, readonly=True)
             if status != "OK":

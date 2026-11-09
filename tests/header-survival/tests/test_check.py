@@ -168,3 +168,15 @@ def test_secret_from_file_then_environment(tmp_path, monkeypatch):
         assert "password_file or password_env" in str(err)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_missing_password_file_is_reported_not_fatal(tmp_path):
+    from survival.receivers import Capture
+
+    cap = Capture("imap", {"password_file": str(tmp_path / "absent")})
+    try:
+        cap.secret("password")
+    except OSError:
+        pass
+    else:
+        raise AssertionError("expected the missing file to raise")
