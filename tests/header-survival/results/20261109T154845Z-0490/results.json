@@ -1,0 +1,221 @@
+[
+ {
+  "receiver": "ses-inbound",
+  "provider": "Amazon SES inbound (S3)",
+  "account_type": "",
+  "hops": [],
+  "label": "minimal",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 700,
+  "captured_octets": 700,
+  "sent_lines": 11,
+  "captured_lines": 11,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "s3",
+  "note": ""
+ },
+ {
+  "receiver": "ses-inbound",
+  "provider": "Amazon SES inbound (S3)",
+  "account_type": "",
+  "hops": [],
+  "label": "cap",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 2560,
+  "captured_octets": 2560,
+  "sent_lines": 35,
+  "captured_lines": 35,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "s3",
+  "note": ""
+ },
+ {
+  "receiver": "ses-inbound",
+  "provider": "Amazon SES inbound (S3)",
+  "account_type": "",
+  "hops": [],
+  "label": "attachments",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 1009,
+  "captured_octets": 1009,
+  "sent_lines": 15,
+  "captured_lines": 15,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "s3",
+  "note": ""
+ },
+ {
+  "receiver": "gmail-workspace",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [],
+  "label": "minimal",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 700,
+  "captured_octets": 700,
+  "sent_lines": 11,
+  "captured_lines": 11,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "gmail-workspace",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [],
+  "label": "cap",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 2560,
+  "captured_octets": 2560,
+  "sent_lines": 35,
+  "captured_lines": 35,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "gmail-workspace",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [],
+  "label": "attachments",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 1009,
+  "captured_octets": 1009,
+  "sent_lines": 15,
+  "captured_lines": 15,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "colophon-protocol.org"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "cloudflare-to-gmail",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [
+   "Cloudflare Email Routing"
+  ],
+  "label": "minimal",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 700,
+  "captured_octets": 700,
+  "sent_lines": 11,
+  "captured_lines": 11,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "cloudflare-email.net",
+   "colophon-protocol.org",
+   "<forwarding domain>"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "cloudflare-to-gmail",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [
+   "Cloudflare Email Routing"
+  ],
+  "label": "cap",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 2560,
+  "captured_octets": 2560,
+  "sent_lines": 35,
+  "captured_lines": 35,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "cloudflare-email.net",
+   "colophon-protocol.org",
+   "<forwarding domain>"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ },
+ {
+  "receiver": "cloudflare-to-gmail",
+  "provider": "Gmail (Google Workspace)",
+  "account_type": "business",
+  "hops": [
+   "Cloudflare Email Routing"
+  ],
+  "label": "attachments",
+  "status": "identical",
+  "verified": true,
+  "reason": "verified",
+  "sent_octets": 1009,
+  "captured_octets": 1009,
+  "sent_lines": 15,
+  "captured_lines": 15,
+  "dkim_pass_domains": [
+   "amazonses.com",
+   "cloudflare-email.net",
+   "colophon-protocol.org",
+   "<forwarding domain>"
+  ],
+  "signed_fields_changed": [],
+  "arrival_source": "topmost Received",
+  "dns_source": "live lookup",
+  "capture_kind": "file",
+  "note": ""
+ }
+]
