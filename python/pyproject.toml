@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "colophon-protocol"
 version = "0.0.1.dev0"
 description = "Colophon v0 agent signatures for email: sign and verify (draft, not for production)"
+readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
@@ -47,7 +48,7 @@ dev = [
 packages = ["src/colophon_protocol"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "LICENSE", "pyproject.toml"]
+include = ["src", "tests", "README.md", "LICENSE", "pyproject.toml"]
 
 [tool.ruff]
 line-length = 100

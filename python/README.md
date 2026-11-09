@@ -1,0 +1,249 @@
+# colophon-protocol (Python)
+
+Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md) agent signatures on email.
+
+> **Draft, not for production.** This package implements draft v0-04 of a specification that
+> is still changing. Its API, its verdicts and the wire format may all change before v0 final.
+> Use it to try Colophon out, to test interoperability and to report problems.
+
+- `verify()` never raises for anything in a message or a DNS answer. Every failure, including
+  one the code did not foresee, is a `NotVerified` with one of the §7.2 reasons.
+- The verifier is a pure state machine (`colophon_protocol.sansio`). Thin blocking and asyncio
+  drivers run it; you can drive it from any other I/O model.
+- Results are frozen dataclasses with full type hints. The package passes `mypy --strict`.
+- Parsing is strict and does bounded work: hand-written linear scanners, no regular expressions
+  on message input, and the §7.7 length limits checked before anything is decoded.
+- One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses
+  [`dnspython`](https://www.dnspython.org) through the optional `dns` extra.
+- It scores 80/80 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), and reproduces the
+  spec's worked example (Appendix A) byte for byte.
+
+## Install
+
+The package is not on PyPI. Install it from a checkout:
+
+```
+pip install './python[dns]'          # or: uv pip install './python[dns]'
+```
+
+Python 3.10 or later. Import it as `colophon_protocol`.
+
+## Verify a message
+
+A receiver verifies each delivery after its own mail server has checked DKIM. The `Receipt`
+carries the facts only the receiver knows (§7.1); the message never supplies them.
+
+```python
+from colophon_protocol import Receipt, verify
+from colophon_protocol.dns import GuardedResolver
+from colophon_protocol.dnspython import DnspythonResolver
+from colophon_protocol.replay import MemoryReplayStore
+
+# Make these once per process and share them: the guard caches answers and counts misses
+# (§7.4), and the store remembers what verified (§7.6).
+resolver = GuardedResolver(DnspythonResolver())
+replay_store = MemoryReplayStore()
+
+receipt = Receipt(
+    arrival=1793870110,  # when your server accepted it in SMTP, Unix seconds
+    dkim_pass_domains={"acme.example"},  # d= of each DKIM signature your server passed
+    mailbox="mbx-reservations",  # your stable ID for the mailbox this copy reached
+    mailbox_addresses={"reservations@bistro.example", "reservations+web@bistro.example"},
+)
+verdict = verify(raw_message, receipt, resolver=resolver, replay_store=replay_store)
+
+if verdict.verified:
+    agent = verdict.agent
+    print(agent.iss, agent.sub, agent.address, agent.principal, agent.scope)
+else:
+    print("plain email:", verdict.reason)  # a Reason, such as Reason.DKIM_UNALIGNED
+```
+
+`raw_message` is the octets as accepted: `bytes`, never a decoded string. `verdict` is a
+`Verified` or a `NotVerified`; `verdict.verified` narrows the type for mypy. Every string in
+`Verified.agent` came from the sender's side (§9): show it as the sender's claim, escape it, and
+never treat it as an instruction.
+
+If your server writes `Authentication-Results`, read the passing DKIM domains from it, using
+only the field your own server added:
+
+```python
+from colophon_protocol.authres import dkim_pass_domains
+
+domains = dkim_pass_domains(value, authserv_id="mx.bistro.example")
+```
+
+### asyncio and FastAPI
+
+`colophon_protocol.aio.verify` is the same call, awaited, with async resolvers and stores:
+
+```python
+from colophon_protocol import Receipt
+from colophon_protocol.aio import verify
+from colophon_protocol.dns import AsyncGuardedResolver
+from colophon_protocol.dnspython import AsyncDnspythonResolver
+from colophon_protocol.replay import AsyncMemoryReplayStore
+
+resolver = AsyncGuardedResolver(AsyncDnspythonResolver())
+replay_store = AsyncMemoryReplayStore()
+
+
+@app.post("/inbound")
+async def inbound(delivery: Delivery) -> dict[str, object]:
+    receipt = Receipt(
+        arrival=delivery.accepted_at,
+        dkim_pass_domains=delivery.dkim_pass_domains,
+        mailbox=delivery.mailbox_id,
+        mailbox_addresses=delivery.mailbox_addresses,
+    )
+    verdict = await verify(delivery.raw, receipt, resolver=resolver, replay_store=replay_store)
+    return verdict.to_json()
+```
+
+The DNS lookup has a 2-second budget (`dns_budget`); past it the verdict is `dns_error`.
+Cancelling the task cancels the verification.
+
+### A shared replay store
+
+`MemoryReplayStore` serves one process. Several workers need one store with an atomic
+set-if-absent. With Redis:
+
+```python
+from redis.asyncio import Redis
+from colophon_protocol import ReplayKey
+from colophon_protocol.replay import RETENTION
+
+
+class RedisReplayStore:
+    def __init__(self, redis: Redis) -> None:
+        self._redis = redis
+
+    async def claim(self, key: ReplayKey, expires_at: int) -> bool:
+        # True only for the first claim. The entry outlives the credential by RETENTION,
+        # so a message verified late, from a queue, cannot replay.
+        return bool(
+            await self._redis.set(
+                f"colophon:{key.digest()}", 1, nx=True, exat=expires_at + RETENTION
+            )
+        )
+```
+
+`claim()` is asked only after both signatures verify, so the store holds verified traffic only.
+If it raises, `verify()` raises too: a store that is down is not a verdict about the message,
+and the caller decides whether to retry or to deliver the message as plain email.
+
+### Without the drivers: the sans-IO core
+
+`colophon_protocol.sansio` does no I/O and reads no clock. It stops twice and asks: once for
+the DNS answer, once for the replay check.
+
+```python
+from colophon_protocol import DnsFailure, TxtAnswer
+from colophon_protocol.sansio import NeedKey, NeedReplayCheck, start
+
+step = start(raw_message, receipt)  # steps 1 to 8
+if isinstance(step, NeedKey):
+    # step.query.name is "<selector>._colophon.<host>"; look up its TXT records your way
+    step = step.resume(TxtAnswer([b"v=COLOPHON0; k=ed25519; p=..."], ttl=300))
+    # or step.resume(DnsFailure.ERROR) when the lookup failed
+if isinstance(step, NeedReplayCheck):
+    # step.key, step.expires_at: claim the key atomically in your store
+    step = step.resume(first_time=True)
+verdict = step  # Verified | NotVerified
+```
+
+Both drivers are this loop and a few lines of error handling; the test suite runs every vector
+through all three.
+
+## Send a signed message
+
+The sending domain holds a domain key and publishes it in DNS (§4). It issues a short-lived
+credential to each agent key (§5). The agent signs each message it sends (§6).
+
+```python
+from colophon_protocol import AgentKey, DomainKey, Issuer, Named, sign
+from colophon_protocol.compose import compose_message
+
+# Once per domain: a domain key and its DNS record.
+issuer = Issuer(host="acme.example", selector="s1", key=DomainKey.generate())
+print(issuer.dns_name, "TXT", issuer.dns_record)
+# s1._colophon.acme.example TXT v=COLOPHON0; k=ed25519; p=...
+
+# Once a day or so: a credential for the agent's key, for at most 24 hours (§5.1).
+agent_key = AgentKey.generate()
+credential = issuer.issue(
+    sub="ag_7Hq2",
+    address="booking-agent@acme.example",
+    agent_key=agent_key.public_bytes,
+    issued_at=now,
+    principal=Named("Maria Ortiz"),  # or Withheld() (the default), or Pseudonymous(...)
+    scope="Book a table for four on Friday",
+)
+
+# Each message: build the final message, then sign it last.
+message = compose_message(
+    sender="Booking agent <booking-agent@acme.example>",
+    to=["reservations@bistro.example"],
+    subject="Table for four, Friday 8 pm",
+    text="Hello,\n\nCould you hold a table for four this Friday at 8 pm?\n",
+)
+signed = sign(message, credential=credential, agent_key=agent_key, signed_at=now)
+```
+
+`signed` is the message's octets with `Colophon-Signature` added. Send them unchanged as a raw
+message, and have the mail system add DKIM with `d=` the From host afterwards, for example with
+Amazon SES and Easy DKIM:
+
+```python
+ses.send_email(
+    FromEmailAddress="booking-agent@acme.example",
+    Destination={"ToAddresses": ["reservations@bistro.example"]},
+    Content={"Raw": {"Data": signed}},
+)
+```
+
+Anything that changes the signed parts after `sign()` (§6.2) breaks the signature: footers,
+banners, subject tags and HTML parts belong in the message before it is signed. `sign()` raises
+`SigningError` when a verifier would reject the result for something in the sender's hands, such
+as a From that is not the credential's address or a credential too close to expiry. Whether a
+given mail system carries `Colophon-Signature` through unchanged has not been tested yet.
+
+Keys are Ed25519. `DomainKey.private_jwk()` and `DomainKey.from_jwk()` store and load them;
+keep private keys in a secret store, never in the repository or in logs.
+
+## Command line
+
+The package installs `colophon-protocol`. Every command takes `--json`; exit status is 0 for
+success, 1 for a message that did not verify and 2 for a usage error.
+
+```
+colophon-protocol keygen --role domain --out domain.jwk      # written with mode 0600
+colophon-protocol dns --key domain.jwk --host acme.example --selector s1
+colophon-protocol check acme.example s1                      # live DNS: what a verifier finds
+colophon-protocol keygen --role agent --out agent.jwk
+colophon-protocol issue --domain-key domain.jwk --host acme.example --selector s1 \
+    --sub ag_7Hq2 --address booking-agent@acme.example --agent-key agent.jwk \
+    --principal named:"Maria Ortiz" --out cred.jwt
+colophon-protocol sign message.eml --credential cred.jwt --agent-key agent.jwk --out signed.eml
+colophon-protocol verify received.eml --arrival 2026-11-08T21:15:10Z \
+    --dkim-pass acme.example --address reservations@bistro.example
+```
+
+`verify` reads live DNS unless `--dns-file` gives the answers as JSON. It takes the DKIM result
+either as `--dkim-pass` domains or as your server's `--authentication-results` value with its
+`--authserv-id`.
+
+## Development
+
+```
+cd python
+uv run pytest               # unit, vector, property and differential tests
+uv run mypy                 # strict, over src and tests
+uv run ruff check && uv run ruff format --check
+uv run pytest -m network    # also the live-DNS test
+```
+
+The tests read the vectors and the reference sketch from the repository root, or from
+`COLOPHON_SPEC_DIR` when set. The differential test mutates the worked example thousands of
+ways and checks that this package and the sketch agree, or that each disagreement falls in a
+known, documented category.
