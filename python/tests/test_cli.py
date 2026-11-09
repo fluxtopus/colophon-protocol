@@ -110,10 +110,14 @@ def test_full_flow(tmp_path: Path, capsys: pytest.CaptureFixture[str], sketch: M
     code, verdict = _json(capsys, *verify_args)
     assert code == 0
     assert verdict["verdict"] == "verified"
+    resinfo = str(verdict["authentication_results"])
+    assert resinfo.startswith("colophon=pass header.from=maple-tiger-27@acme.example ")
+    assert "p_Xk29" not in resinfo
     code, human = _run(capsys, *verify_args)
     assert code == 0
     assert human.startswith("verified")
     assert "pseudonymous, id p_Xk29" in human
+    assert f"  reported   {resinfo}  (§7.8)" in human
 
     assert main([*verify_args[:-2], "--dns-file", str(tmp_path / "none.json")]) == 2
 
@@ -167,6 +171,7 @@ def test_verify_not_verified(
     )
     assert code == 1
     assert human.startswith("not verified: dns_error")
+    assert 'reported   colophon=temperror reason="dns_error"' in human
 
 
 def test_dns_revoke(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

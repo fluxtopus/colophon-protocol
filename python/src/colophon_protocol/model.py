@@ -10,6 +10,7 @@ from typing import ClassVar, Literal
 
 from colophon_protocol._addresses import AddressError, canonical_addr_spec
 from colophon_protocol._codec import ascii_lower, jcs
+from colophon_protocol.authres import colophon_resinfo
 
 __all__ = [
     "Agent",
@@ -128,7 +129,10 @@ class Verified:
 
     agent: Agent
     selector: str
-    """The selector of the domain key the credential verified against."""
+    """The selector of the domain key the credential verified against: the credential's ``kid``."""
+    credential_hash: str
+    """Base64url of the SHA-256 of the credential ``c``, as carried: the signing input's
+    ``credential`` member (§6.3), reported as ``header.cred`` (§7.8)."""
     domain_key: bytes = field(repr=False)
     """The raw Ed25519 domain key. §9: keep it beside the message if proof is needed later."""
     credential_issued_at: int
@@ -145,10 +149,12 @@ class Verified:
             "verdict": "verified",
             "agent": self.agent.to_json(),
             "selector": self.selector,
+            "credential_hash": self.credential_hash,
             "credential_issued_at": self.credential_issued_at,
             "credential_expires_at": self.credential_expires_at,
             "signed_at": self.signed_at,
             "nonce": self.nonce,
+            "authentication_results": colophon_resinfo(self),
         }
 
 
@@ -166,6 +172,7 @@ class NotVerified:
         out: dict[str, object] = {"verdict": "not_verified", "reason": self.reason.value}
         if self.detail:
             out["detail"] = self.detail
+        out["authentication_results"] = colophon_resinfo(self)
         return out
 
 

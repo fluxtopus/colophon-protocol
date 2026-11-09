@@ -16,7 +16,7 @@ from colophon_protocol import __version__
 from colophon_protocol._codec import b64url_decode
 from colophon_protocol._credential import jwk_thumbprint
 from colophon_protocol._record import select_domain_key
-from colophon_protocol.authres import dkim_pass_domains
+from colophon_protocol.authres import colophon_resinfo, dkim_pass_domains
 from colophon_protocol.blocking import TxtResolver, verify
 from colophon_protocol.dns import StaticResolver
 from colophon_protocol.errors import ColophonError, DnsLimited
@@ -256,7 +256,10 @@ def _dns_file(path: str) -> TxtResolver:
 def _human(verdict: Verdict) -> str:
     if not isinstance(verdict, Verified):
         detail = f" ({verdict.detail})" if verdict.detail else ""
-        return f"not verified: {verdict.reason.value}{detail}"
+        return (
+            f"not verified: {verdict.reason.value}{detail}\n"
+            f"  reported   {colophon_resinfo(verdict)}  (§7.8)"
+        )
     agent = verdict.agent
     principal = agent.principal
     if isinstance(principal, Pseudonymous):
@@ -275,6 +278,7 @@ def _human(verdict: Verdict) -> str:
     if agent.scope is not None:
         lines.append(f"  scope      {_shown(agent.scope)}  (the issuer's words)")
     lines.append(f"  agent key  {agent.key_thumbprint}")
+    lines.append(f"  reported   {colophon_resinfo(verdict)}  (§7.8)")
     return "\n".join(lines)
 
 

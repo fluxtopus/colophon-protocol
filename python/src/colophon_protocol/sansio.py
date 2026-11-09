@@ -178,7 +178,8 @@ def _steps_9_to_20(s: _AfterStep8, answer: TxtAnswer | DnsFailure) -> NeedReplay
 
     # 16, 17. the layout, then the signing input
     layout = _mime.layout(s.entity)
-    payload = jcs(_signing_input.build(s.entity, layout, s.credential))
+    signing_input = _signing_input.build(s.entity, layout, s.credential)
+    payload = jcs(signing_input)
 
     # 18, 19. the agent signature
     sig = s.sig
@@ -203,6 +204,7 @@ def _steps_9_to_20(s: _AfterStep8, answer: TxtAnswer | DnsFailure) -> NeedReplay
             key_thumbprint=_credential.jwk_thumbprint(claims.agent_key),
         ),
         selector=s.selector,
+        credential_hash=signing_input["credential"],
         domain_key=domain_key,
         credential_issued_at=claims.issued_at,
         credential_expires_at=claims.expires_at,

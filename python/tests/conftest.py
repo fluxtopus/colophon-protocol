@@ -39,6 +39,7 @@ class Delivery:
     mailbox_addresses: list[str]
     dns_txt: dict[str, list[str] | None]
     expected: str
+    expected_authentication_results: str
 
 
 @dataclass(frozen=True)
@@ -60,6 +61,7 @@ def load_cases() -> list[Case]:
                 mailbox_addresses=d["mailbox_addresses"],
                 dns_txt=d["dns_txt"],
                 expected=d["expected"],
+                expected_authentication_results=d["expected_authentication_results"],
             )
             for d in case["deliveries"]
         ]

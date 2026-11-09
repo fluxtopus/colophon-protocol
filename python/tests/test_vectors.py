@@ -1,10 +1,13 @@
-"""Every vector in reference/vectors.json, through the blocking, asyncio and sans-IO drivers."""
+"""Every vector in reference/vectors.json, through the blocking, asyncio and sans-IO drivers.
+
+Each delivery checks the verdict, the reason, and the §7.8 resinfo, exactly."""
 
 from __future__ import annotations
 
 import pytest
 
 from colophon_protocol import NotVerified, Receipt, TxtAnswer, Verified, aio, sansio, verify
+from colophon_protocol.authres import colophon_resinfo
 from colophon_protocol.dns import AsyncStaticResolver, StaticResolver
 from colophon_protocol.model import DnsFailure
 from colophon_protocol.replay import AsyncMemoryReplayStore, MemoryReplayStore
@@ -23,13 +26,26 @@ def _receipt(d: Delivery) -> Receipt:
     )
 
 
-def _outcome(verdict: Verified | NotVerified) -> str:
-    return "verified" if isinstance(verdict, Verified) else verdict.reason.value
+def _outcome(verdict: Verified | NotVerified) -> tuple[str, str]:
+    verdict_or_reason = "verified" if isinstance(verdict, Verified) else verdict.reason.value
+    resinfo = colophon_resinfo(verdict)
+    assert verdict.to_json()["authentication_results"] == resinfo
+    return verdict_or_reason, resinfo
+
+
+def _expected(case: Case) -> list[tuple[str, str]]:
+    return [(d.expected, d.expected_authentication_results) for d in case.deliveries]
 
 
 def test_vector_count() -> None:
     assert len(CASES) == 77
-    assert sum(len(c.deliveries) for c in CASES) == 80
+    deliveries = [d for c in CASES for d in c.deliveries]
+    assert len(deliveries) == 80
+    results = [d.expected_authentication_results.split()[0] for d in deliveries]
+    assert results.count("colophon=pass") == 18
+    assert results.count("colophon=fail") == 60
+    assert results.count("colophon=none") == 1
+    assert results.count("colophon=temperror") == 1
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c.name for c in CASES])
@@ -43,7 +59,7 @@ def test_blocking(case: Case) -> None:
         )
         for d in case.deliveries
     ]
-    assert got == [d.expected for d in case.deliveries]
+    assert got == _expected(case)
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c.name for c in CASES])
@@ -55,7 +71,7 @@ async def test_asyncio(case: Case) -> None:
             case.message, _receipt(d), resolver=AsyncStaticResolver(d.dns_txt), replay_store=store
         )
         got.append(_outcome(verdict))
-    assert got == [d.expected for d in case.deliveries]
+    assert got == _expected(case)
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c.name for c in CASES])
@@ -75,4 +91,4 @@ def test_sansio(case: Case) -> None:
         if isinstance(step, NotVerified):
             assert not step.detail.startswith("internal error"), step.detail
         got.append(_outcome(step))
-    assert got == [d.expected for d in case.deliveries]
+    assert got == _expected(case)
