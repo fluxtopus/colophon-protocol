@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "colophon-protocol"
+version = "0.0.1.dev0"
+description = "Colophon v0 agent signatures for email: sign and verify (draft, not for production)"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Fluxtopus" }]
+keywords = ["email", "dkim", "jose", "agents", "signatures", "colophon"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Communications :: Email",
+    "Topic :: Security :: Cryptography",
+    "Typing :: Typed",
+]
+dependencies = ["cryptography>=42"]
+
+[project.optional-dependencies]
+# Live DNS lookups for the CLI's `check` and `verify`, and the dnspython resolver adapters.
+dns = ["dnspython>=2.6"]
+
+[project.urls]
+Specification = "https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md"
+Source = "https://github.com/fluxtopus/colophon-protocol"
+
+[dependency-groups]
+dev = [
+    "dnspython>=2.6",
+    "hypothesis>=6.100",
+    "mypy>=1.13",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/colophon_protocol"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "LICENSE", "pyproject.toml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "BLE", "UP", "N", "S", "SIM", "RUF", "PL", "PT"]
+ignore = [
+    "PLR0911",  # the verifier's steps return one reason each
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",  # protocol constants appear inline where the spec names them
+    "N818",     # DnsLimited reads as the spec's reason; it is not an "error" by name
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S311", "PLC0415", "S603"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["dns", "dns.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers -m 'not network'"
+markers = ["network: needs live DNS (not run by default)"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["conftest", "helpers"]
