@@ -2,7 +2,7 @@
 
 Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md) agent signatures on email.
 
-> **Draft, not for production.** This package implements draft v0-04 of a specification that
+> **Draft, not for production.** This package implements draft v0-05 of a specification that
 > is still changing. Its API, its verdicts and the wire format may all change before v0 final.
 > Use it to try Colophon out, to test interoperability and to report problems.
 
@@ -15,8 +15,9 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
   on message input, and the §7.7 length limits checked before anything is decoded.
 - One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses
   [`dnspython`](https://www.dnspython.org) through the optional `dns` extra.
-- It scores 80/80 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), and reproduces the
-  spec's worked example (Appendix A) byte for byte.
+- It scores 80/80 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
+  the §7.8 `Authentication-Results` report, and reproduces the spec's worked example (Appendix A)
+  byte for byte.
 
 ## Install
 
@@ -72,6 +73,56 @@ from colophon_protocol.authres import dkim_pass_domains
 
 domains = dkim_pass_domains(value, authserv_id="mx.bistro.example")
 ```
+
+### Report the verdict in `Authentication-Results`
+
+§7.8 reports the verdict to the software after the verifier, such as the mail store, a filter or
+an agent, as the `colophon` method of an `Authentication-Results` field (RFC 8601). It is
+optional for conformance, and pure: no I/O.
+
+```python
+from colophon_protocol.authres import authentication_results, colophon_resinfo
+
+colophon_resinfo(verdict)
+# 'colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 ...'
+
+value = authentication_results(
+    verdict,
+    authserv_id="mx.bistro.example",
+    other_resinfo=["dkim=pass header.d=acme.example"],  # what your server reports beside it
+)
+message = f"Authentication-Results: {value}\r\n".encode() + raw_message
+```
+
+The worked example (Appendix A), as `mbx-reservations` receives it, folded:
+
+```
+Authentication-Results: mx.bistro.example;
+  dkim=pass header.d=acme.example;
+  colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2
+    header.s=s1 header.principal=pseudonymous
+    header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo
+```
+
+- **Results.** `pass` when verified; `none` for `no_signature`; `temperror` for `dns_error` and
+  `dns_limited`, which may pass later and are never evidence against the sender; `fail` for
+  every other reason. `fail` is not evidence of forgery: treat it as mail with no signature.
+  `colophon_result(verdict)` returns the result alone.
+- **What is reported.** With `pass` only: the verified address, the agent ID, the selector
+  (`Verified.selector`), the principal's mode, and the SHA-256 of the credential
+  (`Verified.credential_hash`). Every other result carries its reason and nothing else:
+  `colophon=fail reason="replay"`. The pseudonym ID, the named principal's name and the scope
+  are never reported. A consumer that needs them decodes the credential from the message's
+  `Colophon-Signature` and checks its hash against `header.cred`, without verifying again,
+  which would trip the replay check.
+- **One field per copy,** under your own authserv-id. The result depends on the mailbox, so a
+  server that adds the field before it expands recipients evaluates each recipient separately,
+  or leaves the method out. Remove incoming fields that claim your authserv-id; consumers trust
+  a `colophon` result only under an authserv-id they trust.
+
+`authentication_results()` returns one unfolded line without the field name, and raises
+`ValueError` for an authserv-id or resinfo that could inject a field. `verdict.to_json()` and
+`colophon-protocol verify --json` include the resinfo as `authentication_results`.
 
 ### asyncio and FastAPI
 
