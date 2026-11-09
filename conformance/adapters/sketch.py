@@ -49,9 +49,11 @@ def main() -> int:
         )
         verdict = sketch.verify(message, arrival)
         if verdict.verified:
-            out.append({"verdict": "verified", "agent": verdict.agent})
+            result = {"verdict": "verified", "agent": verdict.agent}
         else:
-            out.append({"verdict": "not_verified", "reason": verdict.reason})
+            result = {"verdict": "not_verified", "reason": verdict.reason}
+        result["authentication_results"] = sketch.authentication_results(verdict)
+        out.append(result)
     json.dump({"deliveries": out}, sys.stdout)
     return 0
 

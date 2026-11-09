@@ -6,6 +6,10 @@
 For each vector the runner starts <command> once, writes the vector to its stdin as one JSON
 object, closes stdin, and reads one JSON object from its stdout. The contract is in
 conformance/README.md. The runner uses only the standard library.
+
+It scores two things for each delivery: the verdict and reason, and, when the implementation
+returns it, the section 7.8 Authentication-Results resinfo. A delivery without a resinfo is
+"not checked" for the second score, never failed.
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ import argparse
 import json
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +52,16 @@ def vector_input(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+@dataclass(frozen=True)
+class Result:
+    """One delivery as the implementation answered it."""
+
+    outcome: str
+    """"verified", the reason code, or a <bracketed> note on what went wrong."""
+    authentication_results: str | None = None
+    """The resinfo it reported, or None when it reported none: not checked."""
+
+
 def outcome(item: object) -> str:
     """One delivery's result as the vectors write it: "verified" or the reason code."""
     if not isinstance(item, dict):
@@ -58,7 +73,15 @@ def outcome(item: object) -> str:
     return f"<invalid: {json.dumps(item)[:80]}>"
 
 
-def run_case(command: list[str], case: dict[str, Any], timeout: float) -> list[str]:
+def resinfo(item: object) -> str | None:
+    """The optional ``authentication_results`` member. Present but not a string is invalid."""
+    if not isinstance(item, dict) or "authentication_results" not in item:
+        return None
+    value = item["authentication_results"]
+    return value if isinstance(value, str) else f"<invalid: {json.dumps(value)[:80]}>"
+
+
+def run_case(command: list[str], case: dict[str, Any], timeout: float) -> list[Result]:
     want = len(case["deliveries"])
     try:
         done = subprocess.run(  # noqa: S603 - the command is the caller's own implementation
@@ -69,18 +92,18 @@ def run_case(command: list[str], case: dict[str, Any], timeout: float) -> list[s
             check=False,
         )
     except subprocess.TimeoutExpired:
-        return [f"<timeout after {timeout:g} s>"] * want
+        return [Result(f"<timeout after {timeout:g} s>")] * want
     if done.returncode != 0:
         tail = done.stderr.decode(errors="replace").strip().splitlines()[-1:] or [""]
-        return [f"<exit {done.returncode}: {tail[0][:120]}>"] * want
+        return [Result(f"<exit {done.returncode}: {tail[0][:120]}>")] * want
     try:
         result = json.loads(done.stdout)
         items = result["deliveries"]
     except (ValueError, KeyError, TypeError):
-        return ["<stdout is not a result object>"] * want
+        return [Result("<stdout is not a result object>")] * want
     if not isinstance(items, list) or len(items) != want:
-        return [f"<{want} deliveries expected>"] * want
-    return [outcome(item) for item in items]
+        return [Result(f"<{want} deliveries expected>")] * want
+    return [Result(outcome(item), resinfo(item)) for item in items]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -98,22 +121,36 @@ def main(argv: list[str] | None = None) -> int:
     cases = json.loads(args.vectors.read_text(encoding="utf-8"))["cases"]
     if args.only:
         cases = [c for c in cases if args.only in c["name"]]
-    passed = total = 0
+    passed = total = checked = matched = 0
     for case in cases:
         got = run_case(command, case, args.timeout)
-        for n, (delivery, outcome_) in enumerate(zip(case["deliveries"], got, strict=True)):
+        for n, (delivery, result) in enumerate(zip(case["deliveries"], got, strict=True)):
+            label = case["name"] + (f" [delivery {n + 1}]" if len(got) > 1 else "")
+            expected = delivery["expected"]
             total += 1
-            ok = outcome_ == delivery["expected"]
+            ok = result.outcome == expected
             passed += ok
-            label = case["name"]
-            if len(got) > 1:
-                label += f" [delivery {n + 1}]"
             if not ok:
-                print(f"FAIL  {delivery['expected']:<20} {label}  (got {outcome_})")
-            elif not args.quiet:
-                print(f"ok    {delivery['expected']:<20} {label}")
+                print(f"FAIL  {expected:<20} {label}  (got {result.outcome})")
+            want_ar = delivery.get("expected_authentication_results")
+            if result.authentication_results is not None and want_ar is not None:
+                checked += 1
+                if result.authentication_results == want_ar:
+                    matched += 1
+                else:
+                    ok = False
+                    print(f"FAIL  {'resinfo':<20} {label}")
+                    print(f"        want {want_ar}")
+                    print(f"        got  {result.authentication_results}")
+            if ok and not args.quiet:
+                print(f"ok    {expected:<20} {label}")
     print(f"{passed}/{total} deliveries pass ({len(cases)} vectors)")
-    return 0 if total and passed == total else 1
+    if checked:
+        unchecked = f", {total - checked} not checked" if checked < total else ""
+        print(f"{matched}/{checked} Authentication-Results resinfo match{unchecked}")
+    else:
+        print("Authentication-Results resinfo: not checked (the implementation reported none)")
+    return 0 if total and passed == total and matched == checked else 1
 
 
 if __name__ == "__main__":

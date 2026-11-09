@@ -8,12 +8,14 @@ language: the runner starts a command you give it, and the two talk JSON over st
 python conformance/run.py -- <command> [args...]
 ```
 
-The runner needs Python 3.10 or later and nothing else. It prints one line per delivery and a
-score, and exits 0 only when every delivery passes. Options: `--vectors <path>` (default
+The runner needs Python 3.10 or later and nothing else. It prints one line per delivery and two
+scores: verdicts, and the §7.8 `Authentication-Results` resinfo when the implementation reports
+it (see [below](#authentication_results-optional)). It exits 0 only when every verdict is right
+and every resinfo it checked matches. Options: `--vectors <path>` (default
 `reference/vectors.json`), `--timeout <seconds>` per vector (default 20), `--only <text>` to run
 the vectors whose name contains the text, and `--quiet` to print failures and the score only.
 
-The two adapters in this directory score 80/80:
+The two adapters in this directory score 80/80 on both:
 
 ```
 # The reference sketch, from the repository root
@@ -79,8 +81,10 @@ Ignore members you do not know; later versions of the contract may add some. A d
 ### Output
 
 ```json
-{"deliveries": [{"verdict": "verified", "agent": {"iss": "acme.example", "sub": "ag_7Hq2"}},
-                {"verdict": "not_verified", "reason": "replay"}]}
+{"deliveries": [{"verdict": "verified", "agent": {"iss": "acme.example", "sub": "ag_7Hq2"},
+                 "authentication_results": "colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo"},
+                {"verdict": "not_verified", "reason": "replay",
+                 "authentication_results": "colophon=fail reason=\"replay\""}]}
 ```
 
 One entry per input delivery, in the same order. `verdict` is `"verified"` or
@@ -90,6 +94,30 @@ One entry per input delivery, in the same order. `verdict` is `"verified"` or
 `credential_expired`, `from_mismatch`, `layout`, `signature_invalid`, `not_addressed`, `replay`.
 Other members, such as `agent` or a `detail` string, are allowed and ignored.
 
+#### `authentication_results` (optional)
+
+The `colophon` resinfo the implementation would write in an `Authentication-Results` field for
+this delivery (§7.8): the method, result and properties, without the authserv-id and without a
+`;`. Reporting is not required for conformance (§12), so the member is optional:
+
+- **Present:** the runner compares it with the vector's `expected_authentication_results`, as
+  strings, exactly, and scores it beside the verdicts: `80/80 Authentication-Results resinfo
+  match`. A value that is not a string fails.
+- **Absent:** the delivery is *not checked* for this score. It is never counted as failed, and
+  it does not change the exit status.
+
+The vectors write each resinfo in one canonical spelling, which an implementation must match
+octet for octet:
+
+- one line, unfolded, with one space between the result and each property, and no comments;
+- with `pass`, the five properties in the order of §7.8's table: `header.from`, `header.sub`,
+  `header.s`, `header.principal`, `header.cred`;
+- with any other result, only the reason, as a quoted string: `colophon=temperror
+  reason="dns_error"`.
+
+RFC 8601 allows other spellings of the same result, such as folding, comments or a reason
+written as a token; a consumer has to accept them, but this score does not.
+
 Exit 0 after writing the result. A non-zero exit, a timeout, output that is not one JSON object,
 or the wrong number of entries fails every delivery of the vector. A verifier that crashes on a
 hostile message fails; a not-verified verdict is the right answer to anything it cannot parse.
@@ -98,7 +126,7 @@ hostile message fails; a not-verified verdict is the right answer to anything it
 
 An adapter is a short program around the implementation's verify call: decode the input, build
 the receipt for each delivery, give the verifier a resolver that reads `dns_txt` and the one
-replay store, and print the verdicts. The two Python adapters here are about 50 lines each.
+replay store, and print the verdicts, with each resinfo if the implementation reports §7.8. The two Python adapters here are about 50 lines each.
 
 **TypeScript (Node).** Read stdin to the end (`for await (const chunk of process.stdin)`), then
 `JSON.parse`. Decode the message with `Buffer.from(message, "base64")` and keep it a

@@ -12,6 +12,7 @@ import json
 import sys
 
 from colophon_protocol import NotVerified, Receipt, verify
+from colophon_protocol.authres import colophon_resinfo
 from colophon_protocol.dns import StaticResolver
 from colophon_protocol.replay import MemoryReplayStore
 
@@ -34,10 +35,13 @@ def main() -> int:
         verdict = verify(
             message, receipt, resolver=StaticResolver(d["dns_txt"]), replay_store=store
         )
+        result: dict[str, object]
         if isinstance(verdict, NotVerified):
-            out.append({"verdict": "not_verified", "reason": verdict.reason.value})
+            result = {"verdict": "not_verified", "reason": verdict.reason.value}
         else:
-            out.append({"verdict": "verified", "agent": verdict.agent.to_json()})
+            result = {"verdict": "verified", "agent": verdict.agent.to_json()}
+        result["authentication_results"] = colophon_resinfo(verdict)
+        out.append(result)
     json.dump({"deliveries": out}, sys.stdout)
     return 0
 
