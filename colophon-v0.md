@@ -578,7 +578,7 @@ It does not mean:
 
 **A compromised mail system and domain key** together let an attacker send as any agent of that domain. That is the issuer's full compromise. Colophon cannot do better than the issuer it trusts.
 
-**Addresses that differ only in case.** Verifiers lowercase the ASCII letters A to Z in local parts, and compare every other octet as it is, with no Unicode normalization or case folding (§6.4). A mail system may still deliver two such addresses to one place, for example by folding the case of non-ASCII letters. An issuer MUST NOT issue credentials for two addresses that are equal after ASCII lowercasing, or that its mail system treats as one address. Distinct addresses that one mailbox receives at, such as an agent's pairwise addresses (§5.3), are allowed: each has its own credential (§5.2).
+**Addresses that differ only in case.** Verifiers lowercase the ASCII letters A to Z in local parts, and compare every other octet as it is, with no Unicode normalization or case folding (§6.4). A mail system may still deliver two such addresses to one place, for example by folding the case of non-ASCII letters. An issuer MUST NOT issue credentials for two addresses that are equal after ASCII lowercasing, or that its mail system treats as one address (such as variants that differ only in case). Several addresses that deliver to one mailbox MAY each have a credential only if all of them are issued to the same agent for the same principal. An agent's pairwise addresses (§5.3) are one such case: each has its own credential (§5.2).
 
 **Resending a captured message.** DKIM passes again on an unchanged resend. The addressing check (§7.5) and the replay store (§7.6) stop it from verifying anywhere it was not sent.
 
@@ -942,6 +942,7 @@ The design was settled one question at a time. Each decision has a longer record
 - **Limits.** The values in §7.7 are set for v0.
 - **Wire choices.** The tag letters, base64url, the standard detached JWS and the absence of a message-level `exp` are fixed (Appendix D).
 - **Local parts.** Non-ASCII octets compare as they are, with no normalization or folding (§6.4). An issuer must not issue credentials for two addresses its mail system treats as one (§9).
+- **Shared mailboxes.** Several addresses that deliver to one mailbox may each have a credential only if all of them are issued to the same agent for the same principal (§9). This changes nothing on the wire and no vectors.
 - **Clarifications.** `iss` is compared exactly and is lowercase (§5.1, §7.2 step 8). DKIM strength is left to the receiver's DKIM verifier (§9). No change on the wire.
 - **Registrations.** Two, filed at v0 final; no media types (§13).
 - **A2A.** The hook is an extension claim such as `a2a:card` (§14).
