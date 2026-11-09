@@ -34,6 +34,7 @@ REASONS = frozenset(
 INPUT_FIELDS = (
     "accepted_at",
     "dkim_pass_domains",
+    "dkim_pass_identities",
     "envelope_recipient",
     "mailbox",
     "mailbox_addresses",

@@ -35,6 +35,7 @@ def load_sketch() -> ModuleType:
 class Delivery:
     accepted_at: int
     dkim_pass_domains: list[str]
+    dkim_pass_identities: list[str]
     mailbox: str
     mailbox_addresses: list[str]
     dns_txt: dict[str, list[str] | None]
@@ -59,6 +60,7 @@ def load_cases() -> list[Case]:
             Delivery(
                 accepted_at=d["accepted_at"],
                 dkim_pass_domains=d["dkim_pass_domains"],
+                dkim_pass_identities=d["dkim_pass_identities"],
                 mailbox=d["mailbox"],
                 mailbox_addresses=d["mailbox_addresses"],
                 dns_txt=d["dns_txt"],

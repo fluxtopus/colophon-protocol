@@ -12,7 +12,7 @@ import json
 import sys
 
 from colophon_protocol import KeyQuery, NotVerified, Receipt, ReplayKey, TxtAnswer, verify
-from colophon_protocol.authres import colophon_resinfo
+from colophon_protocol.authres import colophon_resinfo, dkim_identity_domain
 from colophon_protocol.dns import GuardedResolver, StaticResolver
 from colophon_protocol.errors import DnsLimited
 from colophon_protocol.replay import MemoryReplayStore
@@ -53,9 +53,11 @@ def main() -> int:
     store = MemoryReplayStore(clock=lambda: 0.0)
     out: list[dict[str, object]] = []
     for d in vector["deliveries"]:
+        # A signature reported only by header.i counts for the d= recovered from the message.
+        recovered = (dkim_identity_domain(message, i) for i in d.get("dkim_pass_identities", []))
         receipt = Receipt(
             arrival=d["accepted_at"],
-            dkim_pass_domains=d["dkim_pass_domains"],
+            dkim_pass_domains=[*d["dkim_pass_domains"], *filter(None, recovered)],
             mailbox=d["mailbox"],
             mailbox_addresses=d["mailbox_addresses"],
         )

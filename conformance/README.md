@@ -15,7 +15,7 @@ and every resinfo it checked matches. Options: `--vectors <path>` (default
 `reference/vectors.json`), `--timeout <seconds>` per vector (default 20), `--only <text>` to run
 the vectors whose name contains the text, and `--quiet` to print failures and the score only.
 
-The two adapters in this directory score 118/118 on both:
+The two adapters in this directory score 123/123 on both:
 
 ```
 # The reference sketch, from the repository root
@@ -42,6 +42,7 @@ that its last line is shown when the command fails.
     {
       "accepted_at": 1793870110,
       "dkim_pass_domains": ["acme.example"],
+      "dkim_pass_identities": [],
       "envelope_recipient": "reservations@bistro.example",
       "mailbox": "mbx-reservations",
       "mailbox_addresses": ["reservations+web@bistro.example", "reservations@bistro.example"],
@@ -65,6 +66,9 @@ that its last line is shown when the command fails.
 - `accepted_at`: §7.1's arrival time, Unix seconds. Verify as if the clock read this; never read
   the real clock.
 - `dkim_pass_domains`: the `d=` of every DKIM signature the receiver's own checks passed.
+- `dkim_pass_identities`: the `header.i` of every passing DKIM signature that the receiver's
+  boundary server reported without `header.d`. Its `d=` counts only as §7.1 recovers it from
+  the message: from the one `DKIM-Signature` field whose identity equals it. Usually empty.
 - `mailbox`: the receiver's stable identifier for the mailbox this copy reached; the replay key
   uses it.
 - `mailbox_addresses`: every address that mailbox receives at (§7.5).
@@ -111,7 +115,7 @@ this delivery (§7.8): the method, result and properties, without the authserv-i
 `;`. Reporting is not required for conformance (§12), so the member is optional:
 
 - **Present:** the runner compares it with the vector's `expected_authentication_results`, as
-  strings, exactly, and scores it beside the verdicts: `118/118 Authentication-Results resinfo
+  strings, exactly, and scores it beside the verdicts: `123/123 Authentication-Results resinfo
   match`. A value that is not a string fails.
 - **Absent:** the delivery is *not checked* for this score. It is never counted as failed, and
   it does not change the exit status.

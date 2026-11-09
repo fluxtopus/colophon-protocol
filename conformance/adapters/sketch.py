@@ -41,6 +41,7 @@ def main() -> int:
         arrival = sketch.Arrival(
             accepted_at=d["accepted_at"],
             dkim_pass_domains=set(d["dkim_pass_domains"]),
+            dkim_pass_identities=set(d.get("dkim_pass_identities", [])),
             mailbox=d["mailbox"],
             mailbox_addresses=set(d["mailbox_addresses"]),
             dns=d["dns_txt"],

@@ -171,6 +171,11 @@ ok    dkim_unaligned       DKIM passes only for mail.acme.example
 ok    verified             DKIM passes for mail.acme.example and acme.example
 ok    dkim_unaligned       DKIM passes for two unaligned domains
 ok    verified             DKIM passes for ACME.EXAMPLE
+ok    verified             DKIM reported by header.i only, i= with an encoded octet
+ok    dkim_unaligned       DKIM reported by header.i only, i= with malformed quoted-printable
+ok    verified             DKIM reported by header.i only, no i=, domain in another case
+ok    dkim_unaligned       DKIM reported by header.i only, two fields with that identity
+ok    verified             DKIM reported by header.i only, beside a field whose tags do not parse
 ok    unsupported_version  v=1
 ok    dns_error            DNS lookup failed
 ok    key_not_found        no record at the selector

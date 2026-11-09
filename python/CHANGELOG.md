@@ -2,7 +2,7 @@
 
 ## Unreleased: draft v0-06
 
-`SPEC_VERSION` is `"v0-06"`. The package scores 118/118 on the v0-06 conformance vectors, for
+`SPEC_VERSION` is `"v0-06"`. The package scores 123/123 on the v0-06 conformance vectors, for
 verdicts and for the §7.8 resinfo, and agrees with the reference sketch on every message the
 differential test makes.
 
@@ -44,6 +44,9 @@ differential test makes.
 - The contract stays `colophon-conformance/1`. Each delivery has two more members,
   `dns_misses` and `replay_store_available`, and `replay_unchecked` is a valid reason. Both
   adapters read the new members, with defaults of 0 and true.
+- A third member, `dkim_pass_identities`, holds the `header.i` of passing DKIM signatures
+  reported without `header.d`. Both adapters recover its `d=` from the message (§7.1), and
+  default it to empty. Five vectors use it.
 
 ## draft v0-05
 

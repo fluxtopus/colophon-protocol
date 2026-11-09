@@ -640,6 +640,56 @@ def sign(
     return fold_header(HEADER, value) + raw
 
 
+# ---------------------------------------------------------------- DKIM identity (§7.1)
+
+DKIM_TAG_NAME = re.compile(rb"[A-Za-z][A-Za-z0-9_]*")  # RFC 6376 §3.2
+DKIM_QP_ESCAPE = re.compile(rb"=([0-9A-Fa-f]{2})")
+
+
+def dkim_identity(value: bytes) -> tuple[bytes, bytes] | None:
+    """A DKIM-Signature field's d= and identity (§7.1): its i=, decoded from DKIM quoted-printable
+    (RFC 6376 §2.11), or `@` and its d=. None when the tag list does not parse (RFC 6376 §3.2), a
+    tag repeats, d= is missing or empty, or i= has an `=` not followed by two hex digits."""
+    found: dict[bytes, bytes] = {}
+    for item in value.split(b";"):
+        name, eq, v = item.partition(b"=")
+        name = name.strip(b" \t\r\n")
+        if not eq:
+            if name:
+                return None  # an item without `=`
+            continue  # an empty item, such as after the last `;`
+        if not DKIM_TAG_NAME.fullmatch(name) or name in found:
+            return None
+        found[name] = re.sub(rb"[ \t\r\n]+", b"", v)
+    d = found.get(b"d")
+    if not d or not d.isascii():
+        return None
+    if b"i" not in found:
+        return d, b"@" + d
+    i = found[b"i"]
+    if i.count(b"=") != len(DKIM_QP_ESCAPE.findall(i)):
+        return None  # malformed quoted-printable: no identity
+    return d, DKIM_QP_ESCAPE.sub(lambda m: bytes.fromhex(m[1].decode()), i)
+
+
+def same_identity(a: bytes, b: bytes) -> bool:
+    """Local parts equal octet for octet, domains equal ignoring case (§7.1)."""
+    local_a, at_a, domain_a = a.rpartition(b"@")
+    local_b, at_b, domain_b = b.rpartition(b"@")
+    return bool(at_a and at_b) and local_a == local_b and domain_a.lower() == domain_b.lower()
+
+
+def dkim_identity_domain(msg: Part, header_i: str) -> str | None:
+    """§7.1: the d= of the one DKIM-Signature field whose identity equals header.i, or None."""
+    wanted = header_i.encode("utf-8")
+    matches = []
+    for key, value in msg.fields:
+        found = dkim_identity(value) if key.lower() == "dkim-signature" else None
+        if found and same_identity(found[1], wanted):
+            matches.append(found[0].decode("ascii").lower())
+    return matches[0] if len(matches) == 1 else None
+
+
 # ---------------------------------------------------------------- verifying
 
 
@@ -656,6 +706,8 @@ class Arrival:
     dns_misses: int = 0  # misses for the From host this hour, before this message (§7.4)
     replay_store_available: bool = True  # whether the replay store can be read and written (§7.6)
     seen: set[tuple] = field(default_factory=set)  # the replay store for the mailbox
+    # header.i of each passing DKIM signature reported without header.d (§7.1)
+    dkim_pass_identities: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -795,8 +847,11 @@ def _verify(raw: bytes, arrival: Arrival) -> tuple[dict, dict]:
     sender = froms[0]
     host = sender.rpartition("@")[2]
 
-    # 4. aligned DKIM, before any DNS lookup
-    if host not in {d.lower() for d in arrival.dkim_pass_domains}:
+    # 4. aligned DKIM, before any DNS lookup. A signature reported only by header.i counts for
+    # the d= that §7.1 recovers from the message.
+    passed = {d.lower() for d in arrival.dkim_pass_domains}
+    passed |= {d for i in arrival.dkim_pass_identities if (d := dkim_identity_domain(msg, i))}
+    if host not in passed:
         raise Fail("dkim_unaligned")
 
     # 5. the tag list, within its size cap, with a v tag
@@ -1096,6 +1151,15 @@ def vectors() -> list[Case]:
     def claims(name: str, want: str, **patch: object) -> Case:
         return one(name, signed(example_claims(**patch)), want)
 
+    def dkim_field(i: bytes | None) -> bytes:
+        tag = b"" if i is None else b" i=" + i + b";"
+        start = b"DKIM-Signature: v=1; a=ed25519-sha256; d=acme.example; s=mail;"
+        return start + tag + b" h=from:to; bh=AAAA; b=AAAA"
+
+    def by_identity(name: str, fields: list[bytes], header_i: str, want: str) -> Case:
+        data = b"".join(f + crlf for f in fields) + raw
+        return one(name, data, want, dkim_pass_domains=set(), dkim_pass_identities={header_i})
+
     def dns(name: str, answers: list[str] | None, want: str) -> Case:
         return one(name, raw, want, dns={DNS_NAME: answers})
 
@@ -1350,6 +1414,36 @@ def vectors() -> list[Case]:
             dkim_pass_domains={"mail.acme.example", "esp.example"},
         ),
         one("DKIM passes for ACME.EXAMPLE", raw, "verified", dkim_pass_domains={"ACME.EXAMPLE"}),
+        by_identity(
+            "DKIM reported by header.i only, i= with an encoded octet",
+            [dkim_field(b"bookings=2Bagent@acme.example")],
+            "bookings+agent@acme.example",
+            "verified",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, i= with malformed quoted-printable",
+            [dkim_field(b"bookings=2Gagent@acme.example")],
+            "bookings=2Gagent@acme.example",
+            "dkim_unaligned",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, no i=, domain in another case",
+            [dkim_field(None)],
+            "@Acme.Example",
+            "verified",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, two fields with that identity",
+            [dkim_field(None), dkim_field(None)],
+            "@acme.example",
+            "dkim_unaligned",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, beside a field whose tags do not parse",
+            [dkim_field(b"@acme.example") + b"; x", dkim_field(b"@acme.example")],
+            "@acme.example",
+            "verified",
+        ),
         one("v=1", edit(b"Colophon-Signature: v=0", b"Colophon-Signature: v=1"), "unsupported_version"),
         # DNS
         dns("DNS lookup failed", None, "dns_error"),
@@ -1484,6 +1578,7 @@ def vector_json(cases: list[Case]) -> list[dict]:
                 {
                     "accepted_at": a.accepted_at,
                     "dkim_pass_domains": sorted(a.dkim_pass_domains),
+                    "dkim_pass_identities": sorted(a.dkim_pass_identities),
                     "envelope_recipient": a.envelope_recipient,
                     "mailbox": a.mailbox,
                     "mailbox_addresses": sorted(a.mailbox_addresses),
@@ -1528,6 +1623,8 @@ def main() -> int:
             "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. "
             "Deliveries run in order and share one replay store; a missing DNS name is "
             "NXDOMAIN, null is a failed lookup, and a TXT string stands for its UTF-8 octets. "
+            "dkim_pass_identities holds the header.i of each passing DKIM signature reported "
+            "without header.d, whose d= the verifier recovers from the message (section 7.1). "
             "dns_misses counts the From host's misses this hour before the delivery, with no "
             "key cached (section 7.4); replay_store_available false means the replay store "
             "cannot be read or written (section 7.6). expected_authentication_results is the "
