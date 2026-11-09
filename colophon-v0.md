@@ -310,7 +310,7 @@ Colophon-Signature: v=0; c=<credential>; b=<agent signature>
 - The signer MAY fold the header anywhere, including inside values (RFC 5322 §2.2.3).
 - Before parsing, a verifier removes all whitespace: SP, HTAB, CR and LF.
 - The value is then a list of items separated by `;`. Empty items are ignored. Every other item is `name=value`: the name matches `[a-z][a-z0-9_]*`, and the value may be empty. An item without `=`, a name that does not match (`V`, for example), or a duplicate name makes the header malformed. Unknown tags are ignored.
-- With whitespace removed, the value MUST be at most 2,560 octets, and `c` at most 2,048. A larger one is malformed. In practice the value is about 800 octets.
+- With whitespace removed, the value MUST be at most 2,560 octets, and `c` at most 2,048. A larger one is malformed. In practice the value is about 700 octets. With the four members of §6.5 alone, a 2,048-octet credential gives a value of about 2,310 octets; the rest of the 2,560 is room for extensions.
 - The issuer's DKIM signature MUST cover `Colophon-Signature`, and SHOULD use relaxed header canonicalization (RFC 6376 §3.4.2) so that refolding in transit does not break DKIM. Verifiers do not check this.
 
 ### 6.3 The signing input
@@ -677,9 +677,9 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 Issue 1 is the one blocker for v0 final. The others do not block it.
 
-1. **Will the header survive?** Header carriage (§6.2) is the default. Whether a folded header of 800 to 2,560 octets reaches common mail systems intact is untested. Verifiers remove whitespace, so refolding is safe for Colophon; DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. The test:
+1. **Will the header survive?** Header carriage (§6.2) is the default. Whether a folded header of 700 to 2,560 octets reaches common mail systems intact is untested. Verifiers remove whitespace, so refolding is safe for Colophon; DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. The test:
    - **Sender.** A domain whose mail Amazon SES signs with DKIM.
-   - **Messages.** Three, signed as §6.6 says: a minimal one, with a header of about 800 octets; one at the 2,560-octet header cap, with a 280-octet scope and a 128-octet named principal; and one with two attachments.
+   - **Messages.** Three, signed as §6.6 says: a minimal one, with a header of about 700 octets; one at the 2,560-octet header cap, with a 280-octet scope, a 128-octet named principal and an extension member in the agent signature's protected header; and one with two attachments.
    - **Receivers.** Gmail, Microsoft 365, Outlook.com, iCloud, Fastmail, Yahoo, Proton, Zoho, and Amazon SES inbound.
    - **Forwarding.** One copy also goes through a Gmail automatic forward, and one through Cloudflare Email Routing. These are recorded; the pass rule below is for direct receivers.
    - **Capture.** The raw message as delivered, pulled over IMAP or Microsoft Graph, with the receiver's `Authentication-Results`.
@@ -945,6 +945,7 @@ The design was settled one question at a time. Each decision has a longer record
 - **Shared mailboxes.** Several addresses that deliver to one mailbox may each have a credential only if all of them are issued to the same agent for the same principal (§9). This changes nothing on the wire and no vectors.
 - **Clarifications.** `iss` is compared exactly and is lowercase (§5.1, §7.2 step 8). DKIM strength is left to the receiver's DKIM verifier (§9). No change on the wire.
 - **Registrations.** Two, filed at v0 final; no media types (§13).
+- **Header size.** The typical header value is about 700 octets, not 800. The 2,560-octet cap stays: without extensions a value reaches about 2,310 octets, and the rest is room for extensions (§6.2, §15). This changes nothing on the wire and no vectors.
 - **A2A.** The hook is an extension claim such as `a2a:card` (§14).
 - **Formal model.** Planned in Tamarin, with two lemmas and two mutants (Appendix C).
 - **Vectors.** Three for multiple DKIM signatures, two for SMTPUTF8 local parts, and one for `iss` in capitals: 80 deliveries.
