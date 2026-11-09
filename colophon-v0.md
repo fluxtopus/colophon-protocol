@@ -847,6 +847,8 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
 `reference/colophon_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per delivery and exits non-zero if any fails. Run it with `--json` to write the vectors as `reference/vectors.json`: each message as base64 of its octets, then one or more deliveries, each with the receiver's inputs and the expected result.
 
+Each delivery also gives `expected_authentication_results`: the `colophon` result that §7.8 reports for it, as one line, without the authserv-id. With `pass`, its properties are in the order of the table in §7.8. Order and spacing are not significant in a real `Authentication-Results` field; the vectors fix one form so that a test can compare strings.
+
 A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
 | Change to the message or inputs | Expected |
@@ -992,7 +994,7 @@ The design was settled one question at a time. Each decision has a longer record
 ### v0-05
 
 - **Header survival.** Resolved (§15, issue 1). Three test messages, the largest at the 2,560-octet cap, went to Amazon SES inbound, Gmail (Google Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. All 12 copies arrived with the header intact and verified. Header carriage (§6.2) stays, so the fallback MIME part is not specified. No open issue blocks v0 final.
-- **Reporting the verdict.** New §7.8: an `Authentication-Results` method, `colophon`, with four results, the reason code, and five properties reported only with `pass`. Recommended, not required for conformance. This changes nothing on the wire and no vectors.
+- **Reporting the verdict.** New §7.8: an `Authentication-Results` method, `colophon`, with four results, the reason code, and five properties reported only with `pass`. Recommended, not required for conformance. This changes nothing on the wire and no verdicts. Each vector delivery gains its expected `colophon` result (Appendix B), and the worked example's output ends with it.
 - **Registrations.** A third, the `colophon` method and its result names, filed at v0 final with the other two (§13).
 - **Real mail.** The test's results are published as a summary: tables, and each copy's `Colophon-Signature` field as sent and as stored. Stored messages are not checked in, and the vectors stay synthetic (§15, issue 2).
 

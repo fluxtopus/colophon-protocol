@@ -455,6 +455,26 @@ class Verdict:
     verified: bool
     reason: str
     agent: dict | None = None
+    properties: dict | None = None  # what §7.8 reports with pass
+
+
+AR_PROPERTIES = ("from", "sub", "s", "principal", "cred")
+TEMPERROR = {"dns_error", "dns_limited"}
+
+
+def authentication_results(verdict: Verdict) -> str:
+    """§7.8: the colophon result as one resinfo of an Authentication-Results field, unfolded."""
+    if verdict.verified:
+        assert verdict.properties is not None
+        props = " ".join(f"header.{k}={verdict.properties[k]}" for k in AR_PROPERTIES)
+        return f"colophon=pass {props}"
+    if verdict.reason == "no_signature":
+        result = "none"
+    elif verdict.reason in TEMPERROR:
+        result = "temperror"
+    else:
+        result = "fail"
+    return f'colophon={result} reason="{verdict.reason}"'
 
 
 def domain_key(answers: list[str]) -> bytes:
@@ -540,12 +560,13 @@ def agent_key(claims: dict) -> bytes:
 
 def verify(raw: bytes, arrival: Arrival) -> Verdict:
     try:
-        return Verdict(True, "verified", _verify(raw, arrival))
+        agent, properties = _verify(raw, arrival)
+        return Verdict(True, "verified", agent, properties)
     except Fail as failed:
         return Verdict(False, failed.reason)
 
 
-def _verify(raw: bytes, arrival: Arrival) -> dict:
+def _verify(raw: bytes, arrival: Arrival) -> tuple[dict, dict]:
     """§7.2, step by step. The first failing step gives the reason."""
     msg = BytesParser(policy=policy.compat32).parsebytes(raw)
     t_arr = arrival.accepted_at
@@ -656,7 +677,14 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
     agent = {"iss": host, "sub": claims["sub"], "from": sender, "principal": claims["principal"]}
     if "scope" in claims:
         agent["scope"] = claims["scope"]
-    return agent
+    properties = {
+        "from": sender,
+        "sub": claims["sub"],
+        "s": selector,
+        "principal": claims["principal"]["mode"],
+        "cred": sha256(credential.encode("ascii")),
+    }
+    return agent, properties
 
 
 # ---------------------------------------------------------------- the draft's example
@@ -1049,8 +1077,10 @@ def vector_json(cases: list[Case]) -> list[dict]:
     out = []
     for name, data, steps in cases:
         deliveries = []
+        seen: set = set()
         for changes, want in steps:
             a = arrival(set(), **changes)
+            report = authentication_results(verify(data, arrival(seen, **changes)))
             deliveries.append(
                 {
                     "accepted_at": a.accepted_at,
@@ -1060,6 +1090,7 @@ def vector_json(cases: list[Case]) -> list[dict]:
                     "mailbox_addresses": sorted(a.mailbox_addresses),
                     "dns_txt": a.dns,
                     "expected": want,
+                    "expected_authentication_results": report,
                 }
             )
         out.append({"name": name, "message": base64.b64encode(data).decode(), "deliveries": deliveries})
@@ -1085,6 +1116,8 @@ def print_example() -> None:
     print(value["b"], "\n")
     print("## Message as sent, before the issuer's DKIM signature\n")
     print(raw.decode().replace("\r\n", "\n"))
+    print("## Authentication-Results method result at mbx-reservations (§7.8)\n")
+    print(authentication_results(verify(raw, arrival(set()))), "\n")
 
 
 def main() -> int:
@@ -1093,7 +1126,8 @@ def main() -> int:
         doc = {
             "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. "
             "Deliveries run in order and share one replay store; a missing DNS name is "
-            "NXDOMAIN and null is a failed lookup.",
+            "NXDOMAIN and null is a failed lookup. expected_authentication_results is the "
+            "colophon resinfo of section 7.8, unfolded.",
             "cases": vector_json(cases),
         }
         print(json.dumps(doc, indent=1, ensure_ascii=False))
