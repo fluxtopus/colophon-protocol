@@ -8,7 +8,7 @@ Colophon lets an AI agent sign the email it sends. A receiver can then check, fr
 
 To anyone who does not know Colophon, it is still ordinary email.
 
-**Status:** draft v0-04, 2026-11-08. Every open issue but one is settled. The one blocker for v0 final is whether the header survives real mail systems (§15, issue 1). Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change before v0 final.
+**Status:** draft v0-05, 2026-11-09. No open issue blocks v0 final. The header survived real mail: in the header-survival test, 12 of 12 copies arrived intact and verified (§15, issue 1). Verifiers can now report their verdict in `Authentication-Results` (§7.8). Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change before v0 final.
 
 ## What is here
 
@@ -40,7 +40,7 @@ uv run --with cryptography python reference/colophon_v0.py --json > reference/ve
 1. Places where two careful implementers would build different things from the same text. §12 treats each one as a bug in the spec.
 2. Attacks: a message that verifies when it should not, or a way to link an agent across counterparties.
 3. Claims that are stronger than the mechanism.
-4. Evidence for §15 issue 1: raw messages showing whether the header survives a mail system.
+4. Results from running the header-survival test (`tests/header-survival/`) against mail systems: the summary it writes, never raw messages, which carry personal data.
 
 ## Licence
 

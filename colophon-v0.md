@@ -1,6 +1,6 @@
 # Colophon v0: Agent Signatures for Email
 
-Draft v0-04, 2026-11-08. For review. Not for production use.
+Draft v0-05, 2026-11-09. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -481,6 +481,8 @@ The reason is for diagnosis. A receiver SHOULD NOT tell the user a different sto
 
 A verdict never blocks delivery by itself. Receivers may still apply their own policies.
 
+§7.8 says how a verifier reports the verdict to the software after it.
+
 ### 7.4 DNS lookups
 
 - A verifier MUST look up a key only for the domain that passed aligned DKIM (step 4). This keeps unauthenticated mail from making the verifier query any domain it names.
@@ -543,6 +545,55 @@ These values are set for v0. A later version may revise them from real traffic. 
 | Agent key replaced | every 30 days, for example (SHOULD) |
 | Domain key TTL | at most 1 hour (SHOULD) |
 | Retired selector kept | at least 7 days after last use (SHOULD) |
+
+### 7.8 Reporting the verdict
+
+A verifier SHOULD report its verdict to the software after it, such as the mail store, a mail client, a filter or an agent, in an `Authentication-Results` header field (RFC 8601), with the method `colophon`. Mail systems already report DKIM, SPF and DMARC there, so consumers need no new header and no new parser. Reporting is not required for conformance (§12). The verdict is.
+
+The method is `colophon`, version 1, written without a version: `colophon=pass`. The protocol version travels in the `v` tag (§11).
+
+| Result | Verdict | §7.2 reasons |
+| --- | --- | --- |
+| `pass` | verified | none |
+| `none` | not verified | `no_signature` |
+| `temperror` | not verified | `dns_error`, `dns_limited` |
+| `fail` | not verified | every other reason |
+
+- **Reason.** Every result but `pass` carries its §7.2 reason code in the `reason` clause, spelled exactly as there: `colophon=fail reason="signature_invalid"`.
+- **What a result means.** `temperror` may pass on a later attempt, and is never evidence against the sender (§7.4). `fail` is not evidence of forgery: a `Bcc` copy and a text a mail system rewrote fail as a forgery does. A receiver SHOULD handle `fail` as it handles mail with no Colophon signature. As §7.3 says, the reason is for diagnosis.
+- **Properties.** With `pass`, and only with `pass`, the verifier reports these properties, all of ptype `header`:
+
+  | Property | Value |
+  | --- | --- |
+  | `header.from` | `from`, the verified address, in canonical form (§6.4) |
+  | `header.sub` | `sub`, the agent ID |
+  | `header.s` | `kid`, the selector of the domain key |
+  | `header.principal` | the principal's `mode`: `withheld`, `pseudonymous` or `named` |
+  | `header.cred` | the `credential` member of the signing input (§6.3): base64url of the SHA-256 of `c` |
+
+  `iss` is not reported: it is the host of `header.from` (§5.1). In an internationalized message, `header.from` carries the address as it is (RFC 6532).
+- **What is not reported.** The pseudonym `id`, the named principal's name, and the scope. They are free text the sender controls, and echoing them into a field that filters, logs and mail clients parse invites quoting bugs and display tricks. A consumer that needs them decodes the credential from the message's own `Colophon-Signature` and checks that its SHA-256 equals `header.cred`. It does not verify the message again: that would trip the replay check (§7.6). Nothing is reported with a result other than `pass`, so a failed result never echoes data an attacker chose.
+- **One result per copy.** Steps 20 and 21 depend on the mailbox, so a result holds for one delivered copy. A server that adds the field before it expands recipients MUST evaluate each recipient separately, or leave the method out.
+- **Whose result.** The receiver adds the field under its own authserv-id, and removes any field that claims that authserv-id but came with the message (RFC 8601 §5). A consumer MUST trust a `colophon` result only under an authserv-id it trusts. A sender can write `colophon=pass` into its own message, and it counts for nothing.
+- **Who adds it.** Any verifier may: a boundary mail server, a delivery agent, or an application that verifies on intake, each under its own authserv-id.
+
+The message of Appendix A, as `mbx-reservations` receives it:
+
+```
+Authentication-Results: mx.bistro.example;
+  dkim=pass header.d=acme.example;
+  colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2
+    header.s=s1 header.principal=pseudonymous
+    header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo
+```
+
+The same message, delivered again to that mailbox:
+
+```
+Authentication-Results: mx.bistro.example;
+  dkim=pass header.d=acme.example;
+  colophon=fail reason="replay"
+```
 
 ## 8. First contact and receiver control
 
@@ -649,10 +700,11 @@ Two verifiers given the same four inputs (§7.1) and the same DNS answers MUST r
 
 ## 13. Registrations
 
-None has been requested yet. Two will be filed when v0 is final:
+None has been requested yet. Three will be filed when v0 is final:
 
 - **Underscored DNS name:** `_colophon`, for TXT, in the Underscored and Globally Scoped DNS Node Names registry (RFC 8552).
 - **Header field:** `Colophon-Signature`, in the Permanent Message Header Field Names registry (RFC 3864), as provisional.
+- **Authentication method:** `colophon`, version 1 (§7.8), in the Email Authentication Methods registry, with its five properties of ptype `header`: `from`, `sub`, `s`, `principal` and `cred`. Its four results, `pass`, `none`, `temperror` and `fail`, go in the Email Authentication Result Names registry (RFC 8601). Both registries are Specification Required (RFC 8126 §4.6): they need a stable public specification and a designated expert's review, not an IETF document.
 
 No other registration is sought:
 - **JWS `typ` values.** Verifiers match `colophon-cred+jwt` and `colophon-sig` exactly. RFC 7515 §4.1.9 leaves the processing of `typ` to the application, and v0 accepts no other spelling. They are not registered as media types: names in the standards tree need an IETF or other standards-body publication.
@@ -675,18 +727,17 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 ## 15. Open issues
 
-Issue 1 is the one blocker for v0 final. The others do not block it.
+No open issue blocks v0 final. Issues 1 and 2 are resolved, and stay here for the record.
 
-1. **Will the header survive?** Header carriage (§6.2) is the default. Whether a folded header of 700 to 2,560 octets reaches common mail systems intact is untested. Verifiers remove whitespace, so refolding is safe for Colophon; DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. The test:
+1. **Will the header survive?** Resolved in v0-05: header carriage (§6.2) stays. The test is in `tests/header-survival/` of this specification's repository.
    - **Sender.** A domain whose mail Amazon SES signs with DKIM.
    - **Messages.** Three, signed as §6.6 says: a minimal one, with a header of about 700 octets; one at the 2,560-octet header cap, with a 280-octet scope, a 128-octet named principal and an extension member in the agent signature's protected header; and one with two attachments.
-   - **Receivers.** Gmail, Microsoft 365, Outlook.com, iCloud, Fastmail, Yahoo, Proton, Zoho, and Amazon SES inbound.
-   - **Forwarding.** One copy also goes through a Gmail automatic forward, and one through Cloudflare Email Routing. These are recorded; the pass rule below is for direct receivers.
-   - **Capture.** The raw message as delivered, pulled over IMAP or Microsoft Graph, with the receiver's `Authentication-Results`.
-   - **Check.** The reference sketch verifies each capture, with the DKIM results taken from the receiver's `Authentication-Results`.
-   - **Pass.** At every direct receiver, the header arrives intact after whitespace removal, DKIM passes aligned, and the verdict is verified.
-   - **Fail.** If the header does not survive at Gmail, Microsoft 365 or Outlook.com, iCloud, or Fastmail, v0-05 specifies the fallback: the credential and signature in an `application/colophon-sig` MIME part.
-2. **Real mail in the vectors.** The captures from issue 1 are checked in beside `reference/vectors.json`, each with the receiver's `Authentication-Results`, as a corpus of real mail.
+   - **Receivers.** Amazon SES inbound, Gmail (Google Workspace) and Fastmail, and a Cloudflare Email Routing forward to Gmail.
+   - **Check.** The reference sketch verified each stored copy, with the DKIM results taken from that receiver's own `Authentication-Results`.
+   - **Result.** 12 of 12 copies arrived with the header intact, passed aligned DKIM, and verified. Every receiver kept the header's folding as sent.
+
+   Verifiers remove whitespace, so refolding is safe for Colophon. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. Anyone can run the test again against other mail systems, with fresh keys under a new selector; the directory's README says how.
+2. **Real mail in the vectors.** Resolved in v0-05: the results are published as a summary, in `tests/header-survival/results/`. For each copy, it gives the header state, the verdict, and the `Colophon-Signature` field as sent and as stored. The stored messages are not published, because they carry mailbox addresses and the receivers' internal data. The vectors in Appendix B stay synthetic.
 3. **The formal model** (Appendix C) is planned. v0 can be final without it. Colophon Tasks waits for it.
 4. **Name.** "Colophon" is final for this text, but its trademark clearance is pending. A conflict would force a new version with new wire names. Production deployment waits for the clearance.
 
@@ -795,6 +846,8 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 ## Appendix B. Test vectors
 
 `reference/colophon_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per delivery and exits non-zero if any fails. Run it with `--json` to write the vectors as `reference/vectors.json`: each message as base64 of its octets, then one or more deliveries, each with the receiver's inputs and the expected result.
+
+Each delivery also gives `expected_authentication_results`: the `colophon` result that §7.8 reports for it, as one line, without the authserv-id. With `pass`, its properties are in the order of the table in §7.8. Order and spacing are not significant in a real `Authentication-Results` field; the vectors fix one form so that a test can compare strings.
 
 A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
@@ -929,12 +982,21 @@ The design was settled one question at a time. Each decision has a longer record
 | JWS form | A standard detached JWS, not RFC 7797 unencoded payloads: RFC 7797 needs `crit`, which v0 rejects. |
 | Message expiry | None. The credential's `exp` and the arrival time bound a message. |
 | Non-ASCII local parts | ASCII letters lowercased, other octets compared as they are, no Unicode normalization or folding. |
-| Registrations | `_colophon` (RFC 8552) and a provisional `Colophon-Signature` (RFC 3864), filed at v0 final. No media types. |
+| Registrations | `_colophon` (RFC 8552), a provisional `Colophon-Signature` (RFC 3864), and the `Authentication-Results` method `colophon` (RFC 8601), filed at v0 final. No media types. |
+| Reporting the verdict | An `Authentication-Results` method with four results and the reason code. Properties only on `pass`, and no free text the sender wrote. Recommended, not required for conformance. |
+| Real-mail evidence | A published summary of the header-survival test. Stored messages stay private, and the vectors stay synthetic. |
 | Formal model | Tamarin, planned. Not required for v0 final; required before Colophon Tasks. |
 | Licence | Apache 2.0 for spec and code. The founder is editor until a second independent implementation exists. Changes go through public review. |
 | Relation to A2A | Independent, with a defined bridge. |
 
 ## Appendix E. Changes
+
+### v0-05
+
+- **Header survival.** Resolved (§15, issue 1). Three test messages, the largest at the 2,560-octet cap, went to Amazon SES inbound, Gmail (Google Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. All 12 copies arrived with the header intact and verified. Header carriage (§6.2) stays, so the fallback MIME part is not specified. No open issue blocks v0 final.
+- **Reporting the verdict.** New §7.8: an `Authentication-Results` method, `colophon`, with four results, the reason code, and five properties reported only with `pass`. Recommended, not required for conformance. This changes nothing on the wire and no verdicts. Each vector delivery gains its expected `colophon` result (Appendix B), and the worked example's output ends with it.
+- **Registrations.** A third, the `colophon` method and its result names, filed at v0 final with the other two (§13).
+- **Real mail.** The test's results are published as a summary: tables, and each copy's `Colophon-Signature` field as sent and as stored. Stored messages are not checked in, and the vectors stay synthetic (§15, issue 2).
 
 ### v0-04
 

@@ -83,6 +83,10 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
 --=_colophon_example_1--
 
+## Authentication-Results method result at mbx-reservations (§7.8)
+
+colophon=pass header.from=maple-tiger-27@acme.example header.sub=ag_7Hq2 header.s=s1 header.principal=pseudonymous header.cred=QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo 
+
 ok    verified             replay: one mailbox, its alias, and a second mailbox
 ok    replay                 ... delivery 2
 ok    replay                 ... delivery 3
