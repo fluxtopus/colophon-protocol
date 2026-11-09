@@ -122,7 +122,7 @@ A Colophon message carries two proofs. A receiver believes "agent X of acme.exam
 
 The issuer reissues each credential automatically, at least once a day. To revoke an agent, the issuer stops reissuing its credential. The credential then lapses within 26 hours: its 24-hour life plus a 2-hour grace for mail in transit.
 
-![A timeline of one credential, from iat to exp, which is at most 24 hours later, and on to exp plus 2 hours. Four bars. The credential is valid from iat to exp. The signer uses it from iat until 6 hours are left; it should not sign in the last 6 hours. A message may arrive from iat minus 5 minutes to exp plus 2 hours. The replay record for a verified message is kept from the moment it verifies to exp plus 2 hours. A bracket under the whole span says: revoke by not reissuing; the last credential's mail stops verifying within 26 hours.](figures/figure-2-credential-times.svg)
+![A timeline of one credential, from iat to exp, which is at most 24 hours later, and on to exp plus 2 hours. Four bars. The credential is valid from iat to exp. The signer uses it from iat until 6 hours are left; it should not sign in the last 6 hours. A message may arrive from iat minus 5 minutes to exp plus 2 hours. The replay record for a verified message is kept from the moment it verifies to exp plus 2 hours, then for the verifier's delay D, shown as an arrow past the end. A bracket under the whole span says: revoke by not reissuing; the last credential's mail stops verifying within 26 hours.](figures/figure-2-credential-times.svg)
 
 *Figure 2. One credential's times. The limits are in §7.7; the arrival check is step 14 of §7.2, and the replay record is in §7.6.*
 
@@ -449,7 +449,9 @@ A verifier works on four inputs from the receiving system, never from the messag
    - the verifier checks the message's DKIM signatures itself (RFC 6376);
    - the verifier reads an `Authentication-Results` field (RFC 8601) added by the receiver's own boundary mail server, identified by its authserv-id. It MUST ignore any such field that came with the message.
 
-   A passing signature counts for its `d=` domain, reported as `header.d`. The `i=` identity, reported as `header.i`, does not count on its own: it may name a subdomain of `d=`. A verifier that has only `header.i` for a signature treats that signature as not passed.
+   A passing signature counts for its `d=` domain, reported as `header.d`. The `i=` identity, reported as `header.i`, does not count on its own: it may name a subdomain of `d=`.
+
+   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, or `@` and its `d=` when it has no `i=`. If exactly one `DKIM-Signature` field in the message has an identity equal to `header.i`, the signature counts for that field's `d=`. Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case. Otherwise, with no such field or more than one, the signature does not count.
 4. **The mailbox.** This is the mailbox this copy was delivered to: a stable identifier the receiver chooses, and every address the mailbox receives at, its own and its aliases. The receiver maps the envelope recipient (RCPT TO) to the mailbox. Two envelope recipients that reach one mailbox, such as an address and its `+tag` form, are one mailbox.
 
 A verifier SHOULD verify soon after arrival. The domain key in DNS may change later.
@@ -546,7 +548,7 @@ Signed copies for `Bcc` recipients are a possible extension (§11).
 
 ### 7.6 Replays
 
-The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp`, plus the 2-hour grace, plus D. D is the longest time the verifier allows between a message's arrival and its verification: 24 hours, for example. After that, a copy that arrives fails step 14, and a copy that arrived in time is past D.
+The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it verified. It keeps the tuple until the credential's `exp`, plus the 2-hour grace, plus D. D is the longest time the verifier allows between a message's arrival and its verification: 24 hours, for example. After that, a copy that arrives fails step 14, and a copy that arrived in time is past D. A receiver that verifies messages again after a failure or an outage chooses a D that covers its retry window.
 
 - A message verified more than D after its arrival is not verified (`replay_unchecked`): its tuple may already be gone from the store.
 - If the store cannot be read or written, the verifier MUST NOT return verified. The verdict is `replay_unchecked`, which §7.8 reports as `temperror`: verifying again once the store is back may pass.
@@ -597,7 +599,7 @@ The method is `colophon`, version 1, written without a version: `colophon=pass`.
 | `fail` | not verified | every other reason |
 
 - **Reason.** Every result but `pass` carries its §7.2 reason code in the `reason` clause, spelled exactly as there: `colophon=fail reason="signature_invalid"`.
-- **What a result means.** `temperror` may pass on a later attempt, and is never evidence against the sender (§7.4). `fail` is not evidence of forgery: a `Bcc` copy and a text a mail system rewrote fail as a forgery does. A receiver SHOULD handle `fail` as it handles mail with no Colophon signature. As §7.3 says, the reason is for diagnosis.
+- **What a result means.** `temperror` may pass on a later attempt, and is never evidence against the sender (§7.4). A receiver MAY hold a message whose result is `temperror` and verify it again later, rather than deliver it as not verified. The later attempt uses the same arrival time (§7.1), so it must come within D (§7.6). `fail` is not evidence of forgery: a `Bcc` copy and a text a mail system rewrote fail as a forgery does. A receiver SHOULD handle `fail` as it handles mail with no Colophon signature. As §7.3 says, the reason is for diagnosis.
 - **Properties.** With `pass`, and only with `pass`, the verifier reports these properties, all of ptype `header`:
 
   | Property | Value |
@@ -779,15 +781,16 @@ Issue 5 is to be settled before v0 final. Issues 1 and 2 are resolved, and stay 
 2. **Real mail in the vectors.** Resolved in v0-05: the results are published as a summary, in `tests/header-survival/results/`. For each copy, it gives the header state, the verdict, and the `Colophon-Signature` field as sent and as stored. The stored messages are not published, because they carry mailbox addresses and the receivers' internal data. The vectors in Appendix B stay synthetic.
 3. **The formal model** (Appendix C) is planned. v0 can be final without it. Colophon Tasks waits for it.
 4. **Name.** "Colophon" is final for this text, but its trademark clearance is pending. A conflict would force a new version with new wire names. Production deployment waits for the clearance.
-5. **Wire rules added in v0-06.** Building the Python library against the sketch found places where the draft was silent and the two disagreed. v0-06 settles them, and each choice changes which messages verify. The draft states the recommended rule; the options below are the alternatives, to be confirmed or replaced before v0 final.
+5. **Wire rules added in v0-06.** Building the Python library and a receiver against the sketch found places where the draft was silent and readers disagreed. v0-06 settles them, and each choice changes which messages verify. The draft states the recommended rule; the options below are the alternatives, to be confirmed or replaced before v0 final.
    - **Line ends (§6.1).** Recommended: a line ends at CRLF or LF alone. A CR alone is malformed in a header section and is data in a body. Options: CRLF only, which rejects messages that a mail store saved with LF line ends; or a CR alone ends a line everywhere, as v0-05's sketch did.
    - **Header lines (§6.1).** Recommended: a line that is neither a field nor a continuation is malformed. Option: such a line ends the header section, as many mail libraries read it. Readers would then disagree on where the body starts.
    - **Parameters (§6.1).** Recommended: strict RFC 2045 in the top-level and body-part `Content-Type`, where a duplicate or a parameter without `=` is malformed; the RFC 2231 forms of `boundary`, `charset` and `format` break the layout; an attachment's parameters are not read. Options: every RFC 2231 parameter breaks the layout, which also rejects attachments with non-ASCII file names, as mail clients commonly send them; or the first of two duplicates wins.
    - **Multipart (§6.1).** Recommended: strict RFC 2046, with a valid boundary, a close delimiter, no empty parts and no delimiter in the epilogue, each malformed if broken. Options: accept a missing close delimiter and drop empty parts, as lenient readers do; or report these as `layout`.
    - **Ed25519 (§6.5).** Recommended: canonical keys not of small order, S < L, R not of small order, and the equation without the cofactor, as libsodium does by default. Options: the ZIP-215 rules, which accept every encoding and use the cofactor, so that batch and single verification agree; or no rule, which leaves verifiers to disagree on crafted signatures.
    - **DNS misses (§7.4).** Recommended: `dns_error`, `key_not_found` and `key_revoked` each count as a miss, so a domain whose DNS times out on purpose spends its budget too. Options: count only lookups that return no Colophon record; or leave `dns_limited` out of the vectors.
-   - **Replay store unavailable (§7.6).** Recommended: a new reason, `replay_unchecked`, reported as `temperror`. Options: report it as `replay`, a `fail`; or give no verdict, and leave the retry to the receiver.
-   - **Late verification (§7.6).** Recommended: tuples are kept until `exp` + 2 hours + D, where D is the verifier's longest delay from arrival to verification, and a message verified later than D is `replay_unchecked`. Options: fix D in the spec, 24 hours for example; or extend retention only, with no rule for messages verified later than D.
+   - **DKIM identity (§7.1).** Recommended: a passing signature counts for its `d=`. A verifier whose boundary server reports only `header.i` recovers `d=` from the one `DKIM-Signature` field whose identity equals `header.i`, and counts nothing if there is not exactly one. Options: count `d=` from a field whose `d=` is the domain of `header.i` and whose identity equals `header.i`, even when other fields share that identity: a signature by a parent domain with `i=` in a subdomain could then make an unverified field for the subdomain count; or `header.d` only, so that such a verifier must check DKIM itself.
+   - **Replay store unavailable (§7.6).** Recommended: a new reason, `replay_unchecked`, reported as `temperror`, which a receiver may hold and verify again within D (§7.8). Options: report it as `replay`, a `fail`; or give no verdict, and leave the retry to the receiver.
+   - **Late verification (§7.6).** Recommended: tuples are kept until `exp` + 2 hours + D, where D is the verifier's longest delay from arrival to verification, chosen to cover its retry window, and a message verified later than D is `replay_unchecked`. Options: fix D in the spec, 24 hours for example, which covers retry windows of minutes to hours; or extend retention only, with no rule for messages verified later than D.
    - **Message size (§7.7).** Recommended: no limit of Colophon's own; the receiver's SMTP size limit applies. Option: a RECOMMENDED maximum size for signed messages.
 
 ## Appendix A. Worked example
@@ -1093,8 +1096,8 @@ v0-06 answers the review of the reference sketch made while building the Python 
 - **JSON.** Surrogates and noncharacters are not allowed in strings, escaped or not, and make the message malformed (§5.1).
 - **Ed25519.** Keys must be valid, and signatures are checked with RFC 8032's open choices made exact (§6.5). The identity key and other keys of small order are rejected.
 - **DNS.** A TXT record with an octet above 0x7F is not a Colophon record (§4.1, §7.4). A miss is defined (§7.4).
-- **DKIM results.** Only `d=` counts, not `i=` (§7.1).
-- **Replay store.** A new reason, `replay_unchecked`, reported as `temperror`, when the store cannot be checked or a message is verified too late. Tuples are kept for the verifier's delay D as well (§7.6, §7.8).
+- **DKIM results.** A signature counts for its `d=`, not its `i=`. A verifier whose boundary server reports only `header.i` recovers `d=` from the message (§7.1).
+- **Replay store.** A new reason, `replay_unchecked`, reported as `temperror`, when the store cannot be checked or a message is verified too late. Tuples are kept for the verifier's delay D as well, which covers its retry window. A receiver may hold a `temperror` message and verify it again (§7.6, §7.8).
 - **Limits.** The message size, the boundary length and D are in §7.7.
 - **Vectors.** Two new delivery inputs, `dns_misses` and `replay_store_available`, and 38 new deliveries: 118 in all (Appendix B). The sketch now reads MIME with its own parser.
 
