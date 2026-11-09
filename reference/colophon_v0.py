@@ -1,10 +1,10 @@
-"""CREST v0 reference sketch: sign and verify a message as the draft specifies.
+"""Colophon v0 reference sketch: sign and verify a message as the draft specifies.
 
 Not a library. It exists so the draft's examples are real bytes that verify, and so a reader can
 check their reading of the spec against running code. It does not check DKIM or query DNS: the
 verifier is given the receiving system's DKIM result, DNS answers and mailbox, as §7.1 describes.
 
-Run:  uv run --with cryptography python crest_v0.py [--example | --json]
+Run:  uv run --with cryptography python colophon_v0.py [--example | --json]
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-HEADER = "Crest-Signature"
+HEADER = "Colophon-Signature"
 VERSION = 0
 GRACE = 2 * 3600  # seconds after a credential's exp that it is still accepted on arrival
 SKEW = 5 * 60  # clocks may run this fast
@@ -31,7 +31,7 @@ MIN_REMAINING = 6 * 3600  # a signer SHOULD NOT sign with less credential life l
 MAX_LIFETIME = 24 * 3600
 MAX_SCOPE_BYTES = 280
 MAX_NAME_BYTES = 128
-MAX_HEADER_BYTES = 2560  # the Crest-Signature value, whitespace removed
+MAX_HEADER_BYTES = 2560  # the Colophon-Signature value, whitespace removed
 MAX_CREDENTIAL_BYTES = 2048  # the c tag value
 MAX_INT = 2**53 - 1
 
@@ -113,9 +113,9 @@ def strict_json(data: bytes) -> object:
 
 
 def jcs(value: object) -> bytes:
-    """RFC 8785 for the values CREST uses: objects, arrays, strings and integers.
+    """RFC 8785 for the values Colophon uses: objects, arrays, strings and integers.
 
-    Keys are ASCII in CREST, so sorting by code point equals JCS's UTF-16 order."""
+    Keys are ASCII in Colophon, so sorting by code point equals JCS's UTF-16 order."""
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
 
 
@@ -381,11 +381,11 @@ def signing_input(msg: Message, credential: str) -> dict:
 
 
 def dns_record(domain_key: Ed25519PrivateKey) -> str:
-    return f"v=CREST0; k=ed25519; p={public_x(domain_key)}"
+    return f"v=COLOPHON0; k=ed25519; p={public_x(domain_key)}"
 
 
 def issue_credential(domain_key: Ed25519PrivateKey, selector: str, claims: dict) -> str:
-    header = {"alg": "EdDSA", "kid": selector, "typ": "crest-cred+jwt"}
+    header = {"alg": "EdDSA", "kid": selector, "typ": "colophon-cred+jwt"}
     h, p, s = jws_sign(header, jcs(claims), domain_key)
     return f"{h}.{p}.{s}"
 
@@ -417,7 +417,7 @@ def sign(
     nonce: str,
     strict: bool = True,
 ) -> bytes:
-    """Sign the bytes that will be sent, and return them with Crest-Signature prepended.
+    """Sign the bytes that will be sent, and return them with Colophon-Signature prepended.
 
     strict=False skips the signer-side rules, so vectors can build messages a signer must not."""
     if strict:
@@ -426,11 +426,11 @@ def sign(
             raise ValueError("credential too close to expiry to sign with")
     msg = BytesParser(policy=policy.compat32).parsebytes(raw)
     payload = jcs(signing_input(msg, credential))
-    header = {"alg": "EdDSA", "iat": iat, "nonce": nonce, "typ": "crest-sig"}
+    header = {"alg": "EdDSA", "iat": iat, "nonce": nonce, "typ": "colophon-sig"}
     h, _, s = jws_sign(header, payload, agent_key)
     value = f"v={VERSION}; c={credential}; b={h}..{s}"
     if strict and (len(credential) > MAX_CREDENTIAL_BYTES or len(value) > MAX_HEADER_BYTES):
-        raise ValueError("Crest-Signature over the size cap")
+        raise ValueError("Colophon-Signature over the size cap")
     return fold_header(HEADER, value) + raw
 
 
@@ -458,14 +458,14 @@ class Verdict:
 
 
 def domain_key(answers: list[str]) -> bytes:
-    """§7.4: the one CREST record at the name, or Fail."""
+    """§7.4: the one Colophon record at the name, or Fail."""
     records = []
     for answer in answers:
         try:
             record = tags(answer)
         except Fail:
-            continue  # not a tag list, or a duplicate tag: not a CREST record
-        if record.get("v") == "CREST0":
+            continue  # not a tag list, or a duplicate tag: not a Colophon record
+        if record.get("v") == "COLOPHON0":
             records.append(record)
     if len(records) != 1:
         raise Fail("key_not_found")
@@ -550,7 +550,7 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
     msg = BytesParser(policy=policy.compat32).parsebytes(raw)
     t_arr = arrival.accepted_at
 
-    # 1, 2. exactly one Crest-Signature
+    # 1, 2. exactly one Colophon-Signature
     count = sum(1 for key, _ in msg.raw_items() if key.lower() == HEADER.lower())
     if count == 0:
         raise Fail("no_signature")
@@ -599,7 +599,7 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
     selector = cred_header.get("kid")
     if (
         cred_header.get("alg") != "EdDSA"
-        or cred_header.get("typ") != "crest-cred+jwt"
+        or cred_header.get("typ") != "colophon-cred+jwt"
         or "crit" in cred_header
         or not isinstance(selector, str)
         or not LABEL.fullmatch(selector)
@@ -608,7 +608,7 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
         raise Fail("credential_invalid")
 
     # 9 to 11. the domain key (the DNS budget of §7.4 is the receiver's; not modelled here)
-    name = f"{selector}._crest.{host}"
+    name = f"{selector}._colophon.{host}"
     if name in arrival.dns and arrival.dns[name] is None:
         raise Fail("dns_error")
     key = domain_key(arrival.dns.get(name) or [])
@@ -631,7 +631,7 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
     sig_iat, nonce = sig_header.get("iat"), sig_header.get("nonce")
     if (
         sig_header.get("alg") != "EdDSA"
-        or sig_header.get("typ") != "crest-sig"
+        or sig_header.get("typ") != "colophon-sig"
         or "crit" in sig_header
         or not isinstance(nonce, str)
         or not NONCE.fullmatch(nonce)
@@ -664,7 +664,7 @@ def _verify(raw: bytes, arrival: Arrival) -> dict:
 
 def test_key(label: str) -> Ed25519PrivateKey:
     """Deterministic test keys: never use these for anything but vectors."""
-    seed = hashlib.sha256(f"crest-v0 test key {label}".encode()).digest()
+    seed = hashlib.sha256(f"colophon-v0 test key {label}".encode()).digest()
     return Ed25519PrivateKey.from_private_bytes(seed)
 
 
@@ -674,8 +674,8 @@ ARRIVED = ISSUED + 4510  # 2026-11-05T09:15:10Z
 EXAMPLE_NONCE = "Zm9yLWV4YW1wbGUtb25seQ"
 DOMAIN_KEY = test_key("domain acme.example s1")
 AGENT_KEY = test_key("agent maple-tiger-27")
-DNS_NAME = "s1._crest.acme.example"
-BOUNDARY = "=_crest_example_1"
+DNS_NAME = "s1._colophon.acme.example"
+BOUNDARY = "=_colophon_example_1"
 
 
 def example_claims(**patch: object) -> dict:
@@ -735,7 +735,7 @@ def signed(
 
 def credential_with_payload(payload: bytes) -> str:
     """A credential over exact payload bytes, for vectors whose JSON JCS cannot produce."""
-    h, p, s = jws_sign({"alg": "EdDSA", "kid": "s1", "typ": "crest-cred+jwt"}, payload, DOMAIN_KEY)
+    h, p, s = jws_sign({"alg": "EdDSA", "kid": "s1", "typ": "colophon-cred+jwt"}, payload, DOMAIN_KEY)
     return f"{h}.{p}.{s}"
 
 
@@ -768,6 +768,8 @@ def vectors() -> list[Case]:
     raw = signed()
     crlf = b"\r\n"
     record = dns_record(DOMAIN_KEY)
+    c_start = raw.index(b"c=")
+    c_end = raw[raw.index(b";", c_start) - 7 : raw.index(b";", c_start) + 1]  # the end of c, then ";"
 
     def edit(old: bytes, new: bytes, data: bytes = raw) -> bytes:
         assert old in data, old
@@ -815,7 +817,7 @@ def vectors() -> list[Case]:
             ],
         ),
         # what does not change the verdict
-        one("Crest-Signature refolded in transit", edit(b";" + crlf + b" b=", b"; b="), "verified"),
+        one("Colophon-Signature refolded in transit", edit(b";" + crlf + b" b=", b"; b="), "verified"),
         one("display name changed", edit(b"From: Booking agent", b"From: Bank"), "verified"),
         one("trailing spaces on a body line", edit(b"Thank you", b"Thank you  "), "verified"),
         one("charset name in capitals", edit(b'charset="utf-8"', b'charset="UTF-8"'), "verified"),
@@ -842,10 +844,10 @@ def vectors() -> list[Case]:
         ),
         one("unrelated TXT beside the record", raw, "verified", dns={DNS_NAME: ["hello world", record]}),
         one(
-            "a CREST record with a duplicate tag beside the record",
+            "a Colophon record with a duplicate tag beside the record",
             raw,
             "verified",
-            dns={DNS_NAME: ["v=CREST0; v=CREST0; k=ed25519; p=", record]},
+            dns={DNS_NAME: ["v=COLOPHON0; v=COLOPHON0; k=ed25519; p=", record]},
         ),
         one("arrived exactly at exp + grace", raw, "verified", accepted_at=ISSUED + MAX_LIFETIME + GRACE),
         one("signed 1 hour before the credential's iat", signed(iat=ISSUED - 3600), "verified"),
@@ -908,9 +910,11 @@ def vectors() -> list[Case]:
         one("invalid UTF-8 in the subject", set_header(b"Subject", b"Table for 2 \xff"), "malformed"),
         one("bad quoted-printable in the body", edit(b"Hello,", b"Hello=ZZ,"), "malformed"),
         one("bad base64 in the attachment", edit(b"MTk6MzAsMgo=", b"MTk6MzAs*go="), "malformed"),
-        one("missing v tag", edit(b"Crest-Signature: v=0;", b"Crest-Signature:"), "malformed"),
-        one("tag name in capitals", edit(b"Crest-Signature: v=0", b"Crest-Signature: V=0"), "malformed"),
-        one("padded base64url in c", edit(b"9mcKLCQ;", b"9mcKLCQ==;"), "malformed"),
+        one("missing v tag", edit(b"Colophon-Signature: v=0;", b"Colophon-Signature:"), "malformed"),
+        one(
+            "tag name in capitals", edit(b"Colophon-Signature: v=0", b"Colophon-Signature: V=0"), "malformed"
+        ),
+        one("padded base64url in c", edit(c_end, c_end[:-1] + b"==;"), "malformed"),
         one(
             "a fraction in exp",
             signed(
@@ -931,24 +935,28 @@ def vectors() -> list[Case]:
             "malformed",
         ),
         # count, DKIM, version
-        one("second Crest-Signature", before(b"From:", b"Crest-Signature: v=0"), "multiple_signatures"),
-        one("no Crest-Signature", raw[raw.index(b"From:") :], "no_signature"),
+        one("second Colophon-Signature", before(b"From:", b"Colophon-Signature: v=0"), "multiple_signatures"),
+        one("no Colophon-Signature", raw[raw.index(b"From:") :], "no_signature"),
         one(
             "DKIM passes only for mail.acme.example",
             raw,
             "dkim_unaligned",
             dkim_pass_domains={"mail.acme.example"},
         ),
-        one("v=1", edit(b"Crest-Signature: v=0", b"Crest-Signature: v=1"), "unsupported_version"),
+        one("v=1", edit(b"Colophon-Signature: v=0", b"Colophon-Signature: v=1"), "unsupported_version"),
         # DNS
         dns("DNS lookup failed", None, "dns_error"),
         one("no record at the selector", raw, "key_not_found", dns={}),
-        dns("two CREST records", [record, dns_record(test_key("other"))], "key_not_found"),
-        dns("a k=rsa CREST record beside the record", [record, "v=CREST0; k=rsa; p=AAAA"], "key_not_found"),
-        dns("record without p", ["v=CREST0; k=ed25519"], "key_not_found"),
-        dns("key of the wrong length", ["v=CREST0; k=ed25519; p=AAAA"], "key_not_found"),
+        dns("two Colophon records", [record, dns_record(test_key("other"))], "key_not_found"),
+        dns(
+            "a k=rsa Colophon record beside the record",
+            [record, "v=COLOPHON0; k=rsa; p=AAAA"],
+            "key_not_found",
+        ),
+        dns("record without p", ["v=COLOPHON0; k=ed25519"], "key_not_found"),
+        dns("key of the wrong length", ["v=COLOPHON0; k=ed25519; p=AAAA"], "key_not_found"),
         dns("key in padded base64", [record + "="], "key_not_found"),
-        dns("record with empty p=", ["v=CREST0; k=ed25519; p="], "key_revoked"),
+        dns("record with empty p=", ["v=COLOPHON0; k=ed25519; p="], "key_revoked"),
         dns("record holds a different key", [dns_record(test_key("other"))], "credential_invalid"),
         # credential contents
         claims("sub with a trailing newline", "credential_invalid", sub="ag_7Hq2\n"),
@@ -1053,7 +1061,7 @@ def main() -> int:
     cases = vectors()
     if "--json" in sys.argv:
         doc = {
-            "about": "CREST v0 test vectors. Each message is base64 of the octets as accepted. "
+            "about": "Colophon v0 test vectors. Each message is base64 of the octets as accepted. "
             "Deliveries run in order and share one replay store; a missing DNS name is "
             "NXDOMAIN and null is a failed lookup.",
             "cases": vector_json(cases),

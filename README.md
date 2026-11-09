@@ -1,30 +1,30 @@
-# CREST v0, draft for review
+# Colophon v0, draft for review
 
-CREST lets an AI agent sign the email it sends. A receiver can then check, from DNS, the message and its own delivery facts (arrival time, DKIM result, mailbox):
+Colophon lets an AI agent sign the email it sends. A receiver can then check, from DNS, the message and its own delivery facts (arrival time, DKIM result, mailbox):
 - which agent wrote it;
 - which domain stands behind that agent;
 - who the agent acts for, as far as that person allows;
 - what the domain says the agent may do.
 
-To anyone who does not know CREST, it is still ordinary email.
+To anyone who does not know Colophon, it is still ordinary email.
 
-**Status:** draft v0-02, 2026-11-08. It applies a first round of review and signs the subject raw; Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change.
+**Status:** draft v0-03, 2026-11-08. It applies a first round of review, signs the subject raw, and renames the protocol; Appendix E lists the changes. Shared for analysis and comment. Do not deploy it. Anything here may change.
 
 ## What is here
 
 | File | What it is |
 | --- | --- |
-| [`crest-v0.md`](crest-v0.md) | The specification. |
-| [`reference/crest_v0.py`](reference/crest_v0.py) | A reference sketch that signs and verifies exactly as the draft says, and runs the test vectors. It is not a library. |
+| [`colophon-v0.md`](colophon-v0.md) | The specification. |
+| [`reference/colophon_v0.py`](reference/colophon_v0.py) | A reference sketch that signs and verifies exactly as the draft says, and runs the test vectors. It is not a library. |
 | [`reference/example.txt`](reference/example.txt) | The sketch's output: the worked example of Appendix A and the vector results. |
 | [`reference/vectors.json`](reference/vectors.json) | The test vectors of Appendix B, machine-readable: each message as base64 of its octets, the receiver's inputs, and the expected verdict and reason. |
 
 Run the sketch (Python 3.10 or later):
 
 ```
-uv run --with cryptography python reference/crest_v0.py            # vectors only
-uv run --with cryptography python reference/crest_v0.py --example  # example, then vectors
-uv run --with cryptography python reference/crest_v0.py --json > reference/vectors.json
+uv run --with cryptography python reference/colophon_v0.py            # vectors only
+uv run --with cryptography python reference/colophon_v0.py --example  # example, then vectors
+uv run --with cryptography python reference/colophon_v0.py --json > reference/vectors.json
 ```
 
 ## How to read it

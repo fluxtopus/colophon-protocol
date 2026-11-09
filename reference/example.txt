@@ -1,10 +1,10 @@
 ## DNS
 
-s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ0eHR6IdgouZsfwk"
+s1._colophon.acme.example. TXT "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
 
 ## Credential protected header
 
-{"alg":"EdDSA","kid":"s1","typ":"crest-cred+jwt"} 
+{"alg":"EdDSA","kid":"s1","typ":"colophon-cred+jwt"} 
 
 ## Credential claims
 
@@ -13,7 +13,7 @@ s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ
     "jwk": {
       "crv": "Ed25519",
       "kty": "OKP",
-      "x": "56n6gHHV7WyyHMgucGUeyc41a95mH8M5Sodd8EcTfUM"
+      "x": "lC9PrkLW2QmPaKqAeeCY94OM3M75MeD9Uyg6oThgOLE"
     }
   },
   "exp": 1793952000,
@@ -30,39 +30,39 @@ s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ
 
 ## Credential (compact)
 
-eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY3Jlc3QtY3JlZCtqd3QifQ.eyJjbmYiOnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiNTZuNmdISFY3V3l5SE1ndWNHVWV5YzQxYTk1bUg4TTVTb2RkOEVjVGZVTSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIjoibWFwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21lLmV4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3VzIn0sInNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvICQ1MDAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.47Kwts6Ukd235LbLIfYTwTC0fAEILEXmMAPaAEiUBc-8Sm0jAdNQgNNnY7FwbZKBG6Ga8uphSPZ10_Y9mcKLCQ 
+eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY29sb3Bob24tY3JlZCtqd3QifQ.eyJjbmYiOnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoibEM5UHJrTFcyUW1QYUtxQWVlQ1k5NE9NM003NU1lRDlVeWc2b1RoZ09MRSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIjoibWFwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21lLmV4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3VzIn0sInNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvICQ1MDAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.RXZMLCGGSf1h2H2vm6R62FUeHwEpBltl4vqouA43gL24o5cCzUMx8tskVEgDWEOKcBRYHw8q4PuxNfqmGDNNAw 
 
 ## Signing input (JCS, one line)
 
-{"attachments":[{"sha256":"toHbGVby3dGckYAJkxBXPj9DGUnSCDiuIVwGV4oFR7w","type":"text/csv"}],"cc":[],"credential":"VJTvpJO2BHDbAMRd9wVXolaQc60ix5iczhAaXo_YB48","from":"maple-tiger-27@acme.example","reply_to":[],"subject":"Table for 2, Friday 7 November, 19:30","text":"JO-XRoNsBAPLwS_XAckdl7Jmo2DmjMagPnYpKzTgLkA","to":["reservations@bistro.example"],"v":0} 
+{"attachments":[{"sha256":"toHbGVby3dGckYAJkxBXPj9DGUnSCDiuIVwGV4oFR7w","type":"text/csv"}],"cc":[],"credential":"QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo","from":"maple-tiger-27@acme.example","reply_to":[],"subject":"Table for 2, Friday 7 November, 19:30","text":"JO-XRoNsBAPLwS_XAckdl7Jmo2DmjMagPnYpKzTgLkA","to":["reservations@bistro.example"],"v":0} 
 
 ## Agent signature (tag b)
 
-eyJhbGciOiJFZERTQSIsImlhdCI6MTc5Mzg3MDEwMCwibm9uY2UiOiJabTl5TFdWNFlXMXdiR1V0YjI1c2VRIiwidHlwIjoiY3Jlc3Qtc2lnIn0..qzQMJWT89VqQAD836qQJGYCWqkuuyiqLcJkDYkw3B1q_KLSESBJwoYkwKNRkwiPfDzUuiMlsyBRpryy2-5mkAQ 
+eyJhbGciOiJFZERTQSIsImlhdCI6MTc5Mzg3MDEwMCwibm9uY2UiOiJabTl5TFdWNFlXMXdiR1V0YjI1c2VRIiwidHlwIjoiY29sb3Bob24tc2lnIn0..lmIvRov2v6U3-dRU-n08mC-Rh4s6lYP36XV3ve-OrsEkyXmHCjEIc2jLIgmzncjqL9KBWiF0Qqks4scg9ZS8Aw 
 
 ## Message as sent, before the issuer's DKIM signature
 
-Crest-Signature: v=0;
- c=eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY3Jlc3QtY3JlZCtqd3QifQ.eyJjbmYi
- OnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiNTZuNmdISFY3V3l5SE1nd
- WNHVWV5YzQxYTk1bUg4TTVTb2RkOEVjVGZVTSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIjoibW
- FwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21lLmV
- 4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3VzIn0s
- InNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvICQ1M
- DAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.47Kwts6Ukd235LbLIfYTwTC0fAEILEXmM
- APaAEiUBc-8Sm0jAdNQgNNnY7FwbZKBG6Ga8uphSPZ10_Y9mcKLCQ;
+Colophon-Signature: v=0;
+ c=eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY29sb3Bob24tY3JlZCtqd3QifQ.eyJj
+ bmYiOnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoibEM5UHJrTFcyUW1QY
+ UtxQWVlQ1k5NE9NM003NU1lRDlVeWc2b1RoZ09MRSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIj
+ oibWFwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21
+ lLmV4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3Vz
+ In0sInNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvI
+ CQ1MDAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.RXZMLCGGSf1h2H2vm6R62FUeHwEpB
+ ltl4vqouA43gL24o5cCzUMx8tskVEgDWEOKcBRYHw8q4PuxNfqmGDNNAw;
  b=eyJhbGciOiJFZERTQSIsImlhdCI6MTc5Mzg3MDEwMCwibm9uY2UiOiJabTl5TFdWNFlXMXdiR1V
- 0YjI1c2VRIiwidHlwIjoiY3Jlc3Qtc2lnIn0..qzQMJWT89VqQAD836qQJGYCWqkuuyiqLcJkDYkw
- 3B1q_KLSESBJwoYkwKNRkwiPfDzUuiMlsyBRpryy2-5mkAQ
+ 0YjI1c2VRIiwidHlwIjoiY29sb3Bob24tc2lnIn0..lmIvRov2v6U3-dRU-n08mC-Rh4s6lYP36XV
+ 3ve-OrsEkyXmHCjEIc2jLIgmzncjqL9KBWiF0Qqks4scg9ZS8Aw
 From: Booking agent <Maple-Tiger-27@acme.example>
 To: Reservations <reservations@bistro.example>
 Subject: Table for 2, Friday 7 November, 19:30
 Message-ID: <example-1@acme.example>
 Date: Thu, 05 Nov 2026 09:15:00 +0000
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="=_crest_example_1"
+Content-Type: multipart/mixed; boundary="=_colophon_example_1"
 
---=_crest_example_1
+--=_colophon_example_1
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
 
@@ -73,7 +73,7 @@ One guest is vegetarian.
 
 Thank you
 
---=_crest_example_1
+--=_colophon_example_1
 Content-Type: text/csv
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="booking.csv"
@@ -81,13 +81,13 @@ MIME-Version: 1.0
 
 ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
---=_crest_example_1--
+--=_colophon_example_1--
 
 ok    verified             replay: one mailbox, its alias, and a second mailbox
 ok    replay                 ... delivery 2
 ok    replay                 ... delivery 3
 ok    verified               ... delivery 4
-ok    verified             Crest-Signature refolded in transit
+ok    verified             Colophon-Signature refolded in transit
 ok    verified             display name changed
 ok    verified             trailing spaces on a body line
 ok    verified             charset name in capitals
@@ -97,7 +97,7 @@ ok    verified             spaces in the subject collapsed
 ok    verified             encoded words that decoders disagree on, signed as sent (never decoded)
 ok    verified             non-ASCII subject, as the signer encoded it
 ok    verified             unrelated TXT beside the record
-ok    verified             a CREST record with a duplicate tag beside the record
+ok    verified             a Colophon record with a duplicate tag beside the record
 ok    verified             arrived exactly at exp + grace
 ok    verified             signed 1 hour before the credential's iat
 ok    signature_invalid    subject changed
@@ -133,14 +133,14 @@ ok    malformed            padded base64url in c
 ok    malformed            a fraction in exp
 ok    malformed            a duplicate claim
 ok    malformed            credential over 2,048 octets
-ok    multiple_signatures  second Crest-Signature
-ok    no_signature         no Crest-Signature
+ok    multiple_signatures  second Colophon-Signature
+ok    no_signature         no Colophon-Signature
 ok    dkim_unaligned       DKIM passes only for mail.acme.example
 ok    unsupported_version  v=1
 ok    dns_error            DNS lookup failed
 ok    key_not_found        no record at the selector
-ok    key_not_found        two CREST records
-ok    key_not_found        a k=rsa CREST record beside the record
+ok    key_not_found        two Colophon records
+ok    key_not_found        a k=rsa Colophon record beside the record
 ok    key_not_found        record without p
 ok    key_not_found        key of the wrong length
 ok    key_not_found        key in padded base64

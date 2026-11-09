@@ -1,21 +1,21 @@
-# CREST v0: Agent Signatures for Email
+# Colophon v0: Agent Signatures for Email
 
-Draft v0-02, 2026-11-08. For review. Not for production use.
+Draft v0-03, 2026-11-08. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
 ## Abstract
 
-CREST lets an AI agent sign the email it sends.
+Colophon lets an AI agent sign the email it sends.
 
 A receiver can then check three things, from DNS, the message, and its own delivery facts (when the message arrived, which DKIM signatures passed, and which mailbox it was delivered to):
 - which agent wrote the message;
 - which domain issued that agent and stands behind it;
 - what the domain says the agent acts for: its principal, as far as the principal allows, and a short statement of its authority.
 
-CREST adds one header to an ordinary email. A receiver that does not know CREST sees a normal message.
+Colophon adds one header to an ordinary email. A receiver that does not know Colophon sees a normal message.
 
-v0 is the identity layer only. Tasks, offers and agreements come later, in a separate document, CREST Tasks, built on this one.
+v0 is the identity layer only. Tasks, offers and agreements come later, in a separate document, Colophon Tasks, built on this one.
 
 ## Contents
 
@@ -32,7 +32,7 @@ v0 is the identity layer only. Tasks, offers and agreements come later, in a sep
 11. Versioning and extensions
 12. Conformance
 13. Registrations
-14. Relation to A2A and CREST Tasks
+14. Relation to A2A and Colophon Tasks
 15. Open issues
 
 Appendices:
@@ -48,7 +48,7 @@ Agents already send email: they book, buy, schedule, follow up and hand work to 
 
 DKIM proves that a domain's mail system sent a message. It does not say which agent of that domain wrote it, who that agent acts for, or what it is allowed to do.
 
-CREST adds that. It is built on what email already has:
+Colophon adds that. It is built on what email already has:
 - DKIM, for the domain;
 - DNS, for keys;
 - MIME, for the message;
@@ -58,7 +58,7 @@ It needs no central registry, no HTTPS fetch, and no service run by any one comp
 
 ### 1.1 Principles
 
-1. **Plain email first.** A signed message is a valid, readable email. A receiver that ignores CREST loses nothing.
+1. **Plain email first.** A signed message is a valid, readable email. A receiver that ignores Colophon loses nothing.
 2. **Verifiable by anyone.** Any implementation checks a message from DNS, the message itself, and the receiver's own delivery facts: arrival time, DKIM result and mailbox.
 3. **Built on what exists.** DKIM, DNS, MIME and JOSE before anything new.
 4. **Receiver in control.** The receiver decides who gets in and what to act on. A sender cannot force its way in.
@@ -101,21 +101,21 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 Values written in `code` are exact. "JCS" is the JSON Canonicalization Scheme (RFC 8785). Times are integer seconds since the Unix epoch, UTC.
 
-"base64url" is the URL-safe alphabet without padding (RFC 4648 §5), decoded strictly. A value with padding, with `+` or `/`, with any other character, or with unused bits that are not zero is invalid. This holds everywhere CREST uses base64url, the DNS record included.
+"base64url" is the URL-safe alphabet without padding (RFC 4648 §5), decoded strictly. A value with padding, with `+` or `/`, with any other character, or with unused bits that are not zero is invalid. This holds everywhere Colophon uses base64url, the DNS record included.
 
 A grammar written as a regular expression must match the whole value. A value with anything before or after the match, a line break included, does not match.
 
 ## 3. Overview
 
-A CREST message carries two proofs. A receiver believes "agent X of acme.example" only when both hold.
+A Colophon message carries two proofs. A receiver believes "agent X of acme.example" only when both hold.
 
 1. **The domain's mail system sent it.** The message passes DKIM, and the DKIM signing domain is exactly the `From` host.
-2. **This agent wrote it.** The message carries a credential and an agent signature in one header, `Crest-Signature`:
+2. **This agent wrote it.** The message carries a credential and an agent signature in one header, `Colophon-Signature`:
    - the credential is signed by a domain key that the `From` host publishes in DNS;
    - the agent signature, made with the key the credential names, covers the message's addresses, subject, text and attachments.
 
 ```
-DNS:   s1._crest.acme.example  TXT  "v=CREST0; k=ed25519; p=<domain public key>"
+DNS:   s1._colophon.acme.example  TXT  "v=COLOPHON0; k=ed25519; p=<domain public key>"
                                                |
                                                | signs (at most 24 h)
                                                v
@@ -126,7 +126,7 @@ Credential:  iss=acme.example, from=maple-tiger-27@acme.example,
                                                v
 Agent signature:  over From, To, Cc, Reply-To, Subject, text, attachments
                                                |
-Header:  Crest-Signature: v=0; c=<credential>; b=<agent signature>
+Header:  Colophon-Signature: v=0; c=<credential>; b=<agent signature>
 Message: still passes DKIM with d=acme.example
 ```
 
@@ -134,7 +134,7 @@ The issuer reissues each credential automatically, at least once a day. To revok
 
 Revocation does not end a stolen agent key by itself. Every message carries a credential, so whoever holds the key can reuse one. A stolen key stays usable until the issuer stops certifying it, and for up to 26 hours after (§5.2, §9).
 
-The verifier checks the message as its own mail server accepted it. The result is **verified**, or **not verified** with a reason. A message that is not verified is still delivered as plain email. CREST never blocks delivery.
+The verifier checks the message as its own mail server accepted it. The result is **verified**, or **not verified** with a reason. A message that is not verified is still delivered as plain email. Colophon never blocks delivery.
 
 ## 4. Domain keys in DNS
 
@@ -143,7 +143,7 @@ The verifier checks the message as its own mail server accepted it. The result i
 An issuer publishes each domain key as a TXT record at:
 
 ```
-<selector>._crest.<host>
+<selector>._colophon.<host>
 ```
 
 Here `<host>` is the domain of the agent addresses: the right-hand side of the `@`.
@@ -151,18 +151,18 @@ Here `<host>` is the domain of the agent addresses: the right-hand side of the `
 The record is a tag list in the style of DKIM (RFC 6376 §3.2):
 
 ```
-v=CREST0; k=ed25519; p=<base64url of the 32-byte Ed25519 public key>
+v=COLOPHON0; k=ed25519; p=<base64url of the 32-byte Ed25519 public key>
 ```
 
-- `v` MUST be `CREST0`.
+- `v` MUST be `COLOPHON0`.
 - `k` MUST be `ed25519`.
 - `p` is the raw 32-octet public key (RFC 8032), in base64url. An empty `p=` means the key is revoked.
-- The record is parsed like the header (§6.2): all whitespace is removed, then it is a list of `name=value` items separated by `;`. Unknown tags are ignored. A record with a duplicate tag is not a CREST record.
+- The record is parsed like the header (§6.2): all whitespace is removed, then it is a list of `name=value` items separated by `;`. Unknown tags are ignored. A record with a duplicate tag is not a Colophon record.
 - If a TXT record has several character strings, they are joined with nothing between them before parsing, as in DKIM.
 
 A selector is one DNS label: lowercase letters, digits and hyphens, from 1 to 63 characters, not starting or ending with a hyphen. Its grammar is `[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?`.
 
-Other TXT records may share the name. §7.4 says exactly which record a verifier uses, and what it concludes when there is none, or more than one. An issuer MUST publish exactly one CREST record at each selector.
+Other TXT records may share the name. §7.4 says exactly which record a verifier uses, and what it concludes when there is none, or more than one. An issuer MUST publish exactly one Colophon record at each selector.
 
 ### 4.2 Rotation and removal
 
@@ -176,13 +176,13 @@ Other TXT records may share the name. §7.4 says exactly which record a verifier
 A domain whose mail a provider runs SHOULD publish a small fixed set of selectors, for example `s1` and `s2`. Each is a CNAME to a name the provider controls:
 
 ```
-s1._crest.customer.example.  CNAME  s1.customer-example.crest-keys.provider.example.
-s2._crest.customer.example.  CNAME  s2.customer-example.crest-keys.provider.example.
+s1._colophon.customer.example.  CNAME  s1.customer-example.colophon-keys.provider.example.
+s2._colophon.customer.example.  CNAME  s2.customer-example.colophon-keys.provider.example.
 ```
 
 The provider then rotates keys under those names, and the customer never touches DNS again. This is how many providers handle DKIM.
 
-A single CNAME at `_crest.<host>` does not work: a CNAME does not redirect the names below it (RFC 1034 §3.6.2).
+A single CNAME at `_colophon.<host>` does not work: a CNAME does not redirect the names below it (RFC 1034 §3.6.2).
 
 ## 5. The agent credential
 
@@ -195,7 +195,7 @@ A credential is a JWS in compact serialization (RFC 7515), with an Ed25519 signa
 | Member | Value |
 | --- | --- |
 | `alg` | `EdDSA` |
-| `typ` | `crest-cred+jwt` |
+| `typ` | `colophon-cred+jwt` |
 | `kid` | the selector of the domain key |
 
 A verifier MUST reject a protected header that contains `crit`. It ignores any other member.
@@ -266,7 +266,7 @@ A disclosed principal is only as reliable as the issuer that attests it.
 - It is part of the credential, so the domain signs it and the agent cannot change it per message.
 - A change takes effect only as credentials are replaced. Messages under an earlier credential still verify, with the earlier scope, until that credential lapses: up to 26 hours.
 
-CREST never decides whether a message fits its scope. A receiver shows the scope and applies its own policy.
+Colophon never decides whether a message fits its scope. A receiver shows the scope and applies its own policy.
 
 ### 5.5 Issuing
 
@@ -299,12 +299,12 @@ A forwarded email cannot be a `message/*` attachment: libraries serialize those 
 
 In every part, the top level included, `Content-Type`, `Content-Transfer-Encoding` and `Content-Disposition` each appear at most once, and `Content-Type` starts with `type/subtype`. A part that breaks this makes the message malformed.
 
-### 6.2 The `Crest-Signature` header
+### 6.2 The `Colophon-Signature` header
 
-A signed message carries exactly one `Crest-Signature` header field. It is a tag list:
+A signed message carries exactly one `Colophon-Signature` header field. It is a tag list:
 
 ```
-Crest-Signature: v=0; c=<credential>; b=<agent signature>
+Colophon-Signature: v=0; c=<credential>; b=<agent signature>
 ```
 
 | Tag | Value |
@@ -317,7 +317,7 @@ Crest-Signature: v=0; c=<credential>; b=<agent signature>
 - Before parsing, a verifier removes all whitespace: SP, HTAB, CR and LF.
 - The value is then a list of items separated by `;`. Empty items are ignored. Every other item is `name=value`: the name matches `[a-z][a-z0-9_]*`, and the value may be empty. An item without `=`, a name that does not match (`V`, for example), or a duplicate name makes the header malformed. Unknown tags are ignored.
 - With whitespace removed, the value MUST be at most 2,560 octets, and `c` at most 2,048. A larger one is malformed. In practice the value is about 800 octets.
-- The issuer's DKIM signature MUST cover `Crest-Signature`, and SHOULD use relaxed header canonicalization (RFC 6376 §3.4.2) so that refolding in transit does not break DKIM. Verifiers do not check this.
+- The issuer's DKIM signature MUST cover `Colophon-Signature`, and SHOULD use relaxed header canonicalization (RFC 6376 §3.4.2) so that refolding in transit does not break DKIM. Verifiers do not check this.
 
 ### 6.3 The signing input
 
@@ -350,7 +350,7 @@ DKIM still covers whatever the issuer's DKIM signature lists.
 
 ### 6.4 Canonical forms
 
-**Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Crest-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every CRLF followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
+**Header fields.** A verifier reads `From`, `To`, `Cc`, `Reply-To`, `Subject` and `Colophon-Signature`. Field names are compared case-insensitively. Each value is unfolded first: every CRLF followed by SP or HTAB is removed. The octets MUST be valid UTF-8 (RFC 6532); otherwise the message is malformed.
 
 **Addresses.** `From`, `To`, `Cc` and `Reply-To` use a strict subset of RFC 5322, so that every verifier reads them alike. A value outside the subset makes the message malformed. Verifiers do not repair it.
 1. The value is a list of mailboxes separated by commas. Each mailbox, with SP and HTAB trimmed at both ends, is either an addr-spec alone, or a display name followed by an addr-spec in angle brackets.
@@ -394,7 +394,7 @@ It travels as `<protected header>..<signature>`, the compact form with the paylo
 | Member | Value |
 | --- | --- |
 | `alg` | `EdDSA` |
-| `typ` | `crest-sig` |
+| `typ` | `colophon-sig` |
 | `iat` | when the signer signed, an integer |
 | `nonce` | a random value, at least 96 bits, in base64url. Grammar: `[A-Za-z0-9_-]{16,64}`. |
 
@@ -407,7 +407,7 @@ The signature is computed as in RFC 7515: Ed25519 over `ASCII(BASE64URL(header) 
 The signer:
 1. builds the message in its final form, as it will leave the issuer's mail system. Footers, banners and subject tags are added first, and the subject is encoded as it will be sent.
 2. picks the credential for the `From` address. It SHOULD NOT sign with a credential that has less than 6 hours left before `exp`, so the message has time to arrive. Verifiers do not check this.
-3. builds the signing input from those bytes, signs it, and adds `Crest-Signature`.
+3. builds the signing input from those bytes, signs it, and adds `Colophon-Signature`.
 4. hands the message to the mail system, which adds DKIM with `d=` equal to the `From` host.
 
 Anything that changes a covered part after signing makes the message not verified. A relay that appends a footer is the most common case.
@@ -433,16 +433,16 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 
 | # | Check | Reason if it fails |
 | --- | --- | --- |
-| 1 | The message has a `Crest-Signature` header. | `no_signature` |
+| 1 | The message has a `Colophon-Signature` header. | `no_signature` |
 | 2 | It has exactly one. | `multiple_signatures` |
 | 3 | `From` has exactly one address. Let H be its host. | `malformed` |
 | 4 | At least one DKIM signature passed with `d=` equal to H (compared case-insensitively). If none did, stop here, before any DNS lookup. | `dkim_unaligned` |
 | 5 | With whitespace removed, the header value is at most 2,560 octets, parses as a tag list (§6.2), and has a `v` tag. | `malformed` |
 | 6 | `v` is `0`. | `unsupported_version` |
 | 7 | It has `c` and `b`, and `c` is at most 2,048 octets. Both parse as compact JWS in strict base64url, `b` with an empty payload. Their protected headers and the claims are JSON objects that follow the JSON rules of §5.1. | `malformed` |
-| 8 | The credential header has `alg` `EdDSA`, `typ` `crest-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H. | `credential_invalid` |
-| 9 | Look up TXT at `<kid>._crest.H` (§7.4). | `dns_error`, `dns_limited` |
-| 10 | The answer holds exactly one CREST record, and it has `k=ed25519` and a `p` tag (§7.4). | `key_not_found` |
+| 8 | The credential header has `alg` `EdDSA`, `typ` `colophon-cred+jwt`, a valid selector in `kid`, and no `crit`. `iss` equals H. | `credential_invalid` |
+| 9 | Look up TXT at `<kid>._colophon.H` (§7.4). | `dns_error`, `dns_limited` |
+| 10 | The answer holds exactly one Colophon record, and it has `k=ed25519` and a `p` tag (§7.4). | `key_not_found` |
 | 11 | `p` is not empty, and is 32 octets in strict base64url (§7.4). | `key_revoked` if empty, otherwise `key_not_found` |
 | 12 | The credential's signature verifies with that key. | `credential_invalid` |
 | 13 | Every claim has its JSON type and grammar (§5.1 to §5.4): `sub`, `from`, `principal`, `scope`, `cnf`, and `0 < exp - iat <= 86400`. | `credential_invalid` |
@@ -450,7 +450,7 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 | 15 | `from` equals the canonical `From` address. | `from_mismatch` |
 | 16 | The layout is valid (§6.1). Parts are checked from the top. For each part, its `Content-*` fields are checked first: a duplicate field or a `Content-Type` that does not parse is `malformed`. Then its type, charset, `format`, transfer encoding and disposition: a failure there is `layout`. | `layout`, `malformed` |
 | 17 | The signing input can be built (§6.3, §6.4). | `malformed` |
-| 18 | The signature header has `alg` `EdDSA`, `typ` `crest-sig`, a `nonce` that matches its grammar, an integer `iat`, and no `crit`. `iat <= min(exp, arrival + 300)`. | `signature_invalid` |
+| 18 | The signature header has `alg` `EdDSA`, `typ` `colophon-sig`, a `nonce` that matches its grammar, an integer `iat`, and no `crit`. `iat <= min(exp, arrival + 300)`. | `signature_invalid` |
 | 19 | The agent signature verifies with the key in `cnf`, over the rebuilt signing input. | `signature_invalid` |
 | 20 | `To` or `Cc` lists an address of the mailbox (§7.5). | `not_addressed` |
 | 21 | The tuple (mailbox, `iss`, `sub`, `nonce`) has not verified before (§7.6). | `replay` |
@@ -473,7 +473,7 @@ There are two verdicts.
   - `sub`, the agent ID;
   - `principal`;
   - `scope`.
-- **Not verified**, with one reason from §7.2. A message that is not verified is plain email: the receiver handles it as it would without CREST.
+- **Not verified**, with one reason from §7.2. A message that is not verified is plain email: the receiver handles it as it would without Colophon.
 
 The reason is for diagnosis. A receiver SHOULD NOT tell the user a different story for each reason. A changed text and a forgery both fail as `signature_invalid`.
 
@@ -491,8 +491,8 @@ A verdict never blocks delivery by itself. Receivers may still apply their own p
 **Which record is the key.** The answer to the lookup is a set of TXT records. The verifier:
 1. joins each record's character strings, with nothing between them;
 2. parses each record as a tag list, as §6.2 does;
-3. discards every record that does not parse, has a duplicate tag, or has no `v=CREST0` tag. These are not CREST records;
-4. if no CREST record remains, or more than one, stops with `key_not_found`. NXDOMAIN and an answer with no TXT records count as none;
+3. discards every record that does not parse, has a duplicate tag, or has no `v=COLOPHON0` tag. These are not Colophon records;
+4. if no Colophon record remains, or more than one, stops with `key_not_found`. NXDOMAIN and an answer with no TXT records count as none;
 5. if the record has no `k=ed25519` tag, or no `p` tag, stops with `key_not_found`;
 6. if `p` is empty, stops with `key_revoked`;
 7. if `p` is not strict base64url of exactly 32 octets, stops with `key_not_found`.
@@ -521,7 +521,7 @@ The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it ver
 
 | Item | Limit |
 | --- | --- |
-| `Crest-Signature` value, whitespace removed | 2,560 octets |
+| `Colophon-Signature` value, whitespace removed | 2,560 octets |
 | Credential (`c`), whitespace removed | 2,048 octets |
 | Credential lifetime (`exp - iat`) | at most 24 hours |
 | Credential life left when signing | at least 6 hours (SHOULD; not checked) |
@@ -544,10 +544,10 @@ The verifier remembers each (mailbox, `iss`, `sub`, `nonce`) of a message it ver
 
 v0 has no special message for an introduction. A stranger agent's first message is a signed message like any other.
 
-- **The receiver decides who gets in.** Holding, admitting, asking a person, and blocking are the receiver's policy. CREST supplies the evidence, never the admission rule.
+- **The receiver decides who gets in.** Holding, admitting, asking a person, and blocking are the receiver's policy. Colophon supplies the evidence, never the admission rule.
 - **The evidence.** It is the verdict and, when verified, the agent's domain, address, agent ID, principal as far as disclosed, and scope.
 - **Anything offered in support is content.** For example: "Bob at partner.example suggested I write", a forwarded message, or a code the receiver gave out. The receiver, or its agent, judges it like any text.
-- **A forwarded CREST message cannot be verified** by the receiver in v0. The receiver may look up keys only for the domain that passed DKIM on the outer message (§7.4). An introducer who wants to be verified writes to the receiver directly, or copies the stranger in.
+- **A forwarded Colophon message cannot be verified** by the receiver in v0. The receiver may look up keys only for the domain that passed DKIM on the outer message (§7.4). An introducer who wants to be verified writes to the receiver directly, or copies the stranger in.
 - **No automatic replies to agents.** A receiver SHOULD NOT tell a sending agent that its message was held. Silence tells address scrapers nothing, and it avoids backscatter.
 - **Agent addresses are worth protecting.** An issuer SHOULD keep agent addresses from becoming widely known, for example with an alias per counterparty, and replace an address that is abused. A counterparty knows the agent by its address, so a replacement starts a new pairing.
 
@@ -566,13 +566,13 @@ It does not mean:
 
 **The subject is signed as octets.** A receiver decodes encoded words to show the subject, and mail libraries disagree on unusual input: a character split across two encoded words, an unknown charset, invalid octets. The signature binds the octets, not one reading of them. A receiver SHOULD show a subject it cannot decode cleanly in its raw form, not a repaired one. A signer SHOULD send an ASCII subject as plain text and encode a non-ASCII subject as whole `utf-8` encoded words, or as UTF-8 (RFC 6532).
 
-**Lookalike domains.** CREST proves which domain spoke, not that it is the domain the user expects. A receiver SHOULD make internationalized and lookalike domains visible, for example by showing A-labels or by flagging confusable characters.
+**Lookalike domains.** Colophon proves which domain spoke, not that it is the domain the user expects. A receiver SHOULD make internationalized and lookalike domains visible, for example by showing A-labels or by flagging confusable characters.
 
 **A stolen agent key** can sign only for its one address, and still needs the domain's mail system to pass DKIM. It is not bounded by the credential's 24 hours. Credentials are public: every message the agent sent carries one, so a thief who holds the key can attach any current credential for it. The key stays usable for as long as the issuer certifies it, and for up to 26 hours after the issuer stops. Ending it is the issuer's job: it replaces the agent key (§5.2). Regular replacement bounds how long an unnoticed theft lasts.
 
 **A leaked domain key** lets the attacker mint credentials for any address on the host. To pass step 4, the attacker also needs to send through the domain's DKIM-signing mail system. Removing the key reaches verifiers within the record's TTL.
 
-**A compromised mail system and domain key** together let an attacker send as any agent of that domain. That is the issuer's full compromise. CREST cannot do better than the issuer it trusts.
+**A compromised mail system and domain key** together let an attacker send as any agent of that domain. That is the issuer's full compromise. Colophon cannot do better than the issuer it trusts.
 
 **Addresses that differ only in case.** Verifiers lowercase ASCII in local parts. An issuer MUST NOT issue credentials for two addresses that are equal after that lowercasing.
 
@@ -582,7 +582,7 @@ It does not mean:
 
 **Relays that change messages.** Mailing lists and gateways that change a covered part or break DKIM make a message not verified. This is deliberate: a verdict that could be true for some receivers and false for others would make implementations disagree. ARC (RFC 8617) is not used in v0.
 
-**Strict alignment.** The DKIM domain must equal the `From` host. Relaxed alignment would need the Public Suffix List, and its versions differ between implementations. A provider that signs subdomain mail with the parent domain must sign CREST mail with the exact host.
+**Strict alignment.** The DKIM domain must equal the `From` host. Relaxed alignment would need the Public Suffix List, and its versions differ between implementations. A provider that signs subdomain mail with the parent domain must sign Colophon mail with the exact host.
 
 **Denial of service.**
 - Key lookups happen only after aligned DKIM passes, have a 2-second budget, and misses are rate-limited.
@@ -592,7 +592,7 @@ It does not mean:
 
 **Time.** Verification uses arrival time, so a signer cannot backdate. The signature's `iat` is only checked not to be later than the credential's `exp`, or than arrival plus 5 minutes.
 
-**Long-term proof is out of scope.** CREST verifies a message when it arrives. Proving years later what was said is a records question between one party, its archive, and perhaps a court. An extension may add timestamps or key transparency. A receiver that needs proof later SHOULD keep the DNS record it verified against, next to the message.
+**Long-term proof is out of scope.** Colophon verifies a message when it arrives. Proving years later what was said is a records question between one party, its archive, and perhaps a court. An extension may add timestamps or key transparency. A receiver that needs proof later SHOULD keep the DNS record it verified against, next to the message.
 
 ## 10. Privacy considerations
 
@@ -604,11 +604,11 @@ It does not mean:
 
 **The domain links.** Every message shows its domain, as DKIM already does. Unlinkability across counterparties holds only when many principals share the domain. On a domain with one owner, the domain names the owner.
 
-**Other things link.** Writing style, timing, scope wording, other headers such as `Received` and `Message-ID` formats, and the content itself. CREST does not hide them.
+**Other things link.** Writing style, timing, scope wording, other headers such as `Received` and `Message-ID` formats, and the content itself. Colophon does not hide them.
 
 **Withheld is not anonymous to the issuer.** The issuer knows the principal (§5.3). When it reveals a withheld principal is a matter of law and its terms.
 
-**No directory.** Nothing in CREST lists a domain's agents or addresses. Selectors name domain keys, not agents.
+**No directory.** Nothing in Colophon lists a domain's agents or addresses. Selectors name domain keys, not agents.
 
 **DNS lookups.** The sender's DNS operator can see that a receiver looked up a key, as with DKIM. Caching limits what it learns.
 
@@ -616,7 +616,7 @@ It does not mean:
 
 ## 11. Versioning and extensions
 
-- **Version.** The header's `v=0`, the record's `v=CREST0`, and the signing input's `"v": 0` mark this version. A verifier that does not support a message's version returns `unsupported_version`. A later version may add members to the signing input, which is why the signing input carries `v`.
+- **Version.** The header's `v=0`, the record's `v=COLOPHON0`, and the signing input's `"v": 0` mark this version. A verifier that does not support a message's version returns `unsupported_version`. A later version may add members to the signing input, which is why the signing input carries `v`.
 - **Credential claims.** Extensions add claims whose names contain a colon. The domain signs them. Verifiers ignore claims they do not know.
 - **Header tags.** Unknown tags are ignored. A tag is not signed, so it MUST NOT carry anything a receiver relies on.
 - **JWS header members.** Unknown members are ignored. `crit` is rejected in v0.
@@ -643,21 +643,21 @@ Two verifiers given the same four inputs (§7.1) and the same DNS answers MUST r
 
 ## 13. Registrations
 
-None has been requested yet. If CREST goes ahead, it would ask for:
+None has been requested yet. If Colophon goes ahead, it would ask for:
 
-- **Header field:** `Crest-Signature`, in the Permanent Message Header Field Names registry (RFC 3864), provisional at first.
-- **Underscored DNS name:** `_crest`, for TXT, in the Underscored and Globally Scoped DNS Node Names registry (RFC 8552).
-- **Media types** for the JWS `typ` values: `application/crest-cred+jwt` and `application/crest-sig`.
+- **Header field:** `Colophon-Signature`, in the Permanent Message Header Field Names registry (RFC 3864), provisional at first.
+- **Underscored DNS name:** `_colophon`, for TXT, in the Underscored and Globally Scoped DNS Node Names registry (RFC 8552).
+- **Media types** for the JWS `typ` values: `application/colophon-cred+jwt` and `application/colophon-sig`.
 - **JWT claims:** `from`, `principal` and `scope`, in the JSON Web Token Claims registry, or renamed to collision-resistant names if the registry's experts prefer.
 
-## 14. Relation to A2A and CREST Tasks
+## 14. Relation to A2A and Colophon Tasks
 
-**A2A.** CREST is independent of A2A (the Agent2Agent protocol), with a defined bridge planned.
-- An agent that also speaks A2A may publish an Agent Card. A later extension will say how a card names its CREST addresses, and how a credential points to a card.
+**A2A.** Colophon is independent of A2A (the Agent2Agent protocol), with a defined bridge planned.
+- An agent that also speaks A2A may publish an Agent Card. A later extension will say how a card names its Colophon addresses, and how a credential points to a card.
 - Both use JOSE, so keys and signatures move between them without conversion.
-- Mapping A2A task states onto email belongs to CREST Tasks.
+- Mapping A2A task states onto email belongs to Colophon Tasks.
 
-**CREST Tasks.** A later document adds tasks on top of v0:
+**Colophon Tasks.** A later document adds tasks on top of v0:
 - a signed, machine-readable task part;
 - requests, offers, acceptance and confirmation;
 - the rules that decide when an agreement exists over slow, lossy email.
@@ -669,7 +669,7 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 These are open for review. Each needs a decision before v0 is final.
 
 1. **The numbers.** The values in §7.7 are proposals: in particular the 2-hour grace, the 2,560 and 2,048-octet caps, the 280-octet scope and the 20-miss DNS budget. Real traffic should set them. The 30-day key replacement is only an example (§5.2).
-2. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for CREST. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
+2. **Will the header survive?** It is untested whether a folded header of about 800 octets survives Gmail, Microsoft 365, iCloud, Fastmail, Amazon SES and common gateways unchanged. Verifiers remove whitespace, so refolding is safe for Colophon. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. A test through those systems is needed before v0 is final. If the header does not survive, the fallback is to carry the credential and signature in a MIME part. That fallback is not specified.
 3. **Local parts.** Lowercasing ASCII in local parts is deliberate: it matches how almost all mail systems behave, although RFC 5321 says local parts are case-sensitive. How non-ASCII local parts (SMTPUTF8) should compare is open. v0 compares them octet for octet after lowercasing ASCII.
 4. **Editor's choices on the wire.** None of these is settled. Each is open to change while v0 is a draft.
    - Tag letters `c` and `b`.
@@ -681,27 +681,27 @@ These are open for review. Each needs a decision before v0 is final.
    - SMTPUTF8 addresses;
    - a corpus of real mail from the systems in issue 2.
 6. **The formal model** (Appendix C) is not built yet.
-7. **Name.** "CREST" and the header name are provisional until a trademark check is done.
+7. **Name.** "Colophon" replaced the draft's first name in v0-03 (Appendix E). It still needs a trademark clearance before v0 is final; until then the name and its wire forms may change.
 
 ## Appendix A. Worked example
 
-The reference sketch in `reference/crest_v0.py` produces this example. Run `uv run --with cryptography python reference/crest_v0.py --example` to reproduce it byte for byte. The keys are test keys derived from fixed strings. Never use them for anything else.
+The reference sketch in `reference/colophon_v0.py` produces this example. Run `uv run --with cryptography python reference/colophon_v0.py --example` to reproduce it byte for byte. The keys are test keys derived from fixed strings. Never use them for anything else.
 
 **DNS**
 
 ```
-s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ0eHR6IdgouZsfwk"
+s1._colophon.acme.example. TXT "v=COLOPHON0; k=ed25519; p=fKF-JHnT8l0RiMibgA4oUYQKwUzyDxroUgxaRM6i6lI"
 ```
 
 **Credential: protected header and claims**
 
 ```json
-{"alg":"EdDSA","kid":"s1","typ":"crest-cred+jwt"}
+{"alg":"EdDSA","kid":"s1","typ":"colophon-cred+jwt"}
 ```
 
 ```json
 {
-  "cnf": {"jwk": {"crv": "Ed25519", "kty": "OKP", "x": "56n6gHHV7WyyHMgucGUeyc41a95mH8M5Sodd8EcTfUM"}},
+  "cnf": {"jwk": {"crv": "Ed25519", "kty": "OKP", "x": "lC9PrkLW2QmPaKqAeeCY94OM3M75MeD9Uyg6oThgOLE"}},
   "exp": 1793952000,
   "from": "maple-tiger-27@acme.example",
   "iat": 1793865600,
@@ -716,7 +716,7 @@ s1._crest.acme.example. TXT "v=CREST0; k=ed25519; p=8HdNlpm5db4VyCRM73vUIBPbBLaQ
 
 ```
 {"attachments":[{"sha256":"toHbGVby3dGckYAJkxBXPj9DGUnSCDiuIVwGV4oFR7w","type":"text/csv"}],
-"cc":[],"credential":"VJTvpJO2BHDbAMRd9wVXolaQc60ix5iczhAaXo_YB48",
+"cc":[],"credential":"QyKlpHCC1M-TdbviC2iuOUhIpLY1HxufeJRGlEgEYSo",
 "from":"maple-tiger-27@acme.example","reply_to":[],"subject":"Table for 2, Friday 7 November, 19:30",
 "text":"JO-XRoNsBAPLwS_XAckdl7Jmo2DmjMagPnYpKzTgLkA","to":["reservations@bistro.example"],"v":0}
 ```
@@ -726,27 +726,27 @@ Note that `From` is written `Maple-Tiger-27@acme.example` in the message and can
 **Message as sent, before the issuer's DKIM signature.** Line endings are CRLF on the wire.
 
 ```
-Crest-Signature: v=0;
- c=eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY3Jlc3QtY3JlZCtqd3QifQ.eyJjbmYi
- OnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiNTZuNmdISFY3V3l5SE1nd
- WNHVWV5YzQxYTk1bUg4TTVTb2RkOEVjVGZVTSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIjoibW
- FwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21lLmV
- 4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3VzIn0s
- InNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvICQ1M
- DAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.47Kwts6Ukd235LbLIfYTwTC0fAEILEXmM
- APaAEiUBc-8Sm0jAdNQgNNnY7FwbZKBG6Ga8uphSPZ10_Y9mcKLCQ;
+Colophon-Signature: v=0;
+ c=eyJhbGciOiJFZERTQSIsImtpZCI6InMxIiwidHlwIjoiY29sb3Bob24tY3JlZCtqd3QifQ.eyJj
+ bmYiOnsiandrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoibEM5UHJrTFcyUW1QY
+ UtxQWVlQ1k5NE9NM003NU1lRDlVeWc2b1RoZ09MRSJ9fSwiZXhwIjoxNzkzOTUyMDAwLCJmcm9tIj
+ oibWFwbGUtdGlnZXItMjdAYWNtZS5leGFtcGxlIiwiaWF0IjoxNzkzODY1NjAwLCJpc3MiOiJhY21
+ lLmV4YW1wbGUiLCJwcmluY2lwYWwiOnsiaWQiOiJwX1hrMjkiLCJtb2RlIjoicHNldWRvbnltb3Vz
+ In0sInNjb3BlIjoiQm9va3MgcmVzdGF1cmFudCB0YWJsZXMgZm9yIG9uZSBwZXJzb24sIHVwIHRvI
+ CQ1MDAgcGVyIGJvb2tpbmcuIiwic3ViIjoiYWdfN0hxMiJ9.RXZMLCGGSf1h2H2vm6R62FUeHwEpB
+ ltl4vqouA43gL24o5cCzUMx8tskVEgDWEOKcBRYHw8q4PuxNfqmGDNNAw;
  b=eyJhbGciOiJFZERTQSIsImlhdCI6MTc5Mzg3MDEwMCwibm9uY2UiOiJabTl5TFdWNFlXMXdiR1V
- 0YjI1c2VRIiwidHlwIjoiY3Jlc3Qtc2lnIn0..qzQMJWT89VqQAD836qQJGYCWqkuuyiqLcJkDYkw
- 3B1q_KLSESBJwoYkwKNRkwiPfDzUuiMlsyBRpryy2-5mkAQ
+ 0YjI1c2VRIiwidHlwIjoiY29sb3Bob24tc2lnIn0..lmIvRov2v6U3-dRU-n08mC-Rh4s6lYP36XV
+ 3ve-OrsEkyXmHCjEIc2jLIgmzncjqL9KBWiF0Qqks4scg9ZS8Aw
 From: Booking agent <Maple-Tiger-27@acme.example>
 To: Reservations <reservations@bistro.example>
 Subject: Table for 2, Friday 7 November, 19:30
 Message-ID: <example-1@acme.example>
 Date: Thu, 05 Nov 2026 09:15:00 +0000
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="=_crest_example_1"
+Content-Type: multipart/mixed; boundary="=_colophon_example_1"
 
---=_crest_example_1
+--=_colophon_example_1
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
 
@@ -757,7 +757,7 @@ One guest is vegetarian.
 
 Thank you
 
---=_crest_example_1
+--=_colophon_example_1
 Content-Type: text/csv
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="booking.csv"
@@ -765,7 +765,7 @@ MIME-Version: 1.0
 
 ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
---=_crest_example_1--
+--=_colophon_example_1--
 ```
 
 **Verifier inputs**
@@ -776,7 +776,7 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 | DKIM | pass, `d=acme.example` |
 | Envelope recipient | `reservations@bistro.example` |
 | Mailbox | `mbx-reservations`, which receives at `reservations@bistro.example` and `reservations+web@bistro.example` |
-| DNS | the record above, at `s1._crest.acme.example` |
+| DNS | the record above, at `s1._colophon.acme.example` |
 
 **Verdict:** verified. The agent:
 - `iss`: `acme.example`
@@ -787,7 +787,7 @@ ZGF0ZSx0aW1lLHBhcnR5CjIwMjYtMTEtMDcsMTk6MzAsMgo=
 
 ## Appendix B. Test vectors
 
-`reference/crest_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per delivery and exits non-zero if any fails. Run it with `--json` to write the vectors as `reference/vectors.json`: each message as base64 of its octets, then one or more deliveries, each with the receiver's inputs and the expected result.
+`reference/colophon_v0.py` runs each vector against the example in Appendix A. Run it without arguments: it prints one line per delivery and exits non-zero if any fails. Run it with `--json` to write the vectors as `reference/vectors.json`: each message as base64 of its octets, then one or more deliveries, each with the receiver's inputs and the expected result.
 
 A vector's deliveries run in order and share one replay store. Unless a row says otherwise, each delivery has the inputs of Appendix A.
 
@@ -797,7 +797,7 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | ... delivered again to the same mailbox | `replay` |
 | ... delivered again, to the alias `reservations+web@bistro.example` | `replay` |
 | ... delivered to a second mailbox, `mbx-tables`, which also receives at `reservations@bistro.example` | verified |
-| Crest-Signature refolded in transit | verified |
+| Colophon-Signature refolded in transit | verified |
 | Display name changed | verified |
 | Trailing spaces on a body line | verified |
 | Charset name in capitals | verified |
@@ -807,7 +807,7 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Encoded words that decoders disagree on, signed as sent (never decoded) | verified |
 | Non-ASCII subject, as the signer encoded it | verified |
 | Unrelated TXT beside the record | verified |
-| A CREST record with a duplicate tag beside the record | verified |
+| A Colophon record with a duplicate tag beside the record | verified |
 | Arrived exactly at exp + grace | verified |
 | Signed 1 hour before the credential's iat | verified |
 | Subject changed | `signature_invalid` |
@@ -843,14 +843,14 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | A fraction in exp | `malformed` |
 | A duplicate claim | `malformed` |
 | Credential over 2,048 octets | `malformed` |
-| Second Crest-Signature | `multiple_signatures` |
-| No Crest-Signature | `no_signature` |
+| Second Colophon-Signature | `multiple_signatures` |
+| No Colophon-Signature | `no_signature` |
 | DKIM passes only for mail.acme.example | `dkim_unaligned` |
 | V=1 | `unsupported_version` |
 | DNS lookup failed | `dns_error` |
 | No record at the selector | `key_not_found` |
-| Two CREST records | `key_not_found` |
-| A k=rsa CREST record beside the record | `key_not_found` |
+| Two Colophon records | `key_not_found` |
+| A k=rsa Colophon record beside the record | `key_not_found` |
 | Record without p | `key_not_found` |
 | Key of the wrong length | `key_not_found` |
 | Key in padded base64 | `key_not_found` |
@@ -868,7 +868,7 @@ A vector's deliveries run in order and share one replay store. Unless a row says
 | Signature iat 10 minutes after arrival | `signature_invalid` |
 | Delivered to a mailbox not in To or Cc (Bcc) | `not_addressed` |
 
-Some of these changes would also break DKIM in real mail. The vectors test the CREST checks alone, with the DKIM result given as an input.
+Some of these changes would also break DKIM in real mail. The vectors test the Colophon checks alone, with the DKIM result given as an input.
 
 The sketch does not check DKIM or query DNS: both are inputs. It handles every address form v0 allows: dot-atom local parts and ASCII domains.
 
@@ -896,7 +896,7 @@ The design was settled one question at a time. Each decision has a longer record
 | Long-term proof | Not part of the protocol. |
 | Messages with no request | Any agent email may be signed, and v0 has no acts at all. |
 | Credentials checked on arrival | The credential must be valid when the receiver's server accepts the message. The signing time is advisory. |
-| v0 is the identity layer | Tasks and agreements move to CREST Tasks. |
+| v0 is the identity layer | Tasks and agreements move to Colophon Tasks. |
 | Scope | A plain-words statement, signed by the domain. Software never enforces it. |
 | Both proofs required | Aligned DKIM, checked by the receiver's own mail system, plus the agent signature. Without DKIM, no key lookup. |
 | A credential belongs to a mailbox | The credential names its address. DKIM alignment is strict. |
@@ -912,6 +912,17 @@ The design was settled one question at a time. Each decision has a longer record
 | Relation to A2A | Independent, with a defined bridge. |
 
 ## Appendix E. Changes
+
+### v0-03
+
+- **Name.** The protocol was formerly named CREST. It is renamed Colophon before publication, because another organization uses CREST in the security field. No rule changed. The wire names are now:
+  - the header `Colophon-Signature`, formerly `Crest-Signature`;
+  - the DNS label `_colophon`, formerly `_crest`;
+  - the record tag `v=COLOPHON0`, formerly `v=CREST0`;
+  - the token types `colophon-sig` and `colophon-cred+jwt`, formerly `crest-sig` and `crest-cred+jwt`.
+- **Tasks document.** The later tasks document is named Colophon Tasks (§14).
+- **Reference files.** The sketch is `reference/colophon_v0.py`. Its test keys are derived from new fixed strings.
+- **Vectors.** Regenerated, since the token types are signed, and the example in Appendix A with them: still 74 deliveries. Earlier signatures do not verify under v0-03.
 
 ### v0-02
 
@@ -936,6 +947,6 @@ v0-01 applies the first round of review. The design is unchanged; the changes cl
 - **Sizes.** Credential 2,048 octets and header 2,560, with the total caps binding (§5.1, §6.2).
 - **Text in claims.** Scope and named principals also forbid bidirectional controls (§5.4).
 - **Time.** The lower bound on the signature `iat` is gone, and the 6-hour rule is a SHOULD (§6.6, §7.2).
-- **DKIM.** The issuer's DKIM signature MUST cover `Crest-Signature`, with relaxed header canonicalization RECOMMENDED (§6.2).
+- **DKIM.** The issuer's DKIM signature MUST cover `Colophon-Signature`, with relaxed header canonicalization RECOMMENDED (§6.2).
 - **Privacy.** Batch reissue times and repeated scope wording can link addresses (§10).
 - **Vectors.** 74 deliveries in Appendix B, and a machine-readable `reference/vectors.json`.
