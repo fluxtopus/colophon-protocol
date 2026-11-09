@@ -72,7 +72,7 @@ def cmd_keys(args) -> int:
     print(f"wrote domain.key and agent.key under {args.key_dir} (mode 0600)")
     print(f"domain public key: {k.domain_public}")
     print(f"agent public key:  {k.agent_public}")
-    print(f'TXT record for {messages.SELECTOR}._colophon.<sender host>: "{k.dns_record()}"')
+    print(f'TXT record for {args.selector}._colophon.<sender host>: "{k.dns_record()}"')
     return 0
 
 
@@ -95,6 +95,7 @@ def cmd_build(args) -> int:
                 run_id=run_id,
                 now=now,
                 display=plan.display,
+                selector=args.selector,
             )
             p = sent_path(rd, receiver.name, label)
             p.parent.mkdir(parents=True, exist_ok=True)
@@ -111,6 +112,7 @@ def cmd_build(args) -> int:
                         "nonce": built.nonce,
                         "built_at": now,
                         "keys": k.source,
+                        "selector": args.selector,
                     },
                     indent=1,
                 )
@@ -127,6 +129,7 @@ def cmd_build(args) -> int:
                 "sender": plan.sender,
                 "region": plan.region,
                 "built_at": now,
+                "selector": args.selector,
                 "dns_record": k.dns_record(),
             },
             indent=1,
@@ -366,11 +369,17 @@ def parser() -> argparse.ArgumentParser:
 
     k = sub.add_parser("keys", help="generate private keys outside the repository")
     k.add_argument("key_dir")
+    k.add_argument("--selector", default=messages.SELECTOR, help="DNS selector for the TXT record")
     k.set_defaults(func=cmd_keys)
 
     b = sub.add_parser("build", help="build the messages for a run")
     common(b, run=False, keys=True)
     b.add_argument("--run-id")
+    b.add_argument(
+        "--selector",
+        default=messages.SELECTOR,
+        help="DNS selector the credentials name; a rerun with fresh keys uses a new one",
+    )
     b.set_defaults(func=cmd_build)
 
     s = sub.add_parser("send", help="send a built run through SES")

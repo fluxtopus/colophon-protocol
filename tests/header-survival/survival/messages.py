@@ -162,6 +162,7 @@ def build(
     run_id: str,
     now: int,
     display: str = "Colophon header test",
+    selector: str = SELECTOR,
 ) -> Built:
     if label not in LABELS:
         raise ValueError(f"unknown message label {label!r}; one of {LABELS}")
@@ -180,7 +181,7 @@ def build(
 
     if label == "minimal":
         credential = ref.issue_credential(
-            keys.domain, SELECTOR, claims(**common, principal={"mode": "withheld"})
+            keys.domain, selector, claims(**common, principal={"mode": "withheld"})
         )
         used = nonce()
         signed, value = _signed(raw, credential, keys, now, used)
@@ -189,17 +190,17 @@ def build(
     if label == "attachments":
         credential = ref.issue_credential(
             keys.domain,
-            SELECTOR,
+            selector,
             claims(**common, principal={"id": "p_test", "mode": "pseudonymous"}, scope=SCOPE),
         )
         used = nonce()
         signed, value = _signed(raw, credential, keys, now, used)
         return Built(label, recipient, signed, credential, value, used)
 
-    return _at_cap(raw, keys, common, recipient)
+    return _at_cap(raw, keys, common, recipient, selector)
 
 
-def _at_cap(raw: bytes, keys: Keys, common: dict, recipient: str) -> Built:
+def _at_cap(raw: bytes, keys: Keys, common: dict, recipient: str, selector: str) -> Built:
     """The cap message: every variable field at its limit, padded to exactly 2,560 octets.
 
     With the credential at its own cap of 2,048 octets, a signature tag with only the four
@@ -212,7 +213,7 @@ def _at_cap(raw: bytes, keys: Keys, common: dict, recipient: str) -> Built:
     credential = ""
     for pad in range(1500):
         candidate = ref.issue_credential(
-            keys.domain, SELECTOR, claims(**common, principal=principal, scope=scope, pad=pad)
+            keys.domain, selector, claims(**common, principal=principal, scope=scope, pad=pad)
         )
         if len(candidate) > ref.MAX_CREDENTIAL_BYTES:
             break

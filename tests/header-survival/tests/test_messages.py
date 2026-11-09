@@ -1,3 +1,4 @@
+import json
 from email import policy
 from email.parser import BytesParser
 
@@ -63,6 +64,23 @@ def test_nonces_differ_between_builds(keys, now):
         now=now,
     )
     assert a.nonce != b.nonce
+
+
+def test_selector_names_the_key(keys, now):
+    for label in messages.LABELS:
+        built = messages.build(
+            label,
+            keys=keys,
+            sender="t@colophon-protocol.org",
+            recipient="b@example.net",
+            run_id="r",
+            now=now,
+            selector="s2",
+        )
+        header = built.credential.split(".")[0]
+        assert json.loads(ref.unb64u(header))["kid"] == "s2"
+        if label == "cap":
+            assert built.header_octets == ref.MAX_HEADER_BYTES
 
 
 def test_exact_octets():

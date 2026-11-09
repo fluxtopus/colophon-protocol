@@ -88,6 +88,23 @@ storage, never in the repository or the shell history.
 `send` refuses to run while the SES account is in the sandbox unless `--allow-sandbox` is given,
 because sandboxed accounts deliver only to verified addresses.
 
+### Running it again
+
+A stored copy cannot be resent later. Its credential expires 24 hours after it was built and the
+verifier accepts arrival until two hours after that (section 7, `credential_expired`), so a
+copy sent the next day would show the header intact and still fail verification. When a new
+receiver is added after that window, or the test is repeated:
+
+1. Generate a fresh domain key and agent key, outside the repository as before.
+2. Pick a selector that no published run uses (`s2` after `s1`): `keys --selector s2` and
+   `build --selector s2`. The old record stays, so the published results of the earlier run
+   keep verifying against the key they name.
+3. Add the new `<selector>._colophon.<host>` TXT record and wait until it resolves before
+   sending anything.
+4. Build and send as a new run with its own run ID. Do not resend copies of an earlier run,
+   and leave expired copies out of the new results.
+5. Delete the keys when the run is captured.
+
 `check` runs the raw-message mode on one stored message, with or without the message as sent:
 
 ```
@@ -103,8 +120,10 @@ For a sender `test@<host>` the harness needs, besides the host being a verified 
 with DKIM:
 
 ```
-s1._colophon.<host>.  TXT  "v=COLOPHON0; k=ed25519; p=<domain public key from `keys`>"
+<selector>._colophon.<host>.  TXT  "v=COLOPHON0; k=ed25519; p=<domain public key from `keys`>"
 ```
+
+The selector is `s1` unless `--selector` says otherwise; each run with fresh keys gets a new one.
 
 The private keys never enter the repository. The deterministic keys the tests use
 (`--test-keys`) are public knowledge and are for dry runs only.
