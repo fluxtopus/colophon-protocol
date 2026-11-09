@@ -1,0 +1,12 @@
+receivers.json
+runs/
+.graph-token-cache*
+__pycache__/
+.pytest_cache/
+results/**/*.eml
+results/**/*.txt
+results/**/*.mime
+results/**/captured/
+results/**/sent/
+results/**/*.outcome.json
+results/**/run.json
