@@ -19,9 +19,10 @@ Nothing here changes `reference/colophon_v0.py`. The harness imports the sketch 
 Each message carries an `X-Colophon-Test: <run-id>/<label>` header and the same token in its
 subject, so the capture tool can find it in any folder, including spam.
 
-The cap message reaches 2,560 octets only with an extension member in the agent signature's
-protected header, which the verifier ignores. With the four members of section 6.5 alone, a
-2,048-octet credential gives a value of about 2,310 octets; see the note in the results.
+A typical header is about 700 octets. The 2,560-octet cap stays; the room above what the four
+members of section 6.5 need (about 2,310 octets with a 2,048-octet credential) is for extensions.
+The cap message fills it with an extension member in the agent signature's protected header,
+which the verifier ignores.
 
 ## What is reported
 
@@ -56,8 +57,30 @@ uv run python -m survival report --run-id <run-id>
 `receivers.json` (never committed; copy `receivers.example.json`) names the sender address and
 each receiver: where to send, how to capture (`imap`, `graph`, `s3` or `file`), the receiver's
 authserv-id, and any forwarding hops. Credentials are never in that file: an IMAP password is
-named by an environment variable (`password_env`), and Microsoft Graph signs in with the device
-code flow against an app registration whose client id is in the file.
+read from a file outside the repository (`password_file`) or from an environment variable
+(`password_env`), and Microsoft Graph signs in with the device code flow against an app
+registration whose client id is in the file.
+
+Most providers need no API access at all. A receiver with `"capture": {"kind": "file"}` is
+collected by hand: open the delivered message in the provider's own client, export its raw
+source, and drop the file into `runs/exports/<receiver>/` (any file name; `build` creates the
+directory and `capture` finds the message by its run token). The verifier then runs on the
+exported octets exactly as it does on an IMAP or S3 capture, with the arrival time and the
+DKIM results taken from the provider's own `Received` and `Authentication-Results` headers.
+Where to find the raw source:
+
+| Provider | Export |
+|---|---|
+| Microsoft 365, Outlook.com | Outlook on the web: open the message, More actions, View, View message source; save as `.eml` |
+| iCloud Mail | Apple Mail: File, Save As, format Raw Message Source |
+| Fastmail | More, Show raw message; save the page as `.eml` |
+| Yahoo Mail | More, View raw message; save as `.eml` |
+| Proton Mail | More, Export; the download is the full `.eml` (the "view headers" `.txt` is not enough) |
+| Zoho Mail | More options, Show original; save as `.eml` |
+
+Line endings are normalised to CRLF on read, so an export saved with LF is fine. Only Gmail is
+collected over IMAP with an app password; the password file lives in the operator's private
+storage, never in the repository or the shell history.
 
 `send` refuses to run while the SES account is in the sandbox unless `--allow-sandbox` is given,
 because sandboxed accounts deliver only to verified addresses.
@@ -92,7 +115,9 @@ The private keys never enter the repository. The deterministic keys the tests us
   the value survived, not that the octets did.
 - **S3** reads what an SES receipt rule stored. SES writes the message unmodified with its own
   `Authentication-Results` on top.
-- **file** reads `.eml` files exported by hand (Proton Mail, a webmail "show original").
+- **file** reads messages exported by hand into `runs/exports/<receiver>/` (`.eml`, `.txt` or
+  `.mime`), found by the run token. Each provider's export is its own serialisation of the
+  stored message, so a `refolded` result here, like one from Graph, says the value survived.
 
 Runs live under `runs/` (ignored by git). A run worth keeping is copied to `results/` with its
 captures, so the table can be checked against the stored messages.

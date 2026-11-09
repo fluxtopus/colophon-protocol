@@ -165,19 +165,36 @@ def s3(cap: Capture, token: str, since: float) -> Captured:
 # ---------------------------------------------------------------- local file
 
 
-def file(cap: Capture, token: str, directory: Path | None = None) -> Captured:
-    """A message exported by hand (Proton, webmail "show original"), found by its token."""
-    root = Path(cap.options.get("path") or directory or ".")
-    paths = [root] if root.is_file() else sorted(root.glob("*.eml"))
+EXPORT_SUFFIXES = (".eml", ".txt", ".mime")
+
+
+def normalise(raw: bytes) -> bytes:
+    """Exported files come with LF, CRLF or mixed line endings; the verifier wants CRLF."""
+    return raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n").replace(b"\n", b"\r\n")
+
+
+def file(cap: Capture, token: str, default_dir: Path) -> Captured:
+    """A message exported by hand from a provider's "show original" or "save as", dropped as a
+    file into the receiver's export directory. Found by the token in its subject or tracking
+    header, whatever the file is called."""
+    root = Path(cap.options.get("path") or default_dir)
+    if root.is_file():
+        paths = [root]
+    elif root.is_dir():
+        paths = sorted(
+            q for q in root.iterdir() if q.is_file() and q.name.lower().endswith(EXPORT_SUFFIXES)
+        )
+    else:
+        raise NotFound(f"no export directory {root}; create it and drop the exported message there")
     needle = token.encode()
     for path in paths:
         data = path.read_bytes()
         if needle in data:
-            return Captured(data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"), str(path), "file")
-    raise NotFound(f"{token} not in {root}")
+            return Captured(normalise(data), str(path), "file")
+    raise NotFound(f"{token} not in {root} ({len(paths)} exported files)")
 
 
-def fetch(cap: Capture, token: str, *, since: float, state_dir: Path) -> Captured:
+def fetch(cap: Capture, token: str, *, since: float, state_dir: Path, export_dir: Path) -> Captured:
     if cap.kind == "imap":
         return imap(cap, token)
     if cap.kind == "graph":
@@ -185,17 +202,24 @@ def fetch(cap: Capture, token: str, *, since: float, state_dir: Path) -> Capture
     if cap.kind == "s3":
         return s3(cap, token, since)
     if cap.kind == "file":
-        return file(cap, token)
+        return file(cap, token, export_dir)
     raise ValueError(f"unknown capture kind {cap.kind!r}")
 
 
 def wait_for(
-    cap: Capture, token: str, *, since: float, state_dir: Path, timeout: float, every: float = 20
+    cap: Capture,
+    token: str,
+    *,
+    since: float,
+    state_dir: Path,
+    export_dir: Path,
+    timeout: float,
+    every: float = 20,
 ) -> Captured:
     deadline = time.time() + timeout
     while True:
         try:
-            return fetch(cap, token, since=since, state_dir=state_dir)
+            return fetch(cap, token, since=since, state_dir=state_dir, export_dir=export_dir)
         except NotFound:
             if time.time() >= deadline:
                 raise

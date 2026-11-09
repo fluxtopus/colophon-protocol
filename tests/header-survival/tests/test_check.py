@@ -124,3 +124,37 @@ def test_failed_lookup_is_reported(built, now):
 
 def test_authres_fixture_is_from_the_receiver():
     assert AUTHRES.startswith("Authentication-Results: mx.example.net;")
+
+
+def test_exported_file_is_found_and_normalised(tmp_path, built):
+    from survival import capture
+    from survival.receivers import Capture
+
+    raw = built["minimal"].raw.replace(b"\r\n", b"\n")  # an export with LF endings
+    (tmp_path / "Colophon header test.eml").write_bytes(raw)
+    (tmp_path / "other.eml").write_bytes(b"Subject: nothing\n\nbody\n")
+    got = capture.file(Capture("file"), "test-run/minimal", tmp_path)
+    assert got.raw == built["minimal"].raw
+    assert got.kind == "file" and got.where.endswith("Colophon header test.eml")
+    try:
+        capture.file(Capture("file"), "test-run/cap", tmp_path)
+    except capture.NotFound as missing:
+        assert "2 exported files" in str(missing)
+    else:
+        raise AssertionError("expected NotFound")
+
+
+def test_secret_from_file_then_environment(tmp_path, monkeypatch):
+    from survival.receivers import Capture
+
+    secret = tmp_path / "pw"
+    secret.write_text("s3cret\n")
+    assert Capture("imap", {"password_file": str(secret)}).secret("password") == "s3cret"
+    monkeypatch.setenv("PW_TEST", "from-env")
+    assert Capture("imap", {"password_env": "PW_TEST"}).secret("password") == "from-env"
+    try:
+        Capture("imap", {}).secret("password")
+    except ValueError as err:
+        assert "password_file or password_env" in str(err)
+    else:
+        raise AssertionError("expected ValueError")

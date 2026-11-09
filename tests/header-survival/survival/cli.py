@@ -28,6 +28,11 @@ from .receivers import Receiver, load
 
 HERE = Path(__file__).resolve().parents[1]
 RUNS = HERE / "runs"
+EXPORTS = RUNS / "exports"
+
+
+def export_dir(receiver_name: str) -> Path:
+    return EXPORTS / receiver_name
 
 
 def run_dir(run_id: str) -> Path:
@@ -78,6 +83,9 @@ def cmd_build(args) -> int:
     rd = run_dir(run_id)
     now = int(time.time())
     for receiver in plan.receivers:
+        if receiver.capture.kind == "file":
+            export_dir(receiver.name).mkdir(parents=True, exist_ok=True)
+            print(f"{receiver.name}: export the stored messages into {export_dir(receiver.name)}")
         for label in args.labels:
             built = messages.build(
                 label,
@@ -187,7 +195,12 @@ def cmd_capture(args) -> int:
             token = f"{args.run_id}/{label}"
             try:
                 got = cap_mod.wait_for(
-                    receiver.capture, token, since=since, state_dir=HERE, timeout=args.timeout
+                    receiver.capture,
+                    token,
+                    since=since,
+                    state_dir=HERE,
+                    export_dir=export_dir(receiver.name),
+                    timeout=0 if receiver.capture.kind == "file" else args.timeout,
                 )
             except cap_mod.NotFound as missing:
                 print(f"missing {receiver.name}/{label}: {missing}", file=sys.stderr)

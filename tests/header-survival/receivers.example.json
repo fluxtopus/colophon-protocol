@@ -7,63 +7,190 @@
       "provider": "Amazon SES inbound",
       "address": "colophon-test@example.net",
       "mailbox": "ses:colophon-test@example.net",
-      "addresses": ["colophon-test@example.net"],
-      "authserv_ids": ["amazonses.com"],
-      "capture": {"kind": "s3", "bucket": "example-inbound-bucket", "prefix": "inbound/", "profile": "example", "region": "us-east-2"}
+      "addresses": [
+        "colophon-test@example.net"
+      ],
+      "authserv_ids": [
+        "amazonses.com"
+      ],
+      "capture": {
+        "kind": "s3",
+        "bucket": "example-inbound-bucket",
+        "prefix": "inbound/",
+        "profile": "example",
+        "region": "us-east-2"
+      }
     },
     "gmail": {
       "provider": "Gmail",
       "account_type": "Google Workspace",
       "address": "someone@example.com",
       "mailbox": "gmail:someone@example.com",
-      "addresses": ["someone@example.com"],
-      "authserv_ids": ["mx.google.com"],
-      "capture": {"kind": "imap", "host": "imap.gmail.com", "user": "someone@example.com", "password_env": "GMAIL_APP_PASSWORD"}
+      "addresses": [
+        "someone@example.com"
+      ],
+      "authserv_ids": [
+        "mx.google.com"
+      ],
+      "capture": {
+        "kind": "imap",
+        "host": "imap.gmail.com",
+        "user": "someone@example.com",
+        "password_file": "/thread-storage/secrets/gmail-app-password"
+      }
+    },
+    "m365": {
+      "provider": "Microsoft 365",
+      "account_type": "business",
+      "address": "someone@tenant.example",
+      "mailbox": "m365:someone@tenant.example",
+      "addresses": [
+        "someone@tenant.example"
+      ],
+      "authserv_ids": [
+        "outlook.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Outlook on the web: View, View message source; save as .eml into runs/exports/m365/."
     },
     "outlook": {
       "provider": "Outlook.com",
       "account_type": "personal",
       "address": "someone@outlook.com",
       "mailbox": "outlook:someone@outlook.com",
-      "addresses": ["someone@outlook.com"],
-      "authserv_ids": ["outlook.com"],
-      "capture": {"kind": "graph", "client_id": "00000000-0000-0000-0000-000000000000", "tenant": "consumers"},
-      "notes": "Graph returns MIME regenerated from the store, not the octets on the wire."
+      "addresses": [
+        "someone@outlook.com"
+      ],
+      "authserv_ids": [
+        "outlook.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Outlook.com: open the message, More actions, View, View message source; save as .eml into runs/exports/outlook/. Graph is the alternative: {\"kind\": \"graph\", \"client_id\": \"...\", \"tenant\": \"consumers\"}."
     },
     "icloud": {
       "provider": "iCloud Mail",
       "address": "someone@icloud.com",
       "mailbox": "icloud:someone@icloud.com",
-      "addresses": ["someone@icloud.com"],
-      "authserv_ids": ["icloud.com"],
-      "capture": {"kind": "imap", "host": "imap.mail.me.com", "user": "someone", "password_env": "ICLOUD_APP_PASSWORD"}
+      "addresses": [
+        "someone@icloud.com"
+      ],
+      "authserv_ids": [
+        "icloud.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "iCloud: in Apple Mail, File, Save As, format Raw Message Source, into runs/exports/icloud/."
     },
     "fastmail": {
       "provider": "Fastmail",
       "address": "someone@fastmail.com",
       "mailbox": "fastmail:someone@fastmail.com",
-      "addresses": ["someone@fastmail.com"],
-      "authserv_ids": ["mx.messagingengine.com"],
-      "capture": {"kind": "imap", "host": "imap.fastmail.com", "user": "someone@fastmail.com", "password_env": "FASTMAIL_APP_PASSWORD"}
+      "addresses": [
+        "someone@fastmail.com"
+      ],
+      "authserv_ids": [
+        "mx.messagingengine.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Fastmail: More, Show raw message; save as .eml into runs/exports/fastmail/."
+    },
+    "yahoo": {
+      "provider": "Yahoo Mail",
+      "address": "someone@yahoo.com",
+      "mailbox": "yahoo:someone@yahoo.com",
+      "addresses": [
+        "someone@yahoo.com"
+      ],
+      "authserv_ids": [
+        "atlas.yahoo.com",
+        "yahoo.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Yahoo: More, View raw message; save as .eml into runs/exports/yahoo/."
     },
     "proton": {
       "provider": "Proton Mail",
       "address": "someone@proton.me",
       "mailbox": "proton:someone@proton.me",
-      "addresses": ["someone@proton.me"],
-      "authserv_ids": ["mail.protonmail.ch"],
-      "capture": {"kind": "file", "path": "runs/exports/proton"},
-      "notes": "No IMAP without Bridge: export each message as .eml into the path."
+      "addresses": [
+        "someone@proton.me"
+      ],
+      "authserv_ids": [
+        "mail.protonmail.ch"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Proton: More, Export (.eml) into runs/exports/proton/. Headers only is not enough."
+    },
+    "zoho": {
+      "provider": "Zoho Mail",
+      "address": "someone@zohomail.com",
+      "mailbox": "zoho:someone@zohomail.com",
+      "addresses": [
+        "someone@zohomail.com"
+      ],
+      "authserv_ids": [
+        "mx.zohomail.com",
+        "zoho.com"
+      ],
+      "capture": {
+        "kind": "file"
+      },
+      "notes": "Zoho: More options, Show original; save as .eml into runs/exports/zoho/."
+    },
+    "gmail-forward": {
+      "provider": "Gmail",
+      "account_type": "personal",
+      "address": "someone@gmail.com",
+      "mailbox": "gmail:someone@example.com",
+      "addresses": [
+        "someone@example.com",
+        "someone@gmail.com"
+      ],
+      "authserv_ids": [
+        "mx.google.com"
+      ],
+      "hops": [
+        "Gmail automatic forward"
+      ],
+      "capture": {
+        "kind": "imap",
+        "host": "imap.gmail.com",
+        "user": "someone@example.com",
+        "password_file": "/thread-storage/secrets/gmail-app-password"
+      }
     },
     "cloudflare-to-gmail": {
       "provider": "Gmail",
       "account_type": "Google Workspace",
       "address": "test@forwarding-domain.example",
       "mailbox": "gmail:someone@example.com",
-      "addresses": ["someone@example.com", "test@forwarding-domain.example"],
-      "authserv_ids": ["mx.google.com"],
-      "hops": ["Cloudflare Email Routing"],
-      "capture": {"kind": "imap", "host": "imap.gmail.com", "user": "someone@example.com", "password_env": "GMAIL_APP_PASSWORD"}
+      "addresses": [
+        "someone@example.com",
+        "test@forwarding-domain.example"
+      ],
+      "authserv_ids": [
+        "mx.google.com"
+      ],
+      "hops": [
+        "Cloudflare Email Routing"
+      ],
+      "capture": {
+        "kind": "imap",
+        "host": "imap.gmail.com",
+        "user": "someone@example.com",
+        "password_file": "/thread-storage/secrets/gmail-app-password"
+      }
     }
   }
 }

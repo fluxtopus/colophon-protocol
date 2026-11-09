@@ -19,10 +19,17 @@ class Capture:
     options: dict = field(default_factory=dict)
 
     def secret(self, name: str) -> str:
-        """A credential named by `<name>_env` in the options, read from the environment."""
+        """A credential read from the file named by `<name>_file` in the options, else from the
+        environment variable named by `<name>_env`. Never from the options themselves."""
+        path = self.options.get(f"{name}_file")
+        if path:
+            value = Path(path).expanduser().read_text(encoding="utf-8").strip()
+            if not value:
+                raise ValueError(f"{path} is empty")
+            return value
         var = self.options.get(f"{name}_env")
         if not var:
-            raise ValueError(f"capture needs {name}_env in receivers.json")
+            raise ValueError(f"capture needs {name}_file or {name}_env in receivers.json")
         value = os.environ.get(var)
         if not value:
             raise ValueError(f"environment variable {var} is not set")
