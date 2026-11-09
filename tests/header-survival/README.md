@@ -29,7 +29,7 @@ which the verifier ignores.
 For every receiver and message:
 
 - **Header state.** `identical` (the octets as sent), `refolded` (same value, other line
-  breaks; allowed by section 3.1), `missing`, `truncated`, `altered` or `duplicated`.
+  breaks; allowed by section 6.2), `missing`, `truncated`, `altered` or `duplicated`.
 - **Verdict.** The sketch's verdict on the stored message with these inputs (section 7.1):
   arrival time from the receiver's topmost `Received`; DKIM pass domains from the receiver's
   own `Authentication-Results` (`header.d`, else the domain of `header.i`); the mailbox and its
@@ -79,9 +79,9 @@ Where to find the raw source:
 | Zoho Mail | More options, Show original; save as `.eml` |
 
 Line endings are normalised to CRLF on read, so an export saved with LF is fine. An export
-dropped into a receiver's directory is used even when that receiver is set up for IMAP or Graph. Only Gmail is
-collected over IMAP with an app password; the password file lives in the operator's private
-storage, never in the repository or the shell history.
+dropped into a receiver's directory is used even when that receiver is set up for IMAP or
+Graph. Only Gmail is collected over IMAP with an app password; the password file lives in the
+operator's private storage, never in the repository or the shell history.
 
 `send` refuses to run while the SES account is in the sandbox unless `--allow-sandbox` is given,
 because sandboxed accounts deliver only to verified addresses.

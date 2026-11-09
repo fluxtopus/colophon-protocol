@@ -6,7 +6,7 @@ header-survival test was sent. It is kept apart from the test's own results, whi
 **REPORTED** (a credible third-party account) or **UNKNOWN** (no source found).
 
 One reading note. Colophon removes all whitespace from the header value before parsing
-(specification section 3.1), so refolding on its own cannot break a signature. Only a
+(specification section 6.2), so refolding on its own cannot break a signature. Only a
 receiver that cuts, drops, duplicates or rewrites the value does.
 
 

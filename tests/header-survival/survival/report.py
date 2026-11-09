@@ -116,7 +116,7 @@ def markdown(rows: list[Row], run_id: str, sent_at: str, sender: str) -> str:
         "reference verifier's verdict on the stored message with the receiver's own inputs.",
         "",
         "`intact` means the whitespace-removed value is what was sent; `refolded` means the same",
-        "value on different line breaks, which the spec allows (section 3.1).",
+        "value on different line breaks, which the spec allows (section 6.2).",
         "",
     ]
     out.append(table(direct, "Direct deliveries"))
