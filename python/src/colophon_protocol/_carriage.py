@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from colophon_protocol._fail import Fail
 from colophon_protocol._grammar import parse_tags, remove_whitespace
-from colophon_protocol._mime import Entity, Field, field_text
+from colophon_protocol._mime import Entity, Field, count_fields, field_text
 from colophon_protocol.model import Reason
 
 HEADER_NAME = "Colophon-Signature"
@@ -27,8 +27,17 @@ class Carried:
     signature: str
 
 
+def count(message: bytes) -> None:
+    """Steps 1 and 2, on the raw octets: they come before step 3 checks the header section."""
+    found = count_fields(message, HEADER_NAME)
+    if not found:
+        raise Fail(Reason.NO_SIGNATURE)
+    if found > 1:
+        raise Fail(Reason.MULTIPLE_SIGNATURES)
+
+
 def locate(entity: Entity) -> Field:
-    """Steps 1 and 2."""
+    """Steps 1 and 2, on a parsed header section: the one Colophon-Signature field."""
     found = entity.all(_LOWER_NAME)
     if not found:
         raise Fail(Reason.NO_SIGNATURE)

@@ -11,6 +11,34 @@ _ATEXT = frozenset(
 _LDH = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-")
 _SPECIALS_OUTSIDE_QUOTES = frozenset("():;[]\\")
 
+# Not allowed in a local part (§6.4): C1 controls, characters that show as space or as nothing,
+# variation selectors, tag characters and the bidirectional controls. A fixed list, so that it
+# does not change with the Unicode database Python ships.
+_NOT_IN_LOCAL_PART_RANGES = (
+    (0x80, 0x9F),
+    (0xA0, 0xA0),
+    (0xAD, 0xAD),
+    (0x34F, 0x34F),
+    (0x61C, 0x61C),
+    (0x115F, 0x1160),
+    (0x1680, 0x1680),
+    (0x180E, 0x180E),
+    (0x2000, 0x200F),
+    (0x2028, 0x202F),
+    (0x205F, 0x206F),
+    (0x3000, 0x3000),
+    (0x3164, 0x3164),
+    (0xFE00, 0xFE0F),
+    (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0),
+    (0xFFF9, 0xFFFB),
+    (0xE0000, 0xE007F),
+    (0xE0100, 0xE01EF),
+)
+_NOT_IN_LOCAL_PART = frozenset(
+    chr(c) for low, high in _NOT_IN_LOCAL_PART_RANGES for c in range(low, high + 1)
+)
+
 
 class AddressError(ValueError):
     """The value is outside §6.4's subset. The message is malformed."""
@@ -20,8 +48,12 @@ def _is_atom_char(ch: str) -> bool:
     return ch in _ATEXT or ord(ch) > 0x7F
 
 
-def _valid_dot_atom(text: str) -> bool:
-    """A dot-atom of atext and non-ASCII characters (RFC 6532)."""
+def _is_local_char(ch: str) -> bool:
+    return ch in _ATEXT or (ord(ch) > 0x7F and ch not in _NOT_IN_LOCAL_PART)
+
+
+def _valid_local_part(text: str) -> bool:
+    """A dot-atom of atext and non-ASCII characters (RFC 6532), except those §6.4 lists."""
     if not text:
         return False
     previous_dot = True  # no leading dot
@@ -30,7 +62,7 @@ def _valid_dot_atom(text: str) -> bool:
             if previous_dot:
                 return False
             previous_dot = True
-        elif _is_atom_char(ch):
+        elif _is_local_char(ch):
             previous_dot = False
         else:
             return False
@@ -53,7 +85,7 @@ def _valid_domain(text: str) -> bool:
 def canonical_addr_spec(addr: str) -> str:
     """§6.4 items 3 and 5: validate ``local@domain`` and lowercase its ASCII letters."""
     local, at, domain = addr.rpartition("@")
-    if not at or not _valid_dot_atom(local) or not _valid_domain(domain):
+    if not at or not _valid_local_part(local) or not _valid_domain(domain):
         raise AddressError("not an addr-spec in the v0 subset")
     return f"{ascii_lower(local)}@{ascii_lower(domain)}"
 

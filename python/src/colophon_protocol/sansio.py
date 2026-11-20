@@ -131,12 +131,14 @@ def _steps_1_to_8(message: bytes, receipt: Receipt) -> NeedKey:
         raise Fail(Reason.MALFORMED, "the message must be bytes")
     if not isinstance(receipt, Receipt):
         raise Fail(Reason.MALFORMED, "the receipt must be a Receipt")
-    entity = _mime.parse_entity(bytes(message))
+    data = bytes(message)
 
-    # 1, 2. exactly one signature
+    # 1, 2. exactly one signature, counted before the header section is checked
+    _carriage.count(data)
+
+    # 3. a well-formed header section, and exactly one From address; H is its host
+    entity = _mime.parse_entity(data)
     carriage_field = _carriage.locate(entity)
-
-    # 3. exactly one From address; H is its host
     sender = _signing_input.from_address(entity)
     host = sender.rpartition("@")[2]
 

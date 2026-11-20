@@ -14,6 +14,7 @@ pure functions of the verdict: no I/O, no clock.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 from colophon_protocol._codec import ascii_lower
@@ -32,29 +33,6 @@ __all__ = [
 
 _MAX_VALUE = 64 * 1024
 _SPACE = " \t\r\n"
-
-
-def _tighten_equals(value: str) -> str:
-    """Drop whitespace on either side of every ``=`` (CFWS is allowed there). One pass."""
-    out: list[str] = []
-    pending: list[str] = []
-    skip = False
-    for ch in value:
-        if ch in _SPACE:
-            if not skip:
-                pending.append(ch)
-            continue
-        if ch == "=":
-            pending.clear()
-            out.append(ch)
-            skip = True
-            continue
-        out.extend(pending)
-        pending.clear()
-        out.append(ch)
-        skip = False
-    out.extend(pending)
-    return "".join(out)
 
 
 def _strip_comments(value: str) -> str:
@@ -112,16 +90,137 @@ def _split(value: str, sep: str) -> list[str]:
     return items
 
 
-def _unquote(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] == '"':
-        inner, out, i = value[1:-1], [], 0
-        while i < len(inner):
-            if inner[i] == "\\" and i + 1 < len(inner):
-                i += 1
-            out.append(inner[i])
+@dataclass(frozen=True, slots=True)
+class _Token:
+    """A lexical item of an Authentication-Results value: ``;``, ``=``, or a value."""
+
+    kind: Literal[";", "=", "value"]
+    text: str  # a quoted string's content, unescaped; otherwise as written
+    raw: str  # as written, quotes included
+    spaced: bool  # whitespace or a comment comes before it
+
+
+_VALUE_STOP = frozenset(' \t\r\n();="')
+
+
+def _lex(value: str) -> list[_Token] | None:
+    """Split a value into tokens by RFC 8601 §2.2: comments are whitespace, a quoted string is
+    one value, and ``;`` and ``=`` stand alone. None when a comment or a quoted string does not
+    close, a ``)`` has no ``(``, or a control character is outside a quoted string. Linear."""
+    tokens: list[_Token] = []
+    i, n = 0, len(value)
+    spaced = False
+    while i < n:
+        ch = value[i]
+        if ch in " \t\r\n":
+            spaced = True
             i += 1
-        return "".join(out)
-    return value
+        elif ch == "(":
+            depth = 0
+            while True:
+                if i >= n:
+                    return None
+                c = value[i]
+                if c == "\\":
+                    i += 2
+                    continue
+                if c == "(":
+                    depth += 1
+                elif c == ")":
+                    depth -= 1
+                    if depth == 0:
+                        i += 1
+                        break
+                i += 1
+            spaced = True
+        elif ch == ")":
+            return None
+        elif ch in ";=":
+            tokens.append(_Token(";" if ch == ";" else "=", ch, ch, spaced))
+            spaced = False
+            i += 1
+        elif ch == '"':
+            start, out = i, []
+            i += 1
+            while True:
+                if i >= n:
+                    return None
+                c = value[i]
+                if c == "\\":
+                    if i + 1 >= n:
+                        return None
+                    out.append(value[i + 1])
+                    i += 2
+                    continue
+                i += 1
+                if c == '"':
+                    break
+                if c not in "\r\n":  # a folded line end inside the string is removed
+                    out.append(c)
+            tokens.append(_Token("value", "".join(out), value[start:i], spaced))
+            spaced = False
+        else:
+            start = i
+            while i < n and value[i] not in _VALUE_STOP:
+                if _has_control(value[i]):
+                    return None
+                i += 1
+            tokens.append(_Token("value", value[start:i], value[start:i], spaced))
+            spaced = False
+    return tokens
+
+
+def _split_tokens(tokens: list[_Token]) -> list[list[_Token]]:
+    groups: list[list[_Token]] = [[]]
+    for token in tokens:
+        if token.kind == ";":
+            groups.append([])
+        else:
+            groups[-1].append(token)
+    return groups
+
+
+def _is_own_field(head: list[_Token], authserv_id: str) -> bool:
+    """The authserv-id is ``authserv_id``, ignoring ASCII case, with at most a version ``1``."""
+    if not head or head[0].kind != "value":
+        return False
+    if ascii_lower(head[0].text) != ascii_lower(authserv_id):
+        return False
+    rest = head[1:]
+    if not rest:
+        return True
+    return len(rest) == 1 and rest[0].kind == "value" and rest[0].spaced and rest[0].raw == "1"
+
+
+def _resinfo(group: list[_Token]) -> tuple[str, str, dict[str, str]] | None:
+    """(method, result, properties) of one resinfo, names in lowercase. None when it does not
+    parse, or a property appears twice. A value is the tokens written together with no space:
+    one quoted string gives its content, anything else is kept as written."""
+    if len(group) < 3 or [t.kind for t in group[:3]] != ["value", "=", "value"]:
+        return None
+    method, result = ascii_lower(group[0].text), ascii_lower(group[2].text)
+    props: dict[str, str] = {}
+    i, n = 3, len(group)
+    while i < n:
+        if i + 2 >= n or group[i].kind != "value" or group[i + 1].kind != "=":
+            return None
+        name = ascii_lower(group[i].raw)
+        j = i + 2
+        if group[j].kind != "value":
+            return None
+        parts = [group[j]]
+        j += 1
+        while j < n and group[j].kind == "value" and not group[j].spaced:
+            parts.append(group[j])
+            j += 1
+        if j < n and not group[j].spaced:
+            return None  # a value followed at once by '='
+        value = parts[0].text if len(parts) == 1 else "".join(p.raw for p in parts)
+        if name in props:
+            return None
+        props[name] = value
+        i = j
+    return method, result, props
 
 
 def dkim_pass_domains(
@@ -129,32 +228,35 @@ def dkim_pass_domains(
 ) -> frozenset[str]:
     """The ``d=`` of every ``dkim=pass`` result, lowercased, from one field's value (§7.1).
 
+    The value is read by RFC 8601's grammar: comments are removed, and a quoted string is one
+    value, whatever it holds. The field counts only when its authserv-id is ``authserv_id``,
+    ignoring ASCII case, followed by nothing but an optional version ``1``. A result counts when
+    its method is ``dkim`` (or ``dkim/1``), its result ``pass``, and it parses with no property
+    given twice.
+
     A result counts for its ``header.d``. A result with ``header.i`` and no ``header.d`` counts
     only when ``message`` is given and :func:`dkim_identity_domain` finds its ``d=`` there:
     ``header.i`` alone may name a subdomain of ``d=``, so its domain never counts on its own.
 
-    Returns an empty set when the field's authserv-id is not ``authserv_id``, or the value does
-    not parse.
+    Returns an empty set when the field is not your server's, or its comments or quoted strings
+    do not close.
     """
     if len(value) > _MAX_VALUE:
         return frozenset()
-    items = _split(_tighten_equals(_strip_comments(value)), ";")
-    head = items[0].split()
-    if not head or ascii_lower(head[0]) != ascii_lower(authserv_id):
+    tokens = _lex(value)
+    if tokens is None:
+        return frozenset()
+    head, *results = _split_tokens(tokens)
+    if not _is_own_field(head, authserv_id):
         return frozenset()
     found: set[str] = set()
-    for item in items[1:]:
-        words = item.split()
-        if not words:
+    for group in results:
+        parsed = _resinfo(group) if group else None
+        if parsed is None:
             continue
-        method, eq, result = words[0].partition("=")
-        if not eq or ascii_lower(method.split("/")[0]) != "dkim" or ascii_lower(result) != "pass":
+        method, result, props = parsed
+        if method not in ("dkim", "dkim/1") or result != "pass":
             continue
-        props: dict[str, str] = {}
-        for word in words[1:]:
-            name, eq, prop = word.partition("=")
-            if eq:
-                props.setdefault(ascii_lower(name), _unquote(prop))
         domain = props.get("header.d")
         if domain is None and message is not None and "header.i" in props:
             domain = dkim_identity_domain(message, props["header.i"])
@@ -214,13 +316,16 @@ def _same_identity(a: bytes, b: bytes) -> bool:
 
 def dkim_identity_domain(message: bytes, header_i: str) -> str | None:
     """The ``d=``, lowercased, of the one ``DKIM-Signature`` field in ``message`` whose identity
-    equals ``header_i`` (§7.1). None when no field or more than one has that identity.
+    equals ``header_i`` (§7.1). None when no field or more than one has that identity, and
+    None when any ``DKIM-Signature`` field has no identity: the server may have read that field
+    differently, so the verifier cannot tell which field it checked.
 
     For a server that reports a passing signature with ``header.i`` and no ``header.d``. A
     field's identity is its ``i=`` (dkim-quoted-printable, decoded), or ``@`` and its ``d=`` when
     it has no ``i=``. Identities are equal when their local parts are equal octet for octet and
-    their domains are equal ignoring case. A field whose tag list does not parse, or that has no
-    ``d=``, has no identity. ``message`` is the octets as accepted, as for ``verify``.
+    their domains are equal ignoring case. A field has no identity when its tag list does not
+    parse, it has no ``d=``, or its identity's domain is neither ``d=`` nor under it (RFC 6376
+    §3.5). ``message`` is the octets as accepted, as for ``verify``.
     """
     # Imported here: model imports this module for reporting, and the parser imports model.
     from colophon_protocol import _mime  # noqa: PLC0415
@@ -233,15 +338,29 @@ def dkim_identity_domain(message: bytes, header_i: str) -> str | None:
     wanted = header_i.encode("utf-8", "surrogateescape")
     found: list[bytes] = []
     for field in entity.all("dkim-signature"):
-        tags = _dkim_tags(field.unfolded())
-        if tags is None or not tags.get("d"):
-            continue
-        identity = _dkim_qp_decode(tags["i"]) if "i" in tags else b"@" + tags["d"]
-        if identity is not None and _same_identity(identity, wanted):
-            found.append(tags["d"])
-    if len(found) != 1 or not found[0].isascii():
+        identity = _identity(field.unfolded())
+        if identity is None:
+            return None  # the server may have read this field differently
+        if _same_identity(identity[1], wanted):
+            found.append(identity[0])
+    if len(found) != 1:
         return None
     return ascii_lower(found[0].decode("ascii"))
+
+
+def _identity(value: bytes) -> tuple[bytes, bytes] | None:
+    """A DKIM-Signature field's (d=, identity), or None when it has no identity (§7.1)."""
+    tags = _dkim_tags(value)
+    if tags is None or not tags.get("d") or not tags["d"].isascii():
+        return None
+    d = tags["d"]
+    identity = _dkim_qp_decode(tags["i"]) if "i" in tags else b"@" + d
+    if identity is None or b"@" not in identity:
+        return None
+    domain, parent = identity.rpartition(b"@")[2].lower(), d.lower()
+    if domain != parent and not domain.endswith(b"." + parent):
+        return None  # the identity is not in d= or under it (RFC 6376 §3.5)
+    return d, identity
 
 
 # ---------------------------------------------------------------- reporting the verdict (§7.8)

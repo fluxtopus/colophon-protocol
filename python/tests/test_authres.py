@@ -28,6 +28,21 @@ MX = "mx.bistro.example"
         ("other.example; dkim=pass header.d=acme.example", set()),
         (f"{MX}; dkim=pass (unbalanced header.d=acme.example", set()),
         ("", set()),
+        # v0-07: RFC 8601 grammar (§7.1)
+        (f"{MX} foo; dkim=pass header.d=acme.example", set()),  # only a version may follow
+        (f"{MX} 2; dkim=pass header.d=acme.example", set()),
+        (f'"{MX}"; dkim=pass header.d=acme.example', {"acme.example"}),
+        (f"{MX.upper()}; dkim=pass header.d=acme.example", {"acme.example"}),
+        (f"(c) {MX} (c) 1 (c); dkim=pass header.d=acme.example", {"acme.example"}),
+        (f'{MX}; dkim=pass header.i="a header.d=bank.example b"@attacker.example', set()),
+        (f"{MX}; dkim=pass header.d=acme.example header.d=other.example", set()),
+        (f"{MX}; dkim/1=pass header.d=acme.example", {"acme.example"}),
+        (f"{MX}; dkim/2=pass header.d=acme.example", set()),
+        (f'{MX}; dkim=pass reason="x; y" header.d=acme.example', {"acme.example"}),
+        (f"{MX}; dkim=pass header.d==acme.example; dkim=pass header.d=b.example", {"b.example"}),
+        (f'{MX}; dkim=pass header.d="acme.example', set()),  # unclosed quote
+        (f"{MX}; dkim=pass header.d=acme.example)", set()),  # stray )
+        (f"{MX}; dkim=pass header.d=acme\x01.example", set()),  # control character
     ],
 )
 def test_dkim_pass_domains(value: str, expected: set[str]) -> None:
@@ -77,6 +92,14 @@ def test_header_d_wins_over_header_i() -> None:
         ([b"d=acme.example; i=bot=4@acme.example"], "bot=4@acme.example", None),
         ([b"i=@acme.example"], "@acme.example", None),  # no d=
         ([], "@acme.example", None),
+        # v0-07: i= must be d= or under it (RFC 6376 §3.5)
+        ([b"d=acme.example; i=bot@other.example"], "bot@other.example", None),
+        ([b"d=acme.example; i=bot@notacme.example"], "bot@notacme.example", None),
+        ([b"d=mail.acme.example; i=bot@acme.example"], "bot@acme.example", None),
+        ([b"d=acme.example; i=bot"], "bot", None),
+        # v0-07: one field without an identity spoils recovery for all of them
+        ([SIG_D, b"d=acme.example; garbage"], "@acme.example", None),
+        ([SIG_I, b"d=other.example; i=x@acme.example"], "bot@mail.acme.example", None),
     ],
 )
 def test_dkim_identity_domain(signatures: list[bytes], header_i: str, expected: str | None) -> None:
@@ -107,3 +130,12 @@ def test_linear_time(chunk: str) -> None:
 
 def test_oversized_value() -> None:
     assert dkim_pass_domains(MX + "; " + "x" * 70_000, authserv_id=MX) == frozenset()
+
+
+def test_quoted_header_i_does_not_hide_header_d() -> None:
+    """A quoted string is one value: its spaces do not start new properties (§7.1)."""
+    value = f'{MX}; dkim=pass header.i="a header.d=bank.example b"@attacker.example'
+    signature = b'd=attacker.example; i="a header.d=bank.example b"@attacker.example'
+    assert "bank.example" not in dkim_pass_domains(
+        value, authserv_id=MX, message=_message(signature)
+    )

@@ -49,7 +49,15 @@ NONCE = re.compile(r"[A-Za-z0-9_-]{16,64}")
 B64URL = re.compile(r"[A-Za-z0-9_-]*")
 TAG_NAME = re.compile(r"[a-z][a-z0-9_]*")
 ATEXT = r"[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]"
-LOCAL_PART = re.compile(rf"(?:{ATEXT}|[^\x00-\x7f])+(?:\.(?:{ATEXT}|[^\x00-\x7f])+)*")
+# Not allowed in a local part (§6.4): C1 controls, characters that show as space or as nothing,
+# variation selectors, tag characters and the bidirectional controls. A fixed list.
+NOT_IN_LOCAL_PART = (
+    "\x80-\x9f\xa0\xad\u034f\u061c\u115f\u1160\u1680\u180e\u3000\u3164\ufeff\uffa0"
+    "\u2000-\u200f\u2028-\u202f\u205f-\u206f"
+    "\ufe00-\ufe0f\ufff9-\ufffb\U000e0000-\U000e007f\U000e0100-\U000e01ef"
+)
+LOCAL_CHAR = rf"(?:{ATEXT}|[^\x00-\x7f{NOT_IN_LOCAL_PART}])"
+LOCAL_PART = re.compile(rf"{LOCAL_CHAR}+(?:\.{LOCAL_CHAR}+)*")
 LDH = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
 DOMAIN = re.compile(rf"{LDH}(?:\.{LDH})+")
 PHRASE = re.compile(rf"(?:{ATEXT}|[ \t.]|[^\x00-\x7f]|\"(?:[^\"\\\r\n]|\\.)*\")*")
@@ -649,7 +657,8 @@ DKIM_QP_ESCAPE = re.compile(rb"=([0-9A-Fa-f]{2})")
 def dkim_identity(value: bytes) -> tuple[bytes, bytes] | None:
     """A DKIM-Signature field's d= and identity (§7.1): its i=, decoded from DKIM quoted-printable
     (RFC 6376 §2.11), or `@` and its d=. None when the tag list does not parse (RFC 6376 §3.2), a
-    tag repeats, d= is missing or empty, or i= has an `=` not followed by two hex digits."""
+    tag repeats, d= is missing or empty, i= has an `=` not followed by two hex digits, or the
+    identity's domain is neither d= nor a subdomain of it (RFC 6376 §3.5)."""
     found: dict[bytes, bytes] = {}
     for item in value.split(b";"):
         name, eq, v = item.partition(b"=")
@@ -669,7 +678,11 @@ def dkim_identity(value: bytes) -> tuple[bytes, bytes] | None:
     i = found[b"i"]
     if i.count(b"=") != len(DKIM_QP_ESCAPE.findall(i)):
         return None  # malformed quoted-printable: no identity
-    return d, DKIM_QP_ESCAPE.sub(lambda m: bytes.fromhex(m[1].decode()), i)
+    identity = DKIM_QP_ESCAPE.sub(lambda m: bytes.fromhex(m[1].decode()), i)
+    domain = identity.rpartition(b"@")[2].lower()
+    if b"@" not in identity or not (domain == d.lower() or domain.endswith(b"." + d.lower())):
+        return None  # the identity is not in d= or under it
+    return d, identity
 
 
 def same_identity(a: bytes, b: bytes) -> bool:
@@ -680,12 +693,17 @@ def same_identity(a: bytes, b: bytes) -> bool:
 
 
 def dkim_identity_domain(msg: Part, header_i: str) -> str | None:
-    """§7.1: the d= of the one DKIM-Signature field whose identity equals header.i, or None."""
+    """§7.1: the d= of the one DKIM-Signature field whose identity equals header.i, or None.
+    None as well when any DKIM-Signature field has no identity."""
     wanted = header_i.encode("utf-8")
     matches = []
     for key, value in msg.fields:
-        found = dkim_identity(value) if key.lower() == "dkim-signature" else None
-        if found and same_identity(found[1], wanted):
+        if key.lower() != "dkim-signature":
+            continue
+        found = dkim_identity(value)
+        if found is None:
+            return None  # the boundary server may have read this field differently
+        if same_identity(found[1], wanted):
             matches.append(found[0].decode("ascii").lower())
     return matches[0] if len(matches) == 1 else None
 
@@ -1375,6 +1393,26 @@ def vectors() -> list[Case]:
         one("a CR alone in To", edit(b"To: Reservations", b"To: Reserv\rations"), "malformed"),
         one("a header line that is not a field", before(b"Subject:", b"X-Note"), "malformed"),
         one(
+            "C1 control U+0085 in the From local part",
+            edit(b"<Maple-Tiger-27@", "<Maple\u0085-Tiger-27@".encode()),
+            "malformed",
+        ),
+        one(
+            "right-to-left override U+202E in a Cc local part",
+            before(b"Subject:", "Cc: bob\u202eexample@partner.example".encode()),
+            "malformed",
+        ),
+        one(
+            "zero width space U+200B in the To local part",
+            set_header(b"To", "Reservations <reser\u200bvations@bistro.example>".encode()),
+            "malformed",
+        ),
+        one(
+            "soft hyphen U+00AD in a Reply-To local part",
+            before(b"Subject:", "Reply-To: book\u00adings@acme.example".encode()),
+            "malformed",
+        ),
+        one(
             "charset given twice", edit(b'charset="utf-8"', b'charset="utf-8"; charset=utf-8'), "malformed"
         ),
         one("a parameter without a value", edit(b'charset="utf-8"', b'charset="utf-8"; flowed'), "malformed"),
@@ -1395,6 +1433,26 @@ def vectors() -> list[Case]:
         # count, DKIM, version
         one("second Colophon-Signature", before(b"From:", b"Colophon-Signature: v=0"), "multiple_signatures"),
         one("no Colophon-Signature", raw[raw.index(b"From:") :], "no_signature"),
+        one(
+            "no Colophon-Signature, and a header line that is not a field",
+            edit(b"Subject:", b"X-Note\r\nSubject:", raw[raw.index(b"From:") :]),
+            "no_signature",
+        ),
+        one(
+            "no Colophon-Signature, and a CR alone in a header line",
+            edit(b"To: Reservations", b"To: Reserv\rations", raw[raw.index(b"From:") :]),
+            "no_signature",
+        ),
+        one(
+            "second Colophon-Signature, and a header line that is not a field",
+            edit(b"Subject:", b"X-Note\r\nSubject:", before(b"From:", b"Colophon-Signature: v=0")),
+            "multiple_signatures",
+        ),
+        one(
+            "space before the colon of Colophon-Signature (not counted)",
+            edit(b"Colophon-Signature: v=0", b"Colophon-Signature : v=0"),
+            "no_signature",
+        ),
         one(
             "DKIM passes only for mail.acme.example",
             raw,
@@ -1442,7 +1500,25 @@ def vectors() -> list[Case]:
             "DKIM reported by header.i only, beside a field whose tags do not parse",
             [dkim_field(b"@acme.example") + b"; x", dkim_field(b"@acme.example")],
             "@acme.example",
+            "dkim_unaligned",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, i= in a subdomain of d=",
+            [dkim_field(b"bookings@mail.acme.example")],
+            "bookings@mail.acme.example",
             "verified",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, i= outside d=",
+            [dkim_field(b"bookings@other.example")],
+            "bookings@other.example",
+            "dkim_unaligned",
+        ),
+        by_identity(
+            "DKIM reported by header.i only, beside a field whose i= is outside its d=",
+            [dkim_field(b"@other.example"), dkim_field(b"@acme.example")],
+            "@acme.example",
+            "dkim_unaligned",
         ),
         one("v=1", edit(b"Colophon-Signature: v=0", b"Colophon-Signature: v=1"), "unsupported_version"),
         # DNS
