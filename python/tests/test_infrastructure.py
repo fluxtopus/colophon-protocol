@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import threading
+import time
 from types import ModuleType
 
 import pytest
@@ -257,3 +259,153 @@ def test_replay_keys_are_per_mailbox() -> None:
     store = MemoryReplayStore()
     assert store.claim(ReplayKey("m1", "i", "s", "n" * 16), 0)
     assert store.claim(ReplayKey("m2", "i", "s", "n" * 16), 0)
+
+
+async def test_async_timeouts_count_as_misses() -> None:
+    """aio.verify cuts a lookup off at the DNS budget by cancelling it: that is a miss (§7.4)."""
+
+    class Stalled:
+        calls = 0
+
+        async def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+            Stalled.calls += 1
+            await asyncio.sleep(5)
+            raise AssertionError("not reached")
+
+    guard = AsyncGuardedResolver(Stalled(), clock=_Clock())
+    for n in range(MISS_LIMIT):
+        with pytest.raises(asyncio.TimeoutError):
+            await asyncio.wait_for(guard.resolve_txt(KeyQuery(f"s{n}", "acme.example")), 0.01)
+    with pytest.raises(DnsLimited):
+        await guard.resolve_txt(KeyQuery("next", "acme.example"))
+    assert Stalled.calls == MISS_LIMIT
+
+
+async def test_async_concurrent_misses_stop_at_the_limit() -> None:
+    gate = asyncio.Event()
+
+    class Slow:
+        calls = 0
+
+        async def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+            Slow.calls += 1
+            await gate.wait()
+            return TxtAnswer(())
+
+    guard = AsyncGuardedResolver(Slow(), clock=_Clock())
+    lookups = [
+        asyncio.ensure_future(guard.resolve_txt(KeyQuery(f"s{n}", "acme.example")))
+        for n in range(50)
+    ]
+    await asyncio.sleep(0)
+    gate.set()
+    results = await asyncio.gather(*lookups, return_exceptions=True)
+    assert Slow.calls == MISS_LIMIT
+    assert sum(isinstance(r, DnsLimited) for r in results) == 50 - MISS_LIMIT
+
+
+def test_concurrent_misses_stop_at_the_limit() -> None:
+    """The check and the count are one step: threads that look up 50 names at one host at once
+    send at most 20 queries, not 50 (§7.4)."""
+    start, release = threading.Barrier(50), threading.Event()
+
+    class Slow:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.lock = threading.Lock()
+
+        def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+            with self.lock:
+                self.calls += 1
+            release.wait(5)
+            return TxtAnswer(())
+
+    inner = Slow()
+    guard = GuardedResolver(inner, clock=_Clock())
+    limited = []
+
+    def lookup(n: int) -> None:
+        start.wait()
+        try:
+            guard.resolve_txt(KeyQuery(f"s{n}", "acme.example"))
+        except DnsLimited:
+            limited.append(n)
+
+    threads = [threading.Thread(target=lookup, args=(n,)) for n in range(50)]
+    for t in threads:
+        t.start()
+    while inner.calls + len(limited) < 50:
+        time.sleep(0.001)
+    release.set()
+    for t in threads:
+        t.join()
+    assert inner.calls == MISS_LIMIT
+    assert len(limited) == 50 - MISS_LIMIT
+
+
+def test_a_burst_for_one_name_is_not_limited() -> None:
+    """Many messages that need one key at once take one place in the count, not one each."""
+    release = threading.Event()
+
+    class Slow:
+        def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+            release.wait(5)
+            return TxtAnswer([ISSUER.dns_record], ttl=300)
+
+    guard = GuardedResolver(Slow(), clock=_Clock())
+    for n in range(MISS_LIMIT - 1):  # 19 misses: one place left
+        miss = KeyQuery(f"m{n}", "acme.example")
+        assert guard._state.begin(miss) is None
+        guard._state.end(miss, None)
+    errors: list[BaseException] = []
+
+    def lookup() -> None:
+        try:
+            guard.resolve_txt(Q)
+        except BaseException as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=lookup) for _ in range(30)]
+    for t in threads:
+        t.start()
+    release.set()
+    for t in threads:
+        t.join()
+    assert errors == []
+
+
+def test_interrupted_lookup_counts_and_frees_its_place() -> None:
+    class Interrupted:
+        def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
+            raise KeyboardInterrupt
+
+    guard = GuardedResolver(Interrupted(), clock=_Clock())
+    with pytest.raises(KeyboardInterrupt):
+        guard.resolve_txt(Q)
+    assert guard._state.in_flight == {}
+    assert guard._state.windows["acme.example"].misses == 1
+
+
+def test_dnspython_answer_ttl_is_the_least_on_the_cname_chain() -> None:
+    pytest.importorskip("dns")
+    import dns.message
+    import dns.resolver
+
+    from colophon_protocol.dnspython import _answer
+
+    response = dns.message.from_text(
+        """id 1
+opcode QUERY
+rcode NOERROR
+flags QR RD RA
+;QUESTION
+s1._colophon.acme.example. IN TXT
+;ANSWER
+s1._colophon.acme.example. 30 IN CNAME keys.provider.example.
+keys.provider.example. 3600 IN TXT "v=colophon1; k=ed25519; p=AAAA"
+"""
+    )
+    assert isinstance(response, dns.message.QueryMessage)
+    question = dns.name.from_text("s1._colophon.acme.example.")
+    answer = dns.resolver.Answer(question, dns.rdatatype.TXT, dns.rdataclass.IN, response)
+    assert _answer(answer).ttl == 30

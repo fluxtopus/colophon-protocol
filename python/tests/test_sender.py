@@ -18,9 +18,12 @@ from colophon_protocol import (
     SigningError,
     Verified,
     Withheld,
+    issuer,
     sign,
     verify,
 )
+from colophon_protocol._codec import jcs
+from colophon_protocol._jose import sign_ed25519
 from colophon_protocol.compose import Attachment, compose_message
 from colophon_protocol.replay import MemoryReplayStore
 from colophon_protocol.signer import new_nonce
@@ -124,11 +127,45 @@ def test_issue_canonicalises_the_address() -> None:
         ({"lifetime": 0}, "lifetime"),
         ({"extensions": {"plain": 1}}, "colon"),
         ({"extensions": {"x:f": 1.5}}, "I-JSON"),
+        ({"extensions": {1: 2}}, "colon"),
+        ({"agent_key": b"\x01" + bytes(31)}, "small order"),  # the identity point
+        ({"agent_key": b"\xff" * 31 + b"\x7f"}, "canonical"),  # y = 2**255 - 1, not below p
+        ({"agent_key": "not a key"}, "AgentKey"),
     ],
 )
 def test_issue_refuses(changes: dict[str, object], match: str) -> None:
     with pytest.raises(IssueError, match=match):
         credential(**changes)
+
+
+def test_issue_checks_the_agent_key_before_signing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def no_signing(*args: object) -> None:
+        raise AssertionError("the domain key signed")
+
+    monkeypatch.setattr(issuer, "sign_ed25519", no_signing)
+    with pytest.raises(IssueError, match="small order"):
+        credential(agent_key=b"\x01" + bytes(31))
+
+
+def _token_without_iss() -> str:
+    claims = {
+        "sub": "maple-tiger-27",
+        "from": "maple-tiger-27@acme.example",
+        "cnf": {"jwk": {"crv": "Ed25519", "kty": "OKP", "x": AGENT_KEY.public_jwk()["x"]}},
+        "principal": {"mode": "withheld"},
+        "iat": ISSUED,
+        "exp": ISSUED + 3600,
+    }
+    header = {"alg": "EdDSA", "kid": ISSUER.selector, "typ": "colophon-cred+jwt"}
+    signing_input, signature = sign_ed25519(ISSUER.key.private_key, header, jcs(claims))
+    return f"{signing_input}.{signature}"
+
+
+def test_credential_without_iss_is_a_value_error() -> None:
+    with pytest.raises(ValueError, match="iss"):
+        Credential.parse(_token_without_iss())
+    with pytest.raises(SigningError):
+        sign(_message(), credential=_token_without_iss(), agent_key=AGENT_KEY, signed_at=SIGNED)
 
 
 def test_issuer_validates_host_and_selector() -> None:

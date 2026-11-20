@@ -1,8 +1,11 @@
 """The asyncio adapter. Same steps as ``verify``; the resolver and the replay store are awaited.
 
-The core is pure and fast (two Ed25519 verifications and a linear pass over the message), so it
-runs inline on the event loop. For very large messages a caller may prefer
-``asyncio.to_thread(sansio.start, ...)``; the core holds no state, so that is safe.
+The core is pure and fast (two Ed25519 verifications and a few linear passes over the message,
+in C where it matters), so it runs inline on the event loop. Its work is linear in the size of
+the message, so a receiver should cap that size before calling ``verify``, as its mail server
+already does. For a cap of tens of megabytes, a caller may prefer to drive ``sansio`` itself
+and run both ``sansio.start`` and ``NeedKey.resume`` in ``asyncio.to_thread``; the core holds
+no state, so that is safe.
 """
 
 from __future__ import annotations

@@ -15,6 +15,27 @@ verdicts and for the §7.8 resinfo.
   header section is checked, so unsigned or doubly signed mail is `no_signature` or
   `multiple_signatures` even when another header line is bad. Before, it was `malformed`.
 
+### Hardening
+
+These change no verdict.
+
+- **Body canonicalisation, §6.4.** Quoted-printable decoding, the text steps and the multipart
+  split work on whole buffers in C, with no object per line. On an 8 MB body of short lines,
+  peak memory falls from about 33 times the body to 4 times or less, and quoted-printable
+  decoding runs about 5 times faster (0.15 s rather than 0.9 s).
+- **DNS miss limit, §7.4.** A lookup in flight holds a place in its host's miss count, once
+  per name. Concurrent lookups of many names at one host no longer all pass a limit that had
+  one place left, and a burst of messages that need one name is still not limited. A lookup
+  that is cancelled counts as a miss in `AsyncGuardedResolver`, so an `aio.verify` lookup that
+  runs past its DNS budget now counts toward the limit.
+- **CNAME TTLs, §7.4.** `DnspythonResolver` caches an answer reached through CNAMEs for the
+  least TTL on the chain, not only the TXT RRset's.
+- **Issuing, §5.5.** `Issuer.issue` rejects an agent key that is not canonical or is of small
+  order before the domain key signs. It raises only `IssueError`, also for an agent key of the
+  wrong type and for an extension name that is not a string.
+- **Credential.parse** raises `ValueError`, not `KeyError`, for a token with no `iss`, so
+  `sign()` reports it as a `SigningError`.
+
 ### Authentication-Results, §7.1
 
 - `dkim_pass_domains` reads the field by the RFC 8601 grammar. A quoted string is one value, so
