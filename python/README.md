@@ -11,9 +11,10 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
 - The verifier is a pure state machine (`colophon_protocol.sansio`). Thin blocking and asyncio
   drivers run it; you can drive it from any other I/O model.
 - Results are frozen dataclasses with full type hints. The package passes `mypy --strict`.
-- Parsing is strict and does bounded work: hand-written linear scanners, no regular expressions
-  on message input beyond the fixed-length boundary check, and the §7.7 length limits checked
-  before anything is decoded.
+- Parsing is strict and does bounded work: hand-written linear scanners, and the §7.7 length
+  limits checked before anything is decoded. The few regular expressions on message input run
+  in linear time. Body canonicalisation works on whole buffers in C, using memory under 8 times
+  the body. Work is still linear in the message size, so cap that size before calling `verify`.
 - Ed25519 is checked as §6.5 makes it exact: keys in canonical form and not of small order,
   S < L, R not of small order, and the equation without the cofactor.
 - One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses

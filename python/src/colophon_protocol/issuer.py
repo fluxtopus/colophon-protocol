@@ -15,6 +15,7 @@ from colophon_protocol._credential import (
     check_claims,
     parse_principal,
 )
+from colophon_protocol._ed25519 import valid_public_key
 from colophon_protocol._fail import Fail
 from colophon_protocol._grammar import MAX_SCOPE_BYTES, is_agent_id, is_plain_text, is_selector
 from colophon_protocol._jose import parse_compact, sign_ed25519
@@ -59,6 +60,8 @@ class Credential:
             raise ValueError("not a Colophon credential")
         if "crit" in header or not isinstance(selector, str) or not is_selector(selector):
             raise ValueError("credential header is invalid")
+        if not isinstance(claims.get("iss"), str):
+            raise ValueError("iss is not a string")
         try:
             checked = check_claims(claims)
         except Fail as exc:
@@ -131,6 +134,8 @@ class Issuer:
         issuer certifies only a key it holds or has proof of possession for (§5.5).
 
         ``extensions`` are extra claims; each name must contain a colon (§5.1, §11).
+
+        Raises ``IssueError`` for anything it will not issue, before the domain key signs.
         """
         if not is_agent_id(sub):
             raise IssueError("sub must match [A-Za-z0-9._-]{1,64}")
@@ -140,9 +145,16 @@ class Issuer:
             raise IssueError(f"{address!r} is not an address in the v0 subset (§6.4)") from None
         if not valid_canonical_address(canonical) or canonical.rpartition("@")[2] != self.host:
             raise IssueError(f"the address must be at {self.host}")
-        public = agent_key.public_bytes if isinstance(agent_key, AgentKey) else bytes(agent_key)
+        if isinstance(agent_key, AgentKey):
+            public = agent_key.public_bytes
+        elif isinstance(agent_key, (bytes, bytearray, memoryview)):
+            public = bytes(agent_key)
+        else:
+            raise IssueError("agent_key is an AgentKey or the 32 octets of a public key")
         if len(public) != 32:
             raise IssueError("an Ed25519 public key is 32 octets")
+        if not valid_public_key(public):
+            raise IssueError("the agent key is not canonical, or is of small order (§6.5)")
         principal = Withheld() if principal is None else principal
         if parse_principal(principal.to_json()) != principal:
             raise IssueError("the principal does not meet §5.3")
@@ -164,7 +176,7 @@ class Issuer:
         if scope is not None:
             claims["scope"] = scope
         for name, value in (extensions or {}).items():
-            if ":" not in name or name in _RESERVED or name in claims:
+            if not isinstance(name, str) or ":" not in name or name in _RESERVED or name in claims:
                 raise IssueError(f"extension claim {name!r} must contain a colon")
             claims[name] = value
         try:
@@ -177,4 +189,7 @@ class Issuer:
         token = f"{signing_input}.{signature}"
         if len(token) > MAX_CREDENTIAL_BYTES:
             raise IssueError(f"the credential is {len(token)} octets; the cap is 2048 (§5.1)")
-        return Credential.parse(token)
+        try:
+            return Credential.parse(token)
+        except ValueError as exc:  # every claim was checked above; this would be a library bug
+            raise IssueError(f"the credential does not parse: {exc}") from None

@@ -22,10 +22,14 @@ LIFETIME = 2.0
 
 
 def _answer(result: Any) -> TxtAnswer:
+    """The TXT records, cached for the shortest TTL on the way to them: through a CNAME chain
+    that is the least of the CNAMEs' TTLs and the TXT RRset's (§7.4)."""
     rrset = result.rrset
     if rrset is None:
         return TxtAnswer(())
-    return TxtAnswer((tuple(rdata.strings) for rdata in rrset), ttl=int(rrset.ttl))
+    chaining = getattr(result, "chaining_result", None)
+    ttl = int(chaining.minimum_ttl) if chaining is not None else int(rrset.ttl)
+    return TxtAnswer((tuple(rdata.strings) for rdata in rrset), ttl=min(ttl, int(rrset.ttl)))
 
 
 class DnspythonResolver:

@@ -7,6 +7,8 @@ in files. A bare CR is malformed in a header section and an ordinary octet in a 
 
 from __future__ import annotations
 
+import binascii
+import codecs
 import re
 from dataclasses import dataclass
 
@@ -282,28 +284,32 @@ def split_multipart(body: bytes, boundary: str | None) -> list[bytes]:
     if boundary is None or not _BOUNDARY.fullmatch(boundary):
         raise _malformed("multipart/mixed has no valid boundary parameter")
     dash = b"--" + boundary.encode("ascii")
+    after_lf = b"\n" + dash
     parts: list[bytes] = []
     start: int | None = None  # where the current part begins; None in the preamble
     closed = False
-    pos, n = 0, len(body)
-    while pos < n:
+    n = len(body)
+    # Only lines that start with the delimiter matter: find them in C, not line by line.
+    found = body.find(after_lf)
+    pos = 0 if body.startswith(dash) else -1 if found < 0 else found + 1
+    while pos >= 0:
         end = body.find(b"\n", pos)
         nxt = n if end == -1 else end + 1
         line = body[pos:] if end == -1 else body[pos:end].removesuffix(b"\r")
-        if line.startswith(dash):
-            rest = line[len(dash) :]
-            close = rest.startswith(b"--")
-            if closed:
-                raise _malformed("a delimiter line after the close delimiter")
-            if (rest[2:] if close else rest).strip(_WSP):
-                raise _malformed("a line starts with the delimiter but is not one")
-            if start is not None:
-                if pos == start:
-                    raise _malformed("two delimiter lines with no line end between them")
-                cut = pos - 2 if body[pos - 2 : pos] == b"\r\n" else pos - 1
-                parts.append(body[start:cut])
-            start, closed = nxt, close
-        pos = nxt
+        rest = line[len(dash) :]
+        close = rest.startswith(b"--")
+        if closed:
+            raise _malformed("a delimiter line after the close delimiter")
+        if (rest[2:] if close else rest).strip(_WSP):
+            raise _malformed("a line starts with the delimiter but is not one")
+        if start is not None:
+            if pos == start:
+                raise _malformed("two delimiter lines with no line end between them")
+            cut = pos - 2 if body[pos - 2 : pos] == b"\r\n" else pos - 1
+            parts.append(body[start:cut])
+        start, closed = nxt, close
+        found = -1 if end == -1 else body.find(after_lf, end)
+        pos = -1 if found < 0 else found + 1
     if not closed:
         raise _malformed("multipart has no close delimiter")
     if not parts:
@@ -401,42 +407,43 @@ def layout(message: Entity) -> Layout:
 
 # ---------------------------------------------------------------- transfer decoding (§6.4)
 
-_HEX = frozenset(b"0123456789ABCDEFabcdef")
+# After trailing SP and HTAB are gone: '=' that neither starts an escape nor ends a line (a soft
+# line break). A search, not a substitution, so it allocates nothing per match.
+_BAD_ESCAPE = re.compile(rb"=(?![0-9A-Fa-f]{2}|\n|\Z)")
+_CHUNK = 1 << 16
+
+
+def _strip_trailing_wsp(data: bytes) -> bytes:
+    """Drop SP and HTAB at the end of every line (lines end at LF) and of the data.
+
+    A chunk of whole lines at a time, so that memory stays near the size of the data however
+    many lines there are; and not at all when no line ends in SP or HTAB, the common case."""
+    if not (b" \n" in data or b"\t\n" in data or data.endswith((b" ", b"\t"))):
+        return data
+    out = bytearray()
+    pos, n = 0, len(data)
+    while pos < n:
+        end = data.find(b"\n", pos + _CHUNK)
+        end = n if end < 0 else end + 1
+        out += b"\n".join([line.rstrip(_WSP) for line in data[pos:end].split(b"\n")])
+        pos = end
+    return bytes(out)
 
 
 def _decode_quoted_printable(data: bytes) -> bytes:
     """RFC 2045 §6.7 as §6.4 makes it strict. Trailing SP and HTAB on a line are dropped; a line
     then ending in '=' joins the next; every other line end becomes CRLF; '=' must be followed
-    by two hex digits."""
-    out = bytearray()
-    pos, n = 0, len(data)
-    while True:
-        lf = data.find(b"\n", pos)
-        last = lf < 0
-        end = n if last else lf
-        if not last and end > pos and data[end - 1] == 0x0D:
-            end -= 1
-        line = data[pos:end].rstrip(_WSP)
-        soft = line.endswith(b"=")
-        if soft:
-            line = line[:-1]
-        i = 0
-        while i < len(line):
-            eq = line.find(b"=", i)
-            if eq < 0:
-                out += line[i:]
-                break
-            out += line[i:eq]
-            pair = line[eq + 1 : eq + 3]
-            if len(pair) != 2 or pair[0] not in _HEX or pair[1] not in _HEX:
-                raise _malformed("'=' not followed by two hex digits")
-            out.append(int(pair, 16))
-            i = eq + 3
-        if last:
-            return bytes(out)
-        if not soft:
-            out += b"\r\n"
-        pos = lf + 1
+    by two hex digits.
+
+    Whole-buffer operations, not a loop over lines: once every '=' is known to start an escape
+    or a soft line break, ``binascii.a2b_qp`` decodes exactly."""
+    text = _strip_trailing_wsp(data.replace(b"\r\n", b"\n"))
+    if _BAD_ESCAPE.search(text):
+        raise _malformed("'=' not followed by two hex digits")
+    text = text.replace(b"=\n", b"")
+    if text.endswith(b"="):
+        text = text[:-1]
+    return binascii.a2b_qp(text.replace(b"\n", b"\r\n"))
 
 
 def decoded(part: Part) -> bytes:
@@ -455,12 +462,23 @@ def decoded(part: Part) -> bytes:
 def canonical_text(part: Part) -> bytes:
     """§6.4 Text, steps 2 to 7."""
     charset = part.content_type.params.get("charset", "us-ascii").lower()
+    data = decoded(part)
+    if not (_valid_utf8(data) if charset == "utf-8" else data.isascii()):
+        raise _malformed(f"body octets are not valid {charset}")
+    # In UTF-8, CR, LF, SP and HTAB are never part of another character, so the steps can work
+    # on the octets: no str, and no object per line.
+    text = _strip_trailing_wsp(data.replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+    text = text.rstrip(b"\n")
+    return (text.replace(b"\n", b"\r\n") + b"\r\n") if text else b""
+
+
+def _valid_utf8(data: bytes) -> bool:
+    """Strict UTF-8, checked a chunk at a time so that no str the size of the body exists."""
+    decoder = codecs.getincrementaldecoder("utf-8")()
     try:
-        text = decoded(part).decode("utf-8" if charset == "utf-8" else "ascii")
+        for i in range(0, len(data), _CHUNK):
+            decoder.decode(data[i : i + _CHUNK])
+        decoder.decode(b"", final=True)
     except UnicodeDecodeError:
-        raise _malformed(f"body octets are not valid {charset}") from None
-    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    lines = [line.rstrip(" \t") for line in lines]
-    while lines and lines[-1] == "":
-        lines.pop()
-    return "".join(line + "\r\n" for line in lines).encode("utf-8")
+        return False
+    return True

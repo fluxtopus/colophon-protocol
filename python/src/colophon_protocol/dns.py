@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import threading
 import time
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
@@ -63,7 +63,11 @@ class _Window:
 
 
 class _GuardState:
-    """The bookkeeping both guarded resolvers share. Bounded: least recently used entries go."""
+    """The bookkeeping both guarded resolvers share. Bounded: least recently used entries go.
+
+    A lookup in flight holds a place in its host's miss count until it ends, once per name: so
+    concurrent lookups of 20 names at one host cannot all pass a limit that only 1 had left,
+    and a burst of messages that all need one name is not limited at all."""
 
     def __init__(self, clock: Callable[[], float], max_names: int, max_hosts: int) -> None:
         self.clock = clock
@@ -71,10 +75,12 @@ class _GuardState:
         self.max_hosts = max_hosts
         self.cache: OrderedDict[str, tuple[float, TxtAnswer]] = OrderedDict()
         self.windows: OrderedDict[str, _Window] = OrderedDict()
+        self.in_flight: dict[str, Counter[str]] = {}
         self.lock = threading.Lock()
 
-    def cached(self, query: KeyQuery) -> TxtAnswer | None:
-        """A fresh cached answer; or None, after checking the miss limit for the host."""
+    def begin(self, query: KeyQuery) -> TxtAnswer | None:
+        """A fresh cached answer; or None, after checking the miss limit for the host and
+        taking a place in it. Every None must be followed by ``end``."""
         now = self.clock()
         with self.lock:
             entry = self.cache.get(query.name)
@@ -87,13 +93,27 @@ class _GuardState:
             if window is not None and now - window.started >= MISS_WINDOW:
                 del self.windows[query.host]
                 window = None
-            if window is not None and window.misses >= MISS_LIMIT:
+            names = self.in_flight.get(query.host, Counter())
+            pending = len(names) + (query.name not in names)
+            if (window.misses if window is not None else 0) + pending > MISS_LIMIT:
                 raise DnsLimited(f"{MISS_LIMIT} misses for {query.host} this hour")
+            names[query.name] += 1
+            self.in_flight[query.host] = names
             return None
 
-    def record(self, query: KeyQuery, answer: TxtAnswer | None) -> None:
-        """Cache an answer, and count a miss for an answer with no key or a failed lookup."""
+    def end(self, query: KeyQuery, answer: TxtAnswer | None, *, miss: bool = True) -> None:
+        """The lookup ``begin`` let through is over. Cache its answer, and count a miss for an
+        answer with no key or, when ``miss``, a lookup that failed (``answer`` None)."""
         now = self.clock()
+        with self.lock:
+            names = self.in_flight[query.host]
+            names[query.name] -= 1
+            if names[query.name] == 0:
+                del names[query.name]
+                if not names:
+                    del self.in_flight[query.host]
+        if answer is None and not miss:
+            return
         usable = answer is not None and isinstance(select_domain_key(answer), bytes)
         with self.lock:
             if answer is not None:
@@ -119,7 +139,8 @@ class _GuardState:
 class GuardedResolver:
     """§7.4 around a resolver: answers cached for their TTL (at most an hour), names with no
     usable record for at least 5 minutes, and after 20 misses for one host in an hour, uncached
-    lookups for it refused as ``dns_limited``. A failed lookup counts as a miss.
+    lookups for it refused as ``dns_limited``. A failed lookup counts as a miss, and so does one
+    that is interrupted.
 
     One instance serves every message; it is thread-safe. ``clock`` is monotonic seconds.
     """
@@ -136,22 +157,26 @@ class GuardedResolver:
         self._state = _GuardState(clock, max_names, max_hosts)
 
     def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
-        hit = self._state.cached(query)
+        hit = self._state.begin(query)
         if hit is not None:
             return hit
         try:
             answer = self._inner.resolve_txt(query)
         except DnsLimited:
+            self._state.end(query, None, miss=False)
             raise
-        except Exception:
-            self._state.record(query, None)
+        except BaseException:
+            self._state.end(query, None)
             raise
-        self._state.record(query, answer)
+        self._state.end(query, answer)
         return answer
 
 
 class AsyncGuardedResolver:
-    """``GuardedResolver`` for an awaited resolver. Use it from one event loop."""
+    """``GuardedResolver`` for an awaited resolver. Use it from one event loop.
+
+    A lookup that is cancelled, as ``aio.verify`` cancels one that runs past its DNS budget,
+    counts as a miss."""
 
     def __init__(
         self,
@@ -165,15 +190,16 @@ class AsyncGuardedResolver:
         self._state = _GuardState(clock, max_names, max_hosts)
 
     async def resolve_txt(self, query: KeyQuery) -> TxtAnswer:
-        hit = self._state.cached(query)
+        hit = self._state.begin(query)
         if hit is not None:
             return hit
         try:
             answer = await self._inner.resolve_txt(query)
         except DnsLimited:
+            self._state.end(query, None, miss=False)
             raise
-        except Exception:
-            self._state.record(query, None)
+        except BaseException:
+            self._state.end(query, None)
             raise
-        self._state.record(query, answer)
+        self._state.end(query, answer)
         return answer
