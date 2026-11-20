@@ -157,6 +157,10 @@ ok    malformed            escaped surrogate in sub
 ok    malformed            noncharacter U+FFFF in scope
 ok    malformed            a CR alone in To
 ok    malformed            a header line that is not a field
+ok    malformed            C1 control U+0085 in the From local part
+ok    malformed            right-to-left override U+202E in a Cc local part
+ok    malformed            zero width space U+200B in the To local part
+ok    malformed            soft hyphen U+00AD in a Reply-To local part
 ok    malformed            charset given twice
 ok    malformed            a parameter without a value
 ok    malformed            boundary given twice
@@ -167,6 +171,10 @@ ok    malformed            a line that starts with the delimiter
 ok    malformed            a delimiter in the epilogue
 ok    multiple_signatures  second Colophon-Signature
 ok    no_signature         no Colophon-Signature
+ok    no_signature         no Colophon-Signature, and a header line that is not a field
+ok    no_signature         no Colophon-Signature, and a CR alone in a header line
+ok    multiple_signatures  second Colophon-Signature, and a header line that is not a field
+ok    no_signature         space before the colon of Colophon-Signature (not counted)
 ok    dkim_unaligned       DKIM passes only for mail.acme.example
 ok    verified             DKIM passes for mail.acme.example and acme.example
 ok    dkim_unaligned       DKIM passes for two unaligned domains
@@ -175,7 +183,10 @@ ok    verified             DKIM reported by header.i only, i= with an encoded oc
 ok    dkim_unaligned       DKIM reported by header.i only, i= with malformed quoted-printable
 ok    verified             DKIM reported by header.i only, no i=, domain in another case
 ok    dkim_unaligned       DKIM reported by header.i only, two fields with that identity
-ok    verified             DKIM reported by header.i only, beside a field whose tags do not parse
+ok    dkim_unaligned       DKIM reported by header.i only, beside a field whose tags do not parse
+ok    verified             DKIM reported by header.i only, i= in a subdomain of d=
+ok    dkim_unaligned       DKIM reported by header.i only, i= outside d=
+ok    dkim_unaligned       DKIM reported by header.i only, beside a field whose i= is outside its d=
 ok    unsupported_version  v=1
 ok    dns_error            DNS lookup failed
 ok    key_not_found        no record at the selector

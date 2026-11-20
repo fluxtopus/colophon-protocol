@@ -91,6 +91,26 @@ def _line_end(data: bytes, start: int) -> tuple[int, int]:
     return end, lf + 1
 
 
+def count_fields(data: bytes, name: str) -> int:
+    """How many header lines start a field named ``name``, read leniently (§7.2 steps 1, 2).
+
+    A line counts when it comes before the first empty line and is ``name``, in any case, then a
+    colon. Every other line is passed over, even one that :func:`parse_entity` rejects, such as
+    a line that is not a field or one with a bare CR: the count comes before that check."""
+    wanted = name.lower().encode("ascii") + b":"
+    size = len(wanted)
+    count = 0
+    pos, n = 0, len(data)
+    while pos < n:
+        end, nxt = _line_end(data, pos)
+        if end == pos:
+            break
+        if end - pos >= size and data[pos : pos + size].lower() == wanted:
+            count += 1
+        pos = nxt
+    return count
+
+
 def parse_entity(data: bytes) -> Entity:
     """Split header section and body at the first empty line. Every line before it is a field
     (``name:value``, the name 1 or more printable ASCII characters other than ``:``) or a

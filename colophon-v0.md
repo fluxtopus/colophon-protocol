@@ -1,6 +1,6 @@
 # Colophon v0: Agent Signatures for Email
 
-Draft v0-06, 2026-11-09. For review. Not for production use.
+Draft v0-07, 2026-11-20. For review. Not for production use.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -374,7 +374,14 @@ DKIM still covers whatever the issuer's DKIM signature lists.
 1. The value is a list of mailboxes separated by commas. Each mailbox, with SP and HTAB trimmed at both ends, is either an addr-spec alone, or a display name followed by an addr-spec in angle brackets. The display name may be empty: `<reservations@bistro.example>` is a mailbox.
 2. A display name is made of atext, `.`, SP, HTAB, non-ASCII characters and quoted strings. Anything else in it, an unquoted `@` for example, is malformed.
 3. An addr-spec is `local@domain`, with no whitespace:
-   - the local part is a dot-atom of atext and non-ASCII characters (RFC 6532). A quoted local part, such as `"john doe"@example.com`, is malformed;
+   - the local part is a dot-atom of atext and non-ASCII characters (RFC 6532), except the characters listed below. A quoted local part, such as `"john doe"@example.com`, is malformed;
+   - these characters are not allowed in a local part, which is malformed if it has one. They are controls, characters that show as space or as nothing, and characters that change the order in which text is shown, so two local parts that differ only in them look alike:
+     - the C1 controls U+0080 to U+009F;
+     - U+00A0, U+00AD, U+034F, U+061C, U+115F, U+1160, U+1680, U+180E, U+3000, U+3164, U+FEFF and U+FFA0;
+     - U+2000 to U+200F, U+2028 to U+202F and U+205F to U+206F;
+     - U+FE00 to U+FE0F, U+FFF9 to U+FFFB, U+E0000 to U+E007F and U+E0100 to U+E01EF.
+
+     The list is fixed. It does not follow later versions of Unicode, and verifiers look up no character properties. It does not cover confusable letters, such as Cyrillic `а` for Latin `a` (§9).
    - the domain is two or more labels separated by `.`. Each label is 1 to 63 ASCII letters, digits and hyphens, and does not start or end with a hyphen. An internationalized domain MUST be written as A-labels (`xn--...`). Verifiers do not convert or check A-labels. A non-ASCII domain, a domain literal such as `[192.0.2.1]`, and a trailing dot are malformed.
 4. Outside quoted strings, `(`, `)`, `:`, `;`, `[`, `]` and `\` are malformed, and so is any `<` or `>` beyond one pair per mailbox. This rules out comments, groups (`undisclosed-recipients:;` included), domain literals and route syntax. An empty member, as in `a@x.example, , b@x.example`, is malformed too.
 5. Canonical form: lowercase the ASCII letters A to Z in the local part and the domain. Leave all other octets as they are. Apply no Unicode normalization and no other case folding. Two addresses are equal when their canonical forms are equal octet for octet.
@@ -451,7 +458,14 @@ A verifier works on four inputs from the receiving system, never from the messag
 
    A passing signature counts for its `d=` domain, reported as `header.d`. The `i=` identity, reported as `header.i`, does not count on its own: it may name a subdomain of `d=`.
 
-   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, decoded from DKIM quoted-printable (RFC 6376 §2.11), or `@` and its `d=` when it has no `i=`. A field has no identity if its tag list does not parse (RFC 6376 §3.2), a tag appears twice, it has no `d=`, or its `i=` has an `=` that is not followed by two hexadecimal digits. If exactly one `DKIM-Signature` field in the message has an identity equal to `header.i`, the signature counts for that field's `d=`. Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case. Otherwise, with no such field or more than one, the signature does not count.
+   A verifier that reads `Authentication-Results` parses the field by the grammar of RFC 8601 §2.2. A field whose comments or quoted strings are not closed, or that holds a control character outside a quoted string, counts for nothing, and so does a field that is not its boundary server's. Within a field that counts, a result that does not parse counts for nothing, and the field's other results still count:
+   - Comments are removed. A quoted string is one value: a space, `;`, `=` or `(` inside it is part of the value, never a separator.
+   - The authserv-id is the field's first value. It MUST equal the boundary server's authserv-id, ignoring the case of ASCII letters. Before the first `;`, only a version may follow it, and the version MUST be `1`. A field with anything else there is not the boundary server's, even when its first value matches.
+   - A `dkim` result counts only when it is `pass`, and the method has no version or version `1`. A result that has a property more than once, `header.d` twice for example, counts for nothing.
+
+   Some boundary servers report only `header.i`. A verifier that has only `header.i` for a passing signature recovers its `d=` from the message. The signature's identity is its `i=` tag, decoded from DKIM quoted-printable (RFC 6376 §2.11), or `@` and its `d=` when it has no `i=`. A field has no identity if its tag list does not parse (RFC 6376 §3.2), a tag appears twice, it has no `d=`, its `i=` has an `=` that is not followed by two hexadecimal digits, or the domain of its identity is neither its `d=` nor a subdomain of it, ignoring case (RFC 6376 §3.5). Identities are equal when their local parts are equal octet for octet and their domains are equal ignoring case.
+   - If any `DKIM-Signature` field in the message has no identity, the signature does not count. The verifier cannot tell which field the boundary server checked, and the two may have read a field differently.
+   - Otherwise, if exactly one field has an identity equal to `header.i`, the signature counts for that field's `d=`. With no such field, or more than one, it does not count.
 4. **The mailbox.** This is the mailbox this copy was delivered to: a stable identifier the receiver chooses, and every address the mailbox receives at, its own and its aliases. The receiver maps the envelope recipient (RCPT TO) to the mailbox. Two envelope recipients that reach one mailbox, such as an address and its `+tag` form, are one mailbox.
 
 A verifier SHOULD verify soon after arrival. The domain key in DNS may change later.
@@ -490,7 +504,7 @@ A verifier runs these steps in order. The first step that fails gives the verdic
 
 If every step passes, the verdict is **verified**.
 
-Steps 1 and 2 count the header lines that start a field named `Colophon-Signature`, before step 3 checks the rest of the header section.
+Steps 1 and 2 count the header lines that start a field named `Colophon-Signature`, before step 3 checks the rest of the header section. Such a line comes before the first empty line, and starts with the field name, in any case, followed at once by a colon. Every other line is passed over in the count, even one that step 3 then finds malformed, such as a line that is not a field or a line with a CR alone. So a message with no such line is `no_signature`, and one with two is `multiple_signatures`, whatever else is wrong with its header section.
 
 A verifier does at most one DNS lookup and two Ed25519 verifications per message.
 
@@ -673,6 +687,10 @@ It does not mean:
 
 **Addresses that differ only in case.** Verifiers lowercase the ASCII letters A to Z in local parts, and compare every other octet as it is, with no Unicode normalization or case folding (§6.4). A mail system may still deliver two such addresses to one place, for example by folding the case of non-ASCII letters. An issuer MUST NOT issue credentials for two addresses that are equal after ASCII lowercasing, or that its mail system treats as one address (such as variants that differ only in case). Several addresses that deliver to one mailbox MAY each have a credential only if all of them are issued to the same agent for the same principal. An agent's pairwise addresses (§5.3) are one such case: each has its own credential (§5.2).
 
+**Characters that look like nothing.** A local part may hold non-ASCII characters (RFC 6532), and some of them show as nothing, as a space, or change the order of the text around them. Two such addresses on one domain could look the same to a user and still verify as two agents. §6.4 makes a local part with any of them malformed, from a fixed list, so verifiers agree on it without a Unicode database. Confusable letters remain, as they do in domains: a receiver SHOULD show a non-ASCII local part in a way that makes it stand out, and an issuer SHOULD NOT issue addresses that are confusable with each other.
+
+**The receiver's own DKIM results.** A verifier that reads `Authentication-Results` instead of checking DKIM itself trusts its boundary server, and only it (§7.1). A field from the sender, or a reading of the field that differs from the server's, could make an unaligned message count as aligned. §7.1 fixes how the field is read, and counts nothing from a field that is not exactly the boundary server's.
+
 **Resending a captured message.** DKIM passes again on an unchanged resend. The addressing check (§7.5) and the replay store (§7.6) stop it from verifying anywhere it was not sent.
 
 **Unsigned headers.** `Sender`, `Resent-*` and every other header §6.3 does not list are not signed by the agent. A receiver MUST NOT present them as part of what the agent signed.
@@ -769,7 +787,7 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 ## 15. Open issues
 
-No open issue blocks v0 final. Issues 1, 2 and 5 are resolved, and stay here for the record.
+No open issue blocks v0 final. Issues 1, 2, 5 and 6 are resolved, and stay here for the record.
 
 1. **Will the header survive?** Resolved in v0-05: header carriage (§6.2) stays. The test is in `tests/header-survival/` of this specification's repository.
    - **Sender.** A domain whose mail Amazon SES signs with DKIM.
@@ -799,6 +817,11 @@ No open issue blocks v0 final. Issues 1, 2 and 5 are resolved, and stay here for
    - **Late verification (§7.6).** The check of D is required of a verifier that removes tuples at `exp` + 2 hours + D, and only of it. The verifier checks D before the store, so a late message costs no read and claims no tuple. Not chosen: require the check of every verifier, including one that keeps tuples longer.
    - **DNS misses (§7.4).** An answer whose only Colophon record has a key that is not valid is a miss, as every lookup that ends in `key_not_found` is.
    - **Parameters (§6.1).** The RFC 2231 form of `boundary`, `charset` or `format` breaks the layout only where the verifier reads that parameter. Elsewhere it is ignored.
+6. **Wire rules added in v0-07.** Resolved in v0-07, on 2026-11-20. A security review of the Python library found inputs on which the draft let readers disagree, or let a sender put invisible characters into a verified address. Each choice below changes which messages verify, or with which reason.
+   - **Characters in local parts (§6.4).** Decided: a fixed list of controls, spaces, invisible characters and bidirectional controls is not allowed in a local part. Not chosen: ASCII-only local parts in v0, which would fail every message that lists an internationalized address in `To` or `Cc`; or a rule by Unicode property, such as `Default_Ignorable_Code_Point`, whose members change between Unicode versions, so that two verifiers could disagree.
+   - **Reading `Authentication-Results` (§7.1).** Decided: the RFC 8601 grammar, quoted strings kept whole, an exact authserv-id with only an optional version `1` after it, and no result with a repeated property. Not chosen: leave the parsing to implementations, which let a quoted `header.i` hide a `header.d` from one reader and not from another.
+   - **DKIM identity (§7.1).** Decided: a field whose identity's domain is not its `d=` or under it has no identity, and any `DKIM-Signature` field without an identity stops `header.i` from counting. Not chosen: pass over the fields with no identity, as v0-06 did. The boundary server may have read such a field differently, and the one field left could then be one the server never checked.
+   - **Counting signatures (§7.2).** Decided, as the sketch already did: steps 1 and 2 count the lines that start a `Colophon-Signature` field, passing over lines that step 3 finds malformed. The text now says what such a line is. Not chosen: check the header section first, which would report an unsigned message with one stray header line as `fail` (`malformed`) instead of `none` (`no_signature`).
 
 ## Appendix A. Worked example
 
@@ -1090,7 +1113,8 @@ The design was settled one question at a time. Each decision has a longer record
 | Encoding | base64url everywhere, the DNS record included, decoded strictly. |
 | JWS form | A standard detached JWS, not RFC 7797 unencoded payloads: RFC 7797 needs `crit`, which v0 rejects. |
 | Message expiry | None. The credential's `exp` and the arrival time bound a message. |
-| Non-ASCII local parts | ASCII letters lowercased, other octets compared as they are, no Unicode normalization or folding. |
+| Non-ASCII local parts | ASCII letters lowercased, other octets compared as they are, no Unicode normalization or folding. A fixed list of controls and invisible characters is not allowed (§6.4). Decided in v0-07 (§15, issue 6). |
+| Reading DKIM results | From the receiver's own checks, or its boundary server's `Authentication-Results`, read by RFC 8601's grammar and trusted only under its exact authserv-id (§7.1). Decided in v0-07 (§15, issue 6). |
 | Registrations | `_colophon` (RFC 8552), a provisional `Colophon-Signature` (RFC 3864), and the `Authentication-Results` method `colophon` (RFC 8601), filed at v0 final. No media types. |
 | Reporting the verdict | An `Authentication-Results` method with four results and the reason code. Properties only on `pass`, and no free text the sender wrote. Recommended, not required for conformance. |
 | Real-mail evidence | A published summary of the header-survival test. Stored messages stay private, and the vectors stay synthetic. |
@@ -1099,6 +1123,16 @@ The design was settled one question at a time. Each decision has a longer record
 | Relation to A2A | Independent, with a defined bridge. |
 
 ## Appendix E. Changes
+
+### v0-07
+
+v0-07 answers a security review of the Python library. Where a reader could disagree with another, or a sender could put invisible characters into a verified address, it now states one rule. The choices were decided on 2026-11-20, and §15, issue 6 records them, with the alternatives considered. The worked example's message, credential and signatures are unchanged. One v0-06 vector changes its verdict, as the DKIM identity rule below says.
+
+- **Local parts.** A fixed list of characters is not allowed in a local part: the C1 controls, characters that show as space or as nothing, variation selectors, tag characters and the bidirectional controls (§6.4). An address with one is malformed. Before, such an address could verify, and a library that reports the verdict in `Authentication-Results` could not write it.
+- **Reading `Authentication-Results`.** The field is read by RFC 8601's grammar. A quoted string is one value, the authserv-id must match exactly, with only a version `1` after it, and a result with a repeated property counts for nothing (§7.1).
+- **DKIM identity.** A `DKIM-Signature` field whose identity's domain is neither its `d=` nor under it has no identity. A signature reported by `header.i` alone counts only when every `DKIM-Signature` field in the message has an identity (§7.1). The v0-06 vector "beside a field whose tags do not parse" is now `dkim_unaligned`, not verified.
+- **Counting signatures.** The text says which lines steps 1 and 2 count, and that they pass over lines step 3 finds malformed (§7.2). The sketch already counted this way.
+- **Vectors.** 11 new deliveries: 134 in all (Appendix B).
 
 ### v0-06
 

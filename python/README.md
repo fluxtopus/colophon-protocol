@@ -2,7 +2,7 @@
 
 Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md) agent signatures on email.
 
-> **Draft, not for production.** This package implements draft v0-06 of a specification that
+> **Draft, not for production.** This package implements draft v0-07 of a specification that
 > is still changing. Its API, its verdicts and the wire format may all change before v0 final.
 > Use it to try Colophon out, to test interoperability and to report problems.
 
@@ -18,7 +18,7 @@ Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blo
   S < L, R not of small order, and the equation without the cofactor.
 - One runtime dependency, [`cryptography`](https://cryptography.io). Live DNS uses
   [`dnspython`](https://www.dnspython.org) through the optional `dns` extra.
-- It scores 123/123 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
+- It scores 134/134 on the [conformance vectors](https://github.com/fluxtopus/colophon-protocol/blob/main/conformance/README.md), for verdicts and for
   the §7.8 `Authentication-Results` report, and reproduces the spec's worked example (Appendix A)
   byte for byte.
 

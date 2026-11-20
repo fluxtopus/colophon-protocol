@@ -93,13 +93,13 @@ def _expected(case: Case) -> list[tuple[str, str]]:
 
 
 def test_vector_count() -> None:
-    assert len(CASES) == 120
+    assert len(CASES) == 131
     deliveries = [d for c in CASES for d in c.deliveries]
-    assert len(deliveries) == 123
+    assert len(deliveries) == 134
     results = [d.expected_authentication_results.split()[0] for d in deliveries]
     assert results.count("colophon=pass") == 35
-    assert results.count("colophon=fail") == 84
-    assert results.count("colophon=none") == 1
+    assert results.count("colophon=fail") == 92
+    assert results.count("colophon=none") == 4
     assert results.count("colophon=temperror") == 3
 
 

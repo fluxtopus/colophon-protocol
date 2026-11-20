@@ -15,7 +15,7 @@ and every resinfo it checked matches. Options: `--vectors <path>` (default
 `reference/vectors.json`), `--timeout <seconds>` per vector (default 20), `--only <text>` to run
 the vectors whose name contains the text, and `--quiet` to print failures and the score only.
 
-The two adapters in this directory score 123/123 on both:
+The two adapters in this directory score 134/134 on both:
 
 ```
 # The reference sketch, from the repository root
@@ -115,7 +115,7 @@ this delivery (§7.8): the method, result and properties, without the authserv-i
 `;`. Reporting is not required for conformance (§12), so the member is optional:
 
 - **Present:** the runner compares it with the vector's `expected_authentication_results`, as
-  strings, exactly, and scores it beside the verdicts: `123/123 Authentication-Results resinfo
+  strings, exactly, and scores it beside the verdicts: `134/134 Authentication-Results resinfo
   match`. A value that is not a string fails.
 - **Absent:** the delivery is *not checked* for this score. It is never counted as failed, and
   it does not change the exit status.

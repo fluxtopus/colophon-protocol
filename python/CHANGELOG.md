@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased: draft v0-07
+
+`SPEC_VERSION` is `"v0-07"`. The package scores 134/134 on the v0-07 conformance vectors, for
+verdicts and for the §7.8 resinfo.
+
+### Verifying
+
+- **Local parts, §6.4.** A fixed list of characters is no longer allowed in a local part: C1
+  controls, invisible and zero-width characters, bidirectional controls, variation selectors and
+  tag characters. An address that holds one is `malformed`. Before, such an address could verify,
+  and `colophon_resinfo()` then raised on it.
+- **Counting signatures, §7.2.** Steps 1 and 2 count `Colophon-Signature` lines before the
+  header section is checked, so unsigned or doubly signed mail is `no_signature` or
+  `multiple_signatures` even when another header line is bad. Before, it was `malformed`.
+
+### Authentication-Results, §7.1
+
+- `dkim_pass_domains` reads the field by the RFC 8601 grammar. A quoted string is one value, so
+  spaces inside a quoted `header.i` no longer start a new property. The authserv-id may be
+  followed only by version `1`. A `dkim` result counts only with method version absent or `1`.
+  A result with a repeated property counts for nothing. A field that does not lex counts for
+  nothing.
+- `dkim_identity_domain` (recovering d= from `header.i`) requires the identity to be d= or under
+  it, as RFC 6376 §3.5 does, and returns `None` when any DKIM-Signature field in the message has
+  no identity it can read.
+
 ## 0.1.0: draft v0-06
 
 The first release on PyPI. Version 0.0.0 there is a placeholder that holds the name.
