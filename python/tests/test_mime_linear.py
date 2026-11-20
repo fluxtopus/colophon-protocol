@@ -171,12 +171,16 @@ SIZE = 8 * 1024 * 1024
 )
 def test_hostile_bodies_are_cheap(body: bytes, encoding: str) -> None:
     """Linear time at C speed, and memory under 8 times the body: the per-line code took
-    seconds and about 35 times the body on the first of these."""
-    tracemalloc.start()
+    seconds and about 35 times the body on the first of these. Time and memory are measured
+    in separate runs, because tracemalloc slows every allocation and would be timed too."""
+    part = _part(body, encoding=encoding)
     start = time.perf_counter()
     with contextlib.suppress(Fail):
-        _mime.canonical_text(_part(body, encoding=encoding))
+        _mime.canonical_text(part)
     elapsed = time.perf_counter() - start
+    tracemalloc.start()
+    with contextlib.suppress(Fail):
+        _mime.canonical_text(part)
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
     assert elapsed < 2.0
