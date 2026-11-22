@@ -2,9 +2,9 @@
 
 Sign and verify [Colophon v0](https://github.com/fluxtopus/colophon-protocol/blob/main/colophon-v0.md) agent signatures on email.
 
-> **Draft, not for production.** This package implements draft v0-07 of a specification that
-> is still changing. Its API, its verdicts and the wire format may all change before v0 final.
-> Use it to try Colophon out, to test interoperability and to report problems.
+> **Draft.** This package implements draft v0-07 of a specification that is still changing.
+> Its API, its verdicts and the wire format may all change before v0 final, so a deployment
+> must be ready to follow a later draft and release.
 
 - `verify()` never raises for anything in a message or a DNS answer. Every failure, including
   one the code did not foresee, is a `NotVerified` with one of the §7.2 reasons.

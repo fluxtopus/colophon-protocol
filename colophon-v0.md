@@ -1,6 +1,6 @@
 # Colophon v0: Agent Signatures for Email
 
-Draft v0-07, 2026-11-20. For review. Not for production use.
+Draft v0-07, 2026-11-20. For review. It may change before v0 final, so a deployment must be ready to follow a later draft.
 Editor: Jorge Vivas (Fluxtopus).
 Licence: Apache 2.0.
 
@@ -787,7 +787,7 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 
 ## 15. Open issues
 
-No open issue blocks v0 final. Issues 1, 2, 5 and 6 are resolved, and stay here for the record.
+No open issue blocks v0 final. Issues 1, 2, 4, 5 and 6 are resolved, and stay here for the record.
 
 1. **Will the header survive?** Resolved in v0-05: header carriage (§6.2) stays. The test is in `tests/header-survival/` of this specification's repository.
    - **Sender.** A domain whose mail Amazon SES signs with DKIM.
@@ -799,7 +799,7 @@ No open issue blocks v0 final. Issues 1, 2, 5 and 6 are resolved, and stay here 
    Verifiers remove whitespace, so refolding is safe for Colophon. DKIM with simple header canonicalization is not, which is why §6.2 asks for relaxed. Anyone can run the test again against other mail systems, with fresh keys under a new selector; the directory's README says how.
 2. **Real mail in the vectors.** Resolved in v0-05: the results are published as a summary, in `tests/header-survival/results/`. For each copy, it gives the header state, the verdict, and the `Colophon-Signature` field as sent and as stored. The stored messages are not published, because they carry mailbox addresses and the receivers' internal data. The vectors in Appendix B stay synthetic.
 3. **The formal model** (Appendix C) is planned. v0 can be final without it. Colophon Tasks waits for it.
-4. **Name.** "Colophon" is final for this text, but its trademark clearance is pending. A conflict would force a new version with new wire names. Production deployment waits for the clearance.
+4. **Name.** Resolved on 2026-11-20: "Colophon" is cleared, and deployment no longer waits on it. The wire names stay as they are.
 5. **Wire rules added in v0-06.** Resolved in v0-06, on 2026-11-09. Building the Python library and a receiver against the sketch found places where the draft was silent and readers disagreed. v0-06 settles each of them, and each choice changes which messages verify. Every rule is decided as the draft states it. The alternatives that were considered stay here for the record.
    - **Line ends (§6.1).** Decided: a line ends at CRLF or LF alone. A CR alone is malformed in a header section and is data in a body. Not chosen: CRLF only, which rejects messages that a mail store saved with LF line ends; or a CR alone ends a line everywhere, as v0-05's sketch did.
    - **Header lines (§6.1).** Decided: a line that is neither a field nor a continuation is malformed. Not chosen: such a line ends the header section, as many mail libraries read it. Readers would then disagree on where the body starts.
@@ -822,6 +822,9 @@ No open issue blocks v0 final. Issues 1, 2, 5 and 6 are resolved, and stay here 
    - **Reading `Authentication-Results` (§7.1).** Decided: the RFC 8601 grammar, quoted strings kept whole, an exact authserv-id with only an optional version `1` after it, and no result with a repeated property. Not chosen: leave the parsing to implementations, which let a quoted `header.i` hide a `header.d` from one reader and not from another.
    - **DKIM identity (§7.1).** Decided: a field whose identity's domain is not its `d=` or under it has no identity, and any `DKIM-Signature` field without an identity stops `header.i` from counting. Not chosen: pass over the fields with no identity, as v0-06 did. The boundary server may have read such a field differently, and the one field left could then be one the server never checked.
    - **Counting signatures (§7.2).** Decided, as the sketch already did: steps 1 and 2 count the lines that start a `Colophon-Signature` field, passing over lines that step 3 finds malformed. The text now says what such a line is. Not chosen: check the header section first, which would report an unsigned message with one stray header line as `fail` (`malformed`) instead of `none` (`no_signature`).
+7. **Marking agent mail.** Proposed for the next draft: the signer SHOULD mark a signed message `Auto-Submitted: auto-generated` (RFC 3834), and the issuer's DKIM signature SHOULD cover that field. Verifiers would not check it.
+   - **Why.** An agent wrote the message, which is what RFC 3834 means by auto-generated. The mark also tells auto-responders, other agents among them, not to answer. That keeps two agents from replying to each other without end.
+   - **Found in deployment.** The first production issuer sends through a provider's SMTP relay. The relay added `List-Id` and one-click `List-Unsubscribe` to signed mail that lacked the mark. Receivers then showed agent mail as a mailing list, with an unsubscribe button. With the mark, the relay added neither. The added fields are not covered, so the messages verified either way.
 
 ## Appendix A. Worked example
 
