@@ -35,6 +35,9 @@ jobs:
         run: >-
           python3 conformance/run.py --quiet --
           uv run --no-project --with cryptography python conformance/adapters/sketch.py
+      # The site build runs this on main too; run it here so a vector change fails the PR first.
+      - name: Test the header-survival harness
+        run: uv run --directory tests/header-survival pytest -q
 
   python:
     runs-on: ubuntu-latest
