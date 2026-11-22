@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased: draft v0-07
+## 0.1.0: draft v0-07
+
+The first release on PyPI. Version 0.0.0 there is a placeholder that holds the name.
 
 `SPEC_VERSION` is `"v0-07"`. The package scores 134/134 on the v0-07 conformance vectors, for
 verdicts and for the §7.8 resinfo.
@@ -47,9 +49,9 @@ These change no verdict.
   it, as RFC 6376 §3.5 does, and returns `None` when any DKIM-Signature field in the message has
   no identity it can read.
 
-## 0.1.0: draft v0-06
+## draft v0-06
 
-The first release on PyPI. Version 0.0.0 there is a placeholder that holds the name.
+Not published on its own. Its changes ship in 0.1.0, above.
 
 `SPEC_VERSION` is `"v0-06"`. The package scores 123/123 on the v0-06 conformance vectors, for
 verdicts and for the §7.8 resinfo, and agrees with the reference sketch on every message the

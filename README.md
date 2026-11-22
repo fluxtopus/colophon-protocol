@@ -18,6 +18,8 @@ To anyone who does not know Colophon, it is still ordinary email.
 | [`reference/colophon_v0.py`](reference/colophon_v0.py) | A reference sketch that signs and verifies exactly as the draft says, and runs the test vectors. It is not a library. |
 | [`reference/example.txt`](reference/example.txt) | The sketch's output: the worked example of Appendix A and the vector results. |
 | [`reference/vectors.json`](reference/vectors.json) | The test vectors of Appendix B, machine-readable: each message as base64 of its octets, the receiver's inputs, and the expected verdict and reason. |
+| [`python/`](python/) | The Python library: signs and verifies, with live DNS. On PyPI as [`colophon-protocol`](https://pypi.org/project/colophon-protocol/): `pip install 'colophon-protocol[dns]'`. Draft, not for production. |
+| [`conformance/`](conformance/) | The conformance vectors and the runner that scores an implementation against them. |
 | [`figures/`](figures/) | The specification's figures, as SVG. They are informative: the text is normative. |
 | [`tests/header-survival/`](tests/header-survival/) | The harness for the header-survival test of §15, issue 1: builds and sends the three messages, captures what receivers stored, verifies and reports. `PRIOR-EVIDENCE.md` there collects what public sources say. |
 

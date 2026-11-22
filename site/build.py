@@ -145,9 +145,10 @@ def wrap_tables(body: str) -> str:
 
 
 def rewrite_readme_links(source: str) -> str:
+    # Directories are not on the site; link them to the repository.
+    source = re.sub(r"\]\(((?:[\w.-]+/)+)\)", rf"]({REPO_URL}/tree/main/\1)", source)
     source = source.replace(f"]({SPEC_SOURCE})", f"]({SPEC_PATH})")
     source = source.replace("](reference/", f"]({SPEC_PATH}reference/")
-    source = source.replace("](figures/)", f"]({REPO_URL}/tree/main/figures)")
     return re.sub(r"\]\(((?:CONTRIBUTING|SECURITY)\.md)\)", rf"]({REPO_URL}/blob/main/\1)", source)
 
 
