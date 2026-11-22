@@ -282,28 +282,29 @@ signed = sign(message, credential=credential, agent_key=agent_key, signed_at=now
 ```
 
 `signed` is the message's octets with `Colophon-Signature` added. Send them unchanged as a raw
-message; the mail system then adds DKIM with `d=` the From host. With Amazon SES:
+message; the mail system then adds DKIM with `d=` the From host. With an email provider's API:
 
 ```python
-ses.send_email(
-    FromEmailAddress="booking-agent@acme.example",
-    Destination={"ToAddresses": ["reservations@bistro.example"]},
-    Content={"Raw": {"Data": signed}},
+provider.send_raw(
+    sender="booking-agent@acme.example",
+    recipients=["reservations@bistro.example"],
+    raw=signed,
 )
 ```
 
-§6.2 requires that the issuer's DKIM signature cover `Colophon-Signature`. Amazon SES Easy DKIM
-signs a fixed list of header fields, `From:To:Subject:Message-ID:Date:Content-Type:Content-Transfer-Encoding:MIME-Version`,
-so its signature does not cover `Colophon-Signature`. A sender that relies on Easy DKIM alone
-does not meet that rule of §6.2. Verifiers do not check it, and such messages still verify.
+§6.2 requires that the issuer's DKIM signature cover `Colophon-Signature`. Many email providers
+sign a fixed list of header fields, such as `From:To:Subject:Message-ID:Date:Content-Type:Content-Transfer-Encoding:MIME-Version`,
+so their signature does not cover `Colophon-Signature`. A sender that relies on such a signature
+alone does not meet that rule of §6.2; it needs a DKIM signature of its own whose `h=` lists
+`Colophon-Signature`. Verifiers do not check this rule, and such messages still verify.
 
 Anything that changes the signed parts after `sign()` (§6.2) breaks the signature: footers,
 banners, subject tags and HTML parts belong in the message before it is signed. `sign()` raises
 `SigningError` when a verifier would reject the result for something in the sender's hands, such
 as a From that is not the credential's address or a credential too close to expiry. The draft's
-header-survival test (§15, issue 1) found the header intact at Amazon SES inbound, Gmail (Google
-Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. Other mail
-systems have not been tested.
+header-survival test (§15, issue 1) found the header intact at an email provider's inbound
+service, Gmail (Google Workspace) and Fastmail, and through a Cloudflare Email Routing forward to
+Gmail. Other mail systems have not been tested.
 
 Keys are Ed25519. `DomainKey.private_jwk()` and `DomainKey.from_jwk()` store and load them;
 keep private keys in a secret store, never in the repository or in logs.

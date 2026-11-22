@@ -1,7 +1,7 @@
 # Header-survival test
 
 The harness for issue 1 of specification section 15: does a `Colophon-Signature` header reach
-real mailboxes intact? It builds three signed messages, sends them through Amazon SES, fetches
+real mailboxes intact? It builds three signed messages, sends them through an email provider, fetches
 what each receiver stored, runs the reference verifier on the stored message with the receiver's
 own inputs, and writes a results table.
 

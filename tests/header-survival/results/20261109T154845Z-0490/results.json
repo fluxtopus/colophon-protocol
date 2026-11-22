@@ -1,7 +1,7 @@
 [
  {
-  "receiver": "ses-inbound",
-  "provider": "Amazon SES inbound (S3)",
+  "receiver": "provider-inbound",
+  "provider": "Email provider inbound",
   "account_type": "",
   "hops": [],
   "label": "minimal",
@@ -13,7 +13,7 @@
   "sent_lines": 11,
   "captured_lines": 11,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -23,8 +23,8 @@
   "note": ""
  },
  {
-  "receiver": "ses-inbound",
-  "provider": "Amazon SES inbound (S3)",
+  "receiver": "provider-inbound",
+  "provider": "Email provider inbound",
   "account_type": "",
   "hops": [],
   "label": "cap",
@@ -36,7 +36,7 @@
   "sent_lines": 35,
   "captured_lines": 35,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -46,8 +46,8 @@
   "note": ""
  },
  {
-  "receiver": "ses-inbound",
-  "provider": "Amazon SES inbound (S3)",
+  "receiver": "provider-inbound",
+  "provider": "Email provider inbound",
   "account_type": "",
   "hops": [],
   "label": "attachments",
@@ -59,7 +59,7 @@
   "sent_lines": 15,
   "captured_lines": 15,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -82,7 +82,7 @@
   "sent_lines": 11,
   "captured_lines": 11,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -105,7 +105,7 @@
   "sent_lines": 35,
   "captured_lines": 35,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -128,7 +128,7 @@
   "sent_lines": 15,
   "captured_lines": 15,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -153,7 +153,7 @@
   "sent_lines": 11,
   "captured_lines": 11,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "cloudflare-email.net",
    "colophon-protocol.org",
    "<forwarding domain>"
@@ -180,7 +180,7 @@
   "sent_lines": 35,
   "captured_lines": 35,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "cloudflare-email.net",
    "colophon-protocol.org",
    "<forwarding domain>"
@@ -207,7 +207,7 @@
   "sent_lines": 15,
   "captured_lines": 15,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "cloudflare-email.net",
    "colophon-protocol.org",
    "<forwarding domain>"
@@ -232,7 +232,7 @@
   "sent_lines": 11,
   "captured_lines": 11,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -255,7 +255,7 @@
   "sent_lines": 35,
   "captured_lines": 35,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],
@@ -278,7 +278,7 @@
   "sent_lines": 15,
   "captured_lines": 15,
   "dkim_pass_domains": [
-   "amazonses.com",
+   "<email provider domain>",
    "colophon-protocol.org"
   ],
   "signed_fields_changed": [],

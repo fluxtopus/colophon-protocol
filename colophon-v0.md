@@ -790,9 +790,9 @@ It reuses v0's credential and signature unchanged, and adds the task part to the
 No open issue blocks v0 final. Issues 1, 2, 5 and 6 are resolved, and stay here for the record.
 
 1. **Will the header survive?** Resolved in v0-05: header carriage (§6.2) stays. The test is in `tests/header-survival/` of this specification's repository.
-   - **Sender.** A domain whose mail Amazon SES signs with DKIM.
+   - **Sender.** A domain whose mail its email provider signs with DKIM.
    - **Messages.** Three, signed as §6.6 says: a minimal one, with a header of about 700 octets; one at the 2,560-octet header cap, with a 280-octet scope, a 128-octet named principal and an extension member in the agent signature's protected header; and one with two attachments.
-   - **Receivers.** Amazon SES inbound, Gmail (Google Workspace) and Fastmail, and a Cloudflare Email Routing forward to Gmail.
+   - **Receivers.** An email provider's inbound service, Gmail (Google Workspace) and Fastmail, and a Cloudflare Email Routing forward to Gmail.
    - **Check.** The reference sketch verified each stored copy, with the DKIM results taken from that receiver's own `Authentication-Results`.
    - **Result.** 12 of 12 copies arrived with the header intact, passed aligned DKIM, and verified. Every receiver kept the header's folding as sent.
 
@@ -1152,7 +1152,7 @@ v0-06 answers the review of the reference sketch made while building the Python 
 
 ### v0-05
 
-- **Header survival.** Resolved (§15, issue 1). Three test messages, the largest at the 2,560-octet cap, went to Amazon SES inbound, Gmail (Google Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. All 12 copies arrived with the header intact and verified. Header carriage (§6.2) stays, so the fallback MIME part is not specified. No open issue blocks v0 final.
+- **Header survival.** Resolved (§15, issue 1). Three test messages, the largest at the 2,560-octet cap, went to an email provider's inbound service, Gmail (Google Workspace) and Fastmail, and through a Cloudflare Email Routing forward to Gmail. All 12 copies arrived with the header intact and verified. Header carriage (§6.2) stays, so the fallback MIME part is not specified. No open issue blocks v0 final.
 - **Reporting the verdict.** New §7.8: an `Authentication-Results` method, `colophon`, with four results, the reason code, and five properties reported only with `pass`. Recommended, not required for conformance. This changes nothing on the wire and no verdicts. Each vector delivery gains its expected `colophon` result (Appendix B), and the worked example's output ends with it.
 - **Registrations.** A third, the `colophon` method and its result names, filed at v0 final with the other two (§13).
 - **Real mail.** The test's results are published as a summary: tables, and each copy's `Colophon-Signature` field as sent and as stored. Stored messages are not checked in, and the vectors stay synthetic (§15, issue 2).

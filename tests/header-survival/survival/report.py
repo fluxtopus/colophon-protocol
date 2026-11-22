@@ -111,7 +111,10 @@ def markdown(rows: list[Row], run_id: str, sent_at: str, sender: str) -> str:
     out = [
         f"# Header survival results: run {run_id}",
         "",
-        f"Sent {sent_at} from `{sender}` through Amazon SES. Messages: `minimal` (one short header),",
+        (
+            f"Sent {sent_at} from `{sender}` through an email provider."
+            " Messages: `minimal` (one short header),"
+        ),
         "`cap` (the header at exactly 2,560 octets with a 2,048-octet credential), `attachments`",
         "(a CSV and a PDF attached). Each cell: what the receiver did to the header, then the",
         "reference verifier's verdict on the stored message with the receiver's own inputs.",
@@ -145,7 +148,7 @@ def markdown(rows: list[Row], run_id: str, sent_at: str, sender: str) -> str:
 def redact(rows: list[Row], private_domains: dict[str, str]) -> list[Row]:
     """The rows with the operator's own domains replaced by their neutral labels wherever a
     receiver reported them as DKIM signers. The sender's domain and public infrastructure
-    (amazonses.com, cloudflare-email.net) stay: they are the evidence."""
+    (the email provider's and forwarders' signing domains) stay: they are the evidence."""
     if not private_domains:
         return rows
     out = []
