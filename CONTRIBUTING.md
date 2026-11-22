@@ -1,6 +1,6 @@
 # Contributing
 
-Issues and pull requests are welcome. The specification is a draft: anything in it may change before v0 final, and it is not ready for deployment. To report a security flaw, follow [SECURITY.md](SECURITY.md) instead of opening an issue.
+Issues and pull requests are welcome. The specification is a draft: anything in it may change before v0 final. To report a security flaw, follow [SECURITY.md](SECURITY.md) instead of opening an issue.
 
 ## What helps most
 
