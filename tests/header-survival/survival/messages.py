@@ -6,8 +6,8 @@
 - `attachments`: a pseudonymous principal with a scope, the text and two attachments.
 
 Each message is signed for one recipient, since the signing input covers `To`. A run therefore
-signs three messages per receiver. Message-ID and Date are set here but Amazon SES replaces both on
-sending; the harness matches captures by the X-Colophon-Test header, which is not signed, and by
+signs three messages per receiver. Message-ID and Date are set here but the email provider
+replaces both on sending; the harness matches captures by the X-Colophon-Test header, which is not signed, and by
 the run token in the subject, which is."""
 
 from __future__ import annotations

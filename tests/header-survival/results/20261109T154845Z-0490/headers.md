@@ -3,7 +3,7 @@
 Each block is the exact field from the message's header block, with its line breaks.
 Only this header is reproduced; the rest of each stored message stays private.
 
-## ses-inbound / minimal
+## provider-inbound / minimal
 
 As sent:
 
@@ -37,7 +37,7 @@ Colophon-Signature: v=0;
  xDYez_arjCMGAuxp2mvOeb0kbx6daaCUMxvcdttDlMu-YJnvhBA
 ```
 
-## ses-inbound / cap
+## provider-inbound / cap
 
 As sent:
 
@@ -119,7 +119,7 @@ Colophon-Signature: v=0;
  9R4kLHG8u_muCYvFuBiYjGCQJAY4HEcSxsEioYrRJCg
 ```
 
-## ses-inbound / attachments
+## provider-inbound / attachments
 
 As sent:
 
